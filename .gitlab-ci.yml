@@ -1,0 +1,42 @@
+stages:
+  - build
+  - upload
+  - release
+
+
+variables:
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}"
+
+build:
+  image: gradle:8.7-jdk21-graal
+  stage: build
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - apt update -y && apt install -y curl
+    - curl -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
+    - gradle clean build -x test nativeCompile
+  artifacts:
+    paths:
+      - loki/build/native/nativeCompile/loki
+    expire_in: 20 minutes
+
+upload:
+  stage: upload
+  image: curlimages/curl:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - |
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file loki/build/native/nativeCompile/loki ${PACKAGE_REGISTRY_URL}/${CI_PROJECT_NAME}
+
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - |
+      release-cli create --name "Release $CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG \
+         --assets-link "{\"name\":\"${CI_PROJECT_NAME}\",\"url\":\"${PACKAGE_REGISTRY_URL}/${CI_PROJECT_NAME}\"}"
