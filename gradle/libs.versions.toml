@@ -1,13 +1,10 @@
 [versions]
 agp = "8.10.1"
 atomicfu = "0.27.0"
-coreVersion = "1.6.1"
 kotlin = "2.1.21"
-junitVersion = "1.2.1"
 kotlinTest = "2.1.21"
 kotlinxCoroutinesCore = "1.10.2"
 kotlinxIoCore = "0.7.0"
-runner = "1.6.2"
 kotlinStdlib = "2.1.21"
 sha1 = "0.7.0"
 cryptoRand = "0.5.1"
@@ -15,10 +12,7 @@ ktor = "3.2.0"
 uriKmp = "0.0.19"
 
 [libraries]
-androidx-core = { module = "androidx.test:core", version.ref = "coreVersion" }
-androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlinTest" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIoCore" }
@@ -29,5 +23,6 @@ ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 
 [plugins]
-kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.32.0" }

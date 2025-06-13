@@ -1,47 +1,31 @@
+
+import com.vanniktech.maven.publish.SonatypeHost
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kotlin.multiplatform.library)
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.vanniktech.mavenPublish)
 }
 
+group = "io.github.remmerw"
+version = "0.1.0"
 
 kotlin {
 
-    androidLibrary {
-        namespace = "tech.lp2p.loki"
-        compileSdk = 36
-        minSdk = 27
-
-        withHostTestBuilder {
-        }
-
-        withDeviceTestBuilder {
-            sourceSetTreeName = "test"
-        }.configure {
-            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        }
-    }
-
     jvm()
-
-    val xcfName = "sharedKit"
-
-    iosX64 {
-        binaries.framework {
-            baseName = xcfName
+    androidTarget {
+        publishLibraryVariants("release")
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
-
-    iosArm64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    iosSimulatorArm64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    linuxX64()
 
 
     sourceSets {
@@ -74,19 +58,57 @@ kotlin {
             }
         }
 
-        getByName("androidDeviceTest") {
-            dependencies {
-                implementation(libs.androidx.runner)
-                implementation(libs.androidx.core)
-                implementation(libs.androidx.junit)
-                implementation(libs.kotlin.test)
-            }
-        }
-
         iosMain {
             dependencies {
             }
         }
     }
+}
 
+
+android {
+    namespace = "io.github.remmerw.loki"
+    compileSdk = 36
+    defaultConfig {
+        minSdk = 27
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+}
+
+
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    signAllPublications()
+
+    coordinates(group.toString(), "library", version.toString())
+
+    pom {
+        name = "loki"
+        description = "A library for downloading magnet-Uris"
+        inceptionYear = "2025"
+        url = "https://github.com/remmerw/loki/"
+        licenses {
+            license { // todo
+                name = "XXX"
+                url = "YYY"
+                distribution = "ZZZ"
+            }
+        }
+        developers {
+            developer {
+                id = "remmerw"
+                name = "Remmer Wilts"
+                url = "https://github.com/remmerw/loki/"
+            }
+        }
+        scm { // todo
+            url = "XXX"
+            connection = "YYY"
+            developerConnection = "ZZZ"
+        }
+    }
 }
