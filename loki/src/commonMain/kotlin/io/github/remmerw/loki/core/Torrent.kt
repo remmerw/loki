@@ -306,7 +306,6 @@ internal fun relPaths(torrentFile: TorrentFile): List<String> {
     val paths: MutableList<String> = mutableListOf()
     for (path in torrentFile.pathElements) {
         val normalized = path.normalizeForFileName()
-        println("Path name $path -> $normalized")
         paths.add(normalized)
     }
     return paths

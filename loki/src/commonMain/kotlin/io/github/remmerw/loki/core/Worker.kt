@@ -5,7 +5,6 @@ import io.github.remmerw.loki.MAX_PEER_CONNECTIONS
 import io.github.remmerw.loki.PEER_INACTIVITY_THRESHOLD
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_MANDATORY_INTERVAL
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
-import io.github.remmerw.loki.debug
 import io.github.remmerw.loki.grid.Message
 import io.github.remmerw.loki.grid.Peer
 import io.github.remmerw.loki.grid.Type
@@ -89,7 +88,6 @@ internal class Worker(
                     connection.lastActive.elapsedNow().inWholeMilliseconds
                     >= PEER_INACTIVITY_THRESHOLD
                 ) {
-                    debug("Worker", "Timeout peer " + connection.peer())
                     removing.add(connection)
                 } else {
                     purged.add(connection)

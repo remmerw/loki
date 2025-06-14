@@ -334,9 +334,9 @@ private fun parseResponse(
                         }
 
                         else -> {
-                            debug(
-                                "MessageDecoder",
-                                "not accepted node " + vals[i].contentToString()
+                            throw MessageException(
+                                "not accepted node " +
+                                        vals[i].contentToString(), PROTOCOL_ERROR
                             )
                         }
                     }
@@ -362,11 +362,11 @@ private fun parseResponse(
     }
 
 
-    val ip = arrayGet(map[Names.IP]) // not yet used
+    val ip = arrayGet(map[Names.IP])
     if (ip != null) {
         val addr = unpackAddress(ip)
         if (addr != null) {
-            debug("MessageDecoder", "External IP: $addr")
+            debug("External IP: $addr")
         }
     }
 

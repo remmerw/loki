@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.mdht
 
-import io.github.remmerw.loki.debug
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.TimeSource
@@ -54,7 +53,6 @@ internal class Call(val request: Request, val expectedID: ByteArray?) {
             is Response -> stateTransition(CallState.RESPONDED)
 
             is Error -> {
-                debug("Call", "received non-response [$rsp] in response to request: $request")
                 stateTransition(CallState.ERROR)
             }
 

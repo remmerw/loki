@@ -215,7 +215,6 @@ internal data class DataStorage(val data: Data) : Storage, AutoCloseable {
     }
 
     override fun storeTo(directory: Path) {
-        debug("Storage", "storeTo $directory")
         storageUnits().forEach { storageUnit ->
             storageUnit.storeTo(directory)
         }

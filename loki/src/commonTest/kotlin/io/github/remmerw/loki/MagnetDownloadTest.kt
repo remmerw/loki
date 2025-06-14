@@ -27,20 +27,22 @@ class MagnetDownloadTest {
 
         val magnetUri = parseMagnetUri(uri)
         val torrentId = magnetUri.torrentId
-
-        val dataDir = Path(SystemTemporaryDirectory, magnetUri.displayName ?: "empty")
-        SystemFileSystem.createDirectories(dataDir)
+        val cacheDir = SystemTemporaryDirectory // temp directory where to store intermediate data
 
 
         val storage =
-            downloadTorrent(SystemTemporaryDirectory, 7777, torrentId) { torrentState: State ->
+            downloadTorrent(cacheDir, 7777, torrentId) { torrentState: State ->
                 val completePieces = torrentState.piecesComplete
                 val totalPieces = torrentState.piecesTotal
 
                 println(" pieces : $completePieces/$totalPieces")
             }
-        storage.storeTo(dataDir)
-        storage.finish()
+
+        val dataDir = Path( cacheDir, magnetUri.displayName ?: "empty")
+        SystemFileSystem.createDirectories(dataDir)
+
+        storage.storeTo(dataDir) // store files in the final directory
+        storage.finish() // cleanup of intermediate files
     }
 
 

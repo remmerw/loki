@@ -94,7 +94,6 @@ suspend fun CoroutineScope.downloadTorrent(
 
 
         try {
-            debug("Loki", "start ...")
             mdht.startup(bootstrap())
 
             val addresses = lookupKey(mdht, torrentId.bytes)
@@ -104,10 +103,7 @@ suspend fun CoroutineScope.downloadTorrent(
             )
             processMessages(worker, handshakes)
 
-
-            debug("Loki", "waitForTorrent")
             metadataConsumer.waitForTorrent()
-            debug("Loki", "Torrent received")
 
 
             // process bitfields and haves that we received while fetching metadata
@@ -118,8 +114,6 @@ suspend fun CoroutineScope.downloadTorrent(
 
             while (true) {
                 if (dataBitfield.piecesRemaining() == 0) {
-
-                    debug("Loki", "Finish Successfully")
 
                     progress.invoke(
                         State(
@@ -145,8 +139,6 @@ suspend fun CoroutineScope.downloadTorrent(
             throw throwable
         } finally {
 
-            debug("Loki", "Start Shutdown")
-
             try {
                 selectorManager.close()
             } catch (throwable: Throwable) {
@@ -157,7 +149,6 @@ suspend fun CoroutineScope.downloadTorrent(
 
             worker.shutdown()
 
-            debug("Loki", "End Shutdown")
         }
     }
 }
@@ -221,10 +212,7 @@ fun parseMagnetUri(uri: String): MagnetUri {
     optionalParams(UriParams.PEER, paramsMap).forEach { value: String ->
         try {
             builder.peer(parsePeer(value))
-        } catch (_: Exception) {
-            debug(
-                "MagnetUriParser", "Failed to parse peer address: $value"
-            )
+        } catch (_: Throwable) {
         }
     }
 
@@ -272,7 +260,6 @@ private fun optionalParams(
 
 private fun buildTorrentId(infoHash: String): TorrentId {
     val len = infoHash.length
-    println("infoHash $infoHash  len $len")
     require(len == 40) { "Invalid info hash length: $len" }
     return TorrentId(fromHex(infoHash))
 }
@@ -406,20 +393,14 @@ fun bootstrap(): List<InetSocketAddress> {
 }
 
 @Suppress("SameReturnValue")
-internal val isDebug: Boolean
+private val isError: Boolean
     get() = false
 
-@Suppress("SameReturnValue")
-private val isError: Boolean
-    get() = true
-
-
-internal fun debug(tag: String, message: String) {
-    if (isDebug) {
-        println("$tag $message")
+internal fun debug(text: String) {
+    if (isError) {
+        println(text)
     }
 }
-
 
 internal fun debug(tag: String, throwable: Throwable) {
     if (isError) {

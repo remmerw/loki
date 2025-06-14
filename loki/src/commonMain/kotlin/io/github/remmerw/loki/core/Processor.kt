@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.debug
 import io.github.remmerw.loki.grid.Grid
 import io.github.remmerw.loki.grid.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.grid.Handshake
@@ -108,8 +107,6 @@ internal fun CoroutineScope.processMessages(
 
 
     channel.consumeEach { connection ->
-
-        debug("Processor", "Process messages " + connection.peer())
         worker.onConnected(connection)
         launch {
             while (!connection.isClosed) {
@@ -127,7 +124,6 @@ internal fun CoroutineScope.processMessages(
                 val send = worker.produce(connection)
                 if (send != null) {
                     connection.posting(send)
-                    debug("Loki", "Sending -> $send")
                 }
             }
         }
@@ -145,7 +141,6 @@ internal fun CoroutineScope.performHandshake(
 
     channel.consumeEach { connection ->
         launch {
-            debug("Processor", "Perform handshake " + connection.peer())
             withTimeoutOrNull(3000) {
                 if (performHandshake(connection, peerId, torrentId, handshakeHandlers, worker)) {
                     send(connection)

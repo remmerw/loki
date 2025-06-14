@@ -505,7 +505,6 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
             // -> ignore response
 
             debug(
-                "Node",
                 "tid matched, socket address did not, ignoring message, request: "
                         + call.request.address + " -> response: " + msg.address
             )
@@ -554,11 +553,11 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
             val b = StringBuilder()
             b.append(" [").append(msg.code).append("] from: ").append(msg.address)
             b.append(" Message: \"").append(msg.message).append("\"")
-            debug("Node", "ErrorMessage $b")
+            debug("ErrorMessage $b")
             return
         }
 
-        debug("Node", "not sure how to handle message $msg")
+        debug("not sure how to handle message $msg")
     }
 
 

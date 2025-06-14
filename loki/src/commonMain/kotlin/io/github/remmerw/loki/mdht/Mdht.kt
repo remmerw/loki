@@ -200,8 +200,6 @@ fun CoroutineScope.lookupKey(mdht: Mdht, key: ByteArray): ReceiveChannel<Address
                                 candidates.increaseFailures(call)
                                 node.timeout(call)
                             }
-                        } else {
-                            debug("Task", "no send info " + call.state().name)
                         }
 
                     }

@@ -44,7 +44,6 @@ internal class Bucket internal constructor() {
 
             if (existing.matchIPorID(newEntry)) {
                 debug(
-                    "KBucket",
                     "new node $newEntry claims same ID or IP as $existing," +
                             " might be impersonation attack or IP change. ignoring until " +
                             "old entry times out"

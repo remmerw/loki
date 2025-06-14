@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.debug
 import io.github.remmerw.loki.grid.Message
 import io.github.remmerw.loki.grid.Piece
 import io.github.remmerw.loki.grid.Request
@@ -35,10 +34,9 @@ internal class PeerRequestAgent(
     private fun consumeRequest(request: Request, connection: Connection) {
 
         if (!connection.choking) {
-            if (!dataStorage.isVerified(request.piece)) {
-                debug("PeerRequestConsumer", "Block rejected")
+            if (dataStorage.isVerified(request.piece)) {
+                connection.addRequest(request)
             }
-            connection.addRequest(request)
         }
     }
 
