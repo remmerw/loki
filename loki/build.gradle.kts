@@ -84,7 +84,7 @@ mavenPublishing {
 
     signAllPublications()
 
-    coordinates(group.toString(), "library", version.toString())
+    coordinates(group.toString(), "loki", version.toString())
 
     pom {
         name = "loki"
@@ -92,23 +92,23 @@ mavenPublishing {
         inceptionYear = "2025"
         url = "https://github.com/remmerw/loki/"
         licenses {
-            license { // todo
-                name = "XXX"
-                url = "YYY"
-                distribution = "ZZZ"
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "https://www.apache.org/licenses/LICENSE-2.0.txt"
             }
         }
         developers {
             developer {
                 id = "remmerw"
                 name = "Remmer Wilts"
-                url = "https://github.com/remmerw/loki/"
+                url = "https://github.com/remmerw/"
             }
         }
-        scm { // todo
-            url = "XXX"
-            connection = "YYY"
-            developerConnection = "ZZZ"
+        scm {
+            url = "https://github.com/remmerw/loki/"
+            connection = "scm:git:git://github.com/remmerw/loki.git"
+            developerConnection = "scm:git:ssh://git@github.com/remmerw/loki.git"
         }
     }
 }
