@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.idun
+package io.github.remmerw.loki.mdht
 
 import org.kotlincrypto.random.CryptoRand
 import kotlin.experimental.inv

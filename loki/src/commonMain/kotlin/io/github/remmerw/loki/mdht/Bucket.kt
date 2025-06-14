@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.idun
+package io.github.remmerw.loki.mdht
 
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress

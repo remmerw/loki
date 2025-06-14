@@ -24,9 +24,9 @@ import io.github.remmerw.loki.grid.Grid
 import io.github.remmerw.loki.grid.PeerExchangeHandler
 import io.github.remmerw.loki.grid.TorrentId
 import io.github.remmerw.loki.grid.UtMetadataHandler
-import io.github.remmerw.loki.idun.lookupKey
-import io.github.remmerw.loki.idun.newIdun
-import io.github.remmerw.loki.idun.peerId
+import io.github.remmerw.loki.mdht.lookupKey
+import io.github.remmerw.loki.mdht.newMdht
+import io.github.remmerw.loki.mdht.peerId
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +57,7 @@ suspend fun CoroutineScope.downloadTorrent(
         val selectorManager = SelectorManager(Dispatchers.IO)
 
         val peerId = peerId()
-        val idun = newIdun(peerId, port)
+        val mdht = newMdht(peerId, port)
 
 
         val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
@@ -95,9 +95,9 @@ suspend fun CoroutineScope.downloadTorrent(
 
         try {
             debug("Loki", "start ...")
-            idun.startup(bootstrap())
+            mdht.startup(bootstrap())
 
-            val addresses = lookupKey(idun, torrentId.bytes)
+            val addresses = lookupKey(mdht, torrentId.bytes)
             val connections = performConnection(grid, worker, selectorManager, addresses)
             val handshakes = performHandshake(
                 peerId, torrentId, handshakeHandlers, worker, connections
@@ -153,7 +153,7 @@ suspend fun CoroutineScope.downloadTorrent(
                 debug("Loki", throwable)
             }
 
-            idun.shutdown()
+            mdht.shutdown()
 
             worker.shutdown()
 

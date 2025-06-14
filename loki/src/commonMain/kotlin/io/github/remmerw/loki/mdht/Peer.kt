@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.idun
+package io.github.remmerw.loki.mdht
 
 import io.ktor.network.sockets.InetSocketAddress
 import kotlin.time.TimeSource

@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.idun
+package io.github.remmerw.loki.mdht
 
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock

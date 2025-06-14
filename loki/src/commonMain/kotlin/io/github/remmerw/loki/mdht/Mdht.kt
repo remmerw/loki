@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.idun
+package io.github.remmerw.loki.mdht
 
 import io.github.remmerw.loki.debug
 import io.ktor.network.selector.SelectorManager
@@ -24,7 +24,7 @@ import kotlinx.io.writeUShort
 import kotlin.random.Random
 
 
-class Idun internal constructor(peerId: ByteArray, val port: Int) {
+class Mdht internal constructor(peerId: ByteArray, val port: Int) {
     private val channel = Channel<EnqueuedSend>()
     internal val node: Node = Node(peerId, channel)
     private val selectorManager = SelectorManager(Dispatchers.IO)
@@ -71,7 +71,7 @@ class Idun internal constructor(peerId: ByteArray, val port: Int) {
             es.associatedCall?.hasSend()
 
         } catch (throwable: Throwable) {
-            debug("Idun", throwable)
+            debug("Mdht", throwable)
 
             if (es.associatedCall != null) {
                 es.associatedCall.injectStall()
@@ -86,19 +86,19 @@ class Idun internal constructor(peerId: ByteArray, val port: Int) {
         try {
             channel.close()
         } catch (throwable: Throwable) {
-            debug("Idun", throwable)
+            debug("Mdht", throwable)
         }
 
         try {
             selectorManager.close()
         } catch (throwable: Throwable) {
-            debug("Idun", throwable)
+            debug("Mdht", throwable)
         }
 
         try {
             socket?.close()
         } catch (throwable: Throwable) {
-            debug("Idun", throwable)
+            debug("Mdht", throwable)
         }
     }
 }
@@ -107,9 +107,9 @@ class Idun internal constructor(peerId: ByteArray, val port: Int) {
 const val LOOKUP_DELAY: Long = 5000
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.lookupKey(idun: Idun, key: ByteArray): ReceiveChannel<Address> = produce {
+fun CoroutineScope.lookupKey(mdht: Mdht, key: ByteArray): ReceiveChannel<Address> = produce {
     val peers: MutableSet<Address> = mutableSetOf()
-    val node = idun.node
+    val node = mdht.node
     while (!node.isShutdown) {
 
         val closest = ClosestSet(key)
@@ -219,8 +219,8 @@ fun CoroutineScope.lookupKey(idun: Idun, key: ByteArray): ReceiveChannel<Address
     }
 }
 
-fun newIdun(peerId: ByteArray, port: Int): Idun {
-    return Idun(peerId, port)
+fun newMdht(peerId: ByteArray, port: Int): Mdht {
+    return Mdht(peerId, port)
 }
 
 fun peerId(): ByteArray {

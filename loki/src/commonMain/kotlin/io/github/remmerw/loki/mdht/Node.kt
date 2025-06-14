@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.idun
+package io.github.remmerw.loki.mdht
 
 import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.arrayGet

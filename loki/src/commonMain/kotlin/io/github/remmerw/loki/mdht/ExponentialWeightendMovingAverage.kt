@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.idun
+package io.github.remmerw.loki.mdht
 
 internal class ExponentialWeightendMovingAverage {
     private var weight = 0.3
