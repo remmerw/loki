@@ -1,4 +1,4 @@
-The **Loki** library is currently in development [**Version 0.0.1**]
+The **Loki** library is currently in development [**Version 0.1.0**]
 
 ## Loki
 
