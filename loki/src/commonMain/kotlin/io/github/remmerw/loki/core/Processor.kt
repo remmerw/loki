@@ -3,8 +3,8 @@ package io.github.remmerw.loki.core
 import io.github.remmerw.loki.debug
 import io.github.remmerw.loki.grid.Grid
 import io.github.remmerw.loki.grid.HANDSHAKE_RESERVED_LENGTH
-import io.github.remmerw.loki.grid.PROTOCOL_NAME
 import io.github.remmerw.loki.grid.Handshake
+import io.github.remmerw.loki.grid.PROTOCOL_NAME
 import io.github.remmerw.loki.grid.Peer
 import io.github.remmerw.loki.grid.TorrentId
 import io.github.remmerw.loki.idun.Address

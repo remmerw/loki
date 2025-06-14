@@ -1,11 +1,11 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.CHOKING_THRESHOLD
-import io.github.remmerw.loki.grid.choke
 import io.github.remmerw.loki.grid.Have
 import io.github.remmerw.loki.grid.Message
 import io.github.remmerw.loki.grid.Piece
 import io.github.remmerw.loki.grid.Type
+import io.github.remmerw.loki.grid.choke
 import io.github.remmerw.loki.grid.unchoke
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock

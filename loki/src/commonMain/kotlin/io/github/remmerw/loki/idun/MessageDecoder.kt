@@ -1,11 +1,11 @@
 package io.github.remmerw.loki.idun
 
-import io.github.remmerw.loki.buri.arrayGet
 import io.github.remmerw.loki.buri.BEInteger
 import io.github.remmerw.loki.buri.BEList
 import io.github.remmerw.loki.buri.BEMap
 import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.BEString
+import io.github.remmerw.loki.buri.arrayGet
 import io.github.remmerw.loki.buri.longGet
 import io.github.remmerw.loki.buri.stringGet
 import io.github.remmerw.loki.debug

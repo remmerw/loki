@@ -19,8 +19,8 @@ import io.github.remmerw.loki.core.newData
 import io.github.remmerw.loki.core.performConnection
 import io.github.remmerw.loki.core.performHandshake
 import io.github.remmerw.loki.core.processMessages
-import io.github.remmerw.loki.grid.Grid
 import io.github.remmerw.loki.grid.ExtendedMessageHandler
+import io.github.remmerw.loki.grid.Grid
 import io.github.remmerw.loki.grid.PeerExchangeHandler
 import io.github.remmerw.loki.grid.TorrentId
 import io.github.remmerw.loki.grid.UtMetadataHandler

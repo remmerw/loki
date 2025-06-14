@@ -1,7 +1,6 @@
 package io.github.remmerw.loki.grid
 
 import kotlinx.io.Buffer
-import kotlin.collections.iterator
 
 internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) : MessageHandler {
 

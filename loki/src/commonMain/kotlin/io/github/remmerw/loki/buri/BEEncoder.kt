@@ -1,7 +1,6 @@
 package io.github.remmerw.loki.buri
 
 import kotlinx.io.Buffer
-import kotlin.collections.iterator
 
 internal fun encode(string: BEString, out: Buffer) {
     val bytes = string.content

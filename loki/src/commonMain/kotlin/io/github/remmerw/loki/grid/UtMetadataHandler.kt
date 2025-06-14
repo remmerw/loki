@@ -37,17 +37,17 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
         val messageType = checkNotNull(getMessageType(map))
         val pieceIndex = checkNotNull(getPieceIndex(map))
         val totalSize = checkNotNull(getTotalSize(map))
-        when (messageType) {
+        return when (messageType) {
             MetaType.REQUEST -> {
-                return request(pieceIndex)
+                request(pieceIndex)
             }
 
             MetaType.DATA -> {
-                return data(pieceIndex, totalSize, buffer.readByteArray())
+                data(pieceIndex, totalSize, buffer.readByteArray())
             }
 
             MetaType.REJECT -> {
-                return reject(pieceIndex)
+                reject(pieceIndex)
             }
         }
 

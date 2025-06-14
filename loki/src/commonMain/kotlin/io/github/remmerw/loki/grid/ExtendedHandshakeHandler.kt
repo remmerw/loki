@@ -6,7 +6,6 @@ import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.decode
 import io.github.remmerw.loki.buri.encode
 import kotlinx.io.Buffer
-import kotlin.collections.iterator
 
 internal class ExtendedHandshakeHandler : MessageHandler {
     override fun supportedTypes(): Collection<Type> = setOf(Type.ExtendedHandshake)

@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.idun
 
-import io.github.remmerw.loki.buri.arrayGet
 import io.github.remmerw.loki.buri.BEObject
+import io.github.remmerw.loki.buri.arrayGet
 import io.github.remmerw.loki.buri.decode
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.Datagram
