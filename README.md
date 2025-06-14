@@ -1,4 +1,4 @@
-The **Loki** library is currently in development [**Version 0.1.0**]
+The **Loki** library is currently in development
 
 ![Maven Central Version](https://img.shields.io/maven-central/v/:io.github.remmerw/:loki)
 
