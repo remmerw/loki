@@ -4,7 +4,7 @@ The **Loki** library is currently in development
 
 ## Loki
 
-The **Loki** Bittorrent library implements the download of **magnet** URI.
+The **Loki** Bittorrent library implements the download of **magnet** URIs.
 
 This sections describes the main goals of this project
 
