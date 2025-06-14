@@ -1,22 +1,16 @@
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/78fbdb24-6210-4d41-afeb-57d199a743f8" alt="Loki for Kotlin Multiplatform and Compose Multiplatform" />
-
-  <br>
-
-  <h1>Loki</h1>
-  <p>🚀 A cross-platform magnet URI download library for Kotlin Multiplatform</p>
-
- <div>
-    <img src="https://img.shields.io/maven-central/v/io.github.remmerw/floki" alt="Kotlin Maven Version" />
-    <img src="https://img.shields.io/badge/Platform-Android-brightgreen.svg?logo=android" alt="Badge Android" />
-		<img src="https://img.shields.io/badge/Platform-iOS%20%2F%20macOS-lightgrey.svg?logo=apple" alt="Badge iOS" />
-		<img src="https://img.shields.io/badge/Platform-JVM-8A2BE2.svg?logo=openjdk" alt="Badge JVM" />
+<div>
+    <div>
+        <img src="https://img.shields.io/maven-central/v/io.github.remmerw/floki" alt="Kotlin Maven Version" />
+        <img src="https://img.shields.io/badge/Platform-Android-brightgreen.svg?logo=android" alt="Badge Android" />
+        <img src="https://img.shields.io/badge/Platform-iOS%20%2F%20macOS-lightgrey.svg?logo=apple" alt="Badge iOS" />
+        <img src="https://img.shields.io/badge/Platform-JVM-8A2BE2.svg?logo=openjdk" alt="Badge JVM" />
   </div>
 
   <br>
 </div>
 
 ## Loki
+<
 
 The **Loki** Bittorrent library implements the download of **magnet** URIs. 
 
