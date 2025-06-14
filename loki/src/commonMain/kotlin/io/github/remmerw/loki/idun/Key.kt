@@ -35,7 +35,7 @@ internal fun distance(a: ByteArray, b: ByteArray): ByteArray {
 
 internal fun add(a: ByteArray, b: ByteArray): ByteArray {
     var carry = 0
-    val hash = a.clone()
+    val hash = a.copyOf()
     for (i in (SHA1_HASH_LENGTH - 1) downTo 0) {
         carry += (hash[i].toUInt() + b[i].toUInt()).toInt()
         hash[i] = (carry and 0xff).toByte()
@@ -74,7 +74,7 @@ internal fun threeWayDistance(h0: ByteArray, h1: ByteArray, h2: ByteArray): Int 
 }
 
 internal fun createPrefixHash(hash: ByteArray, depth: Int): ByteArray {
-    val hash = hash.clone()
+    val hash = hash.copyOf()
     copyBits(hash, hash, depth)
     return hash
 }
@@ -86,7 +86,7 @@ internal fun createPrefix(hash: ByteArray, depth: Int): Prefix {
 
 internal fun splitPrefixBranch(prefix: Prefix, highBranch: Boolean): Prefix {
 
-    val hash = prefix.hash.clone()
+    val hash = prefix.hash.copyOf()
     val depth = prefix.depth + 1
     if (highBranch) hash[depth / 8] =
         (hash[depth / 8].toInt() or (0x80 shr (depth % 8)).toByte()

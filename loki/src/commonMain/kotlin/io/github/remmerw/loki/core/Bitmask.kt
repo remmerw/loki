@@ -366,10 +366,10 @@ internal class Bitmask(bits: Int) {
      * @return a clone of this bit set
      * @see .size
      */
-    fun clone(): Bitmask {
+    fun copyOf(): Bitmask {
         if (!sizeIsSticky) trimToSize()
         val result = Bitmask(0)
-        result.words = this.words.clone()
+        result.words = this.words.copyOf()
         result.wordsInUse = this.wordsInUse
         result.sizeIsSticky = this.sizeIsSticky
         return result

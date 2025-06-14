@@ -24,7 +24,7 @@ internal data class DataBitfield(
      */
     fun clonedBitmask(): Bitmask {
         lock.withLock {
-            return bitmask.clone()
+            return bitmask.copyOf()
         }
     }
 
