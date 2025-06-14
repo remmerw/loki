@@ -1,12 +1,12 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.buri.core.BEInteger
-import io.github.remmerw.loki.buri.core.BEMap
-import io.github.remmerw.loki.buri.core.BEObject
-import io.github.remmerw.loki.buri.core.BEString
-import io.github.remmerw.loki.grid.core.ExtendedHandshake
-import io.github.remmerw.loki.grid.core.ExtendedMessageHandler
-import io.github.remmerw.loki.grid.core.Handshake
+import io.github.remmerw.loki.buri.BEInteger
+import io.github.remmerw.loki.buri.BEMap
+import io.github.remmerw.loki.buri.BEObject
+import io.github.remmerw.loki.buri.BEString
+import io.github.remmerw.loki.grid.ExtendedHandshake
+import io.github.remmerw.loki.grid.ExtendedMessageHandler
+import io.github.remmerw.loki.grid.Handshake
 
 internal data class ExtendedProtocolHandshakeHandler(
     private val dataStorage: DataStorage,

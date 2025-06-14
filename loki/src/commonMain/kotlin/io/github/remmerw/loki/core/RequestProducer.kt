@@ -1,9 +1,9 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.MAX_OUTSTANDING_REQUESTS
-import io.github.remmerw.loki.grid.core.Cancel
-import io.github.remmerw.loki.grid.core.Message
-import io.github.remmerw.loki.grid.core.Request
+import io.github.remmerw.loki.grid.Cancel
+import io.github.remmerw.loki.grid.Message
+import io.github.remmerw.loki.grid.Request
 import kotlin.math.min
 
 internal class RequestProducer(private val dataStorage: DataStorage) : Produces {

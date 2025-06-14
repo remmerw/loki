@@ -6,9 +6,9 @@ import io.github.remmerw.loki.PEER_INACTIVITY_THRESHOLD
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_MANDATORY_INTERVAL
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
 import io.github.remmerw.loki.debug
-import io.github.remmerw.loki.grid.core.Message
-import io.github.remmerw.loki.grid.core.Peer
-import io.github.remmerw.loki.grid.core.Type
+import io.github.remmerw.loki.grid.Message
+import io.github.remmerw.loki.grid.Peer
+import io.github.remmerw.loki.grid.Type
 import io.github.remmerw.loki.grid.interested
 import io.github.remmerw.loki.grid.notInterested
 import kotlinx.atomicfu.locks.reentrantLock

@@ -1,11 +1,5 @@
 package io.github.remmerw.loki.buri
 
-import io.github.remmerw.loki.buri.core.BEInteger
-import io.github.remmerw.loki.buri.core.BEMap
-import io.github.remmerw.loki.buri.core.BEObject
-import io.github.remmerw.loki.buri.core.BEString
-import io.github.remmerw.loki.buri.core.BEType
-import io.github.remmerw.loki.buri.core.createParser
 import kotlinx.io.Buffer
 import kotlinx.io.Source
 

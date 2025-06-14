@@ -20,10 +20,10 @@ import io.github.remmerw.loki.core.performConnection
 import io.github.remmerw.loki.core.performHandshake
 import io.github.remmerw.loki.core.processMessages
 import io.github.remmerw.loki.grid.Grid
-import io.github.remmerw.loki.grid.core.ExtendedMessageHandler
-import io.github.remmerw.loki.grid.core.PeerExchangeHandler
-import io.github.remmerw.loki.grid.core.TorrentId
-import io.github.remmerw.loki.grid.core.UtMetadataHandler
+import io.github.remmerw.loki.grid.ExtendedMessageHandler
+import io.github.remmerw.loki.grid.PeerExchangeHandler
+import io.github.remmerw.loki.grid.TorrentId
+import io.github.remmerw.loki.grid.UtMetadataHandler
 import io.github.remmerw.loki.idun.lookupKey
 import io.github.remmerw.loki.idun.newIdun
 import io.github.remmerw.loki.idun.peerId

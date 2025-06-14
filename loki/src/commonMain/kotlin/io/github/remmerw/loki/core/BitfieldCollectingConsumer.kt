@@ -1,9 +1,9 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.grid.core.Bitfield
-import io.github.remmerw.loki.grid.core.Have
-import io.github.remmerw.loki.grid.core.Message
-import io.github.remmerw.loki.grid.core.Type
+import io.github.remmerw.loki.grid.Bitfield
+import io.github.remmerw.loki.grid.Have
+import io.github.remmerw.loki.grid.Message
+import io.github.remmerw.loki.grid.Type
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 

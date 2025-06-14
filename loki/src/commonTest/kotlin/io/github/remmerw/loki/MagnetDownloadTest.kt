@@ -1,7 +1,7 @@
 package io.github.remmerw.loki
 
-import io.github.remmerw.loki.idun.core.SHA1_HASH_LENGTH
-import io.github.remmerw.loki.idun.core.createRandomKey
+import io.github.remmerw.loki.idun.SHA1_HASH_LENGTH
+import io.github.remmerw.loki.idun.createRandomKey
 import io.github.remmerw.loki.idun.lookupKey
 import io.github.remmerw.loki.idun.newIdun
 import io.github.remmerw.loki.idun.peerId

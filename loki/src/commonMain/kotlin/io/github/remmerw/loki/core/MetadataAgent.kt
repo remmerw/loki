@@ -1,10 +1,10 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.BLOCK_SIZE
-import io.github.remmerw.loki.grid.core.Message
-import io.github.remmerw.loki.grid.core.MetaType
-import io.github.remmerw.loki.grid.core.Type
-import io.github.remmerw.loki.grid.core.UtMetadata
+import io.github.remmerw.loki.grid.Message
+import io.github.remmerw.loki.grid.MetaType
+import io.github.remmerw.loki.grid.Type
+import io.github.remmerw.loki.grid.UtMetadata
 import io.github.remmerw.loki.grid.data
 import io.github.remmerw.loki.grid.reject
 import kotlin.math.min
