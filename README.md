@@ -22,7 +22,8 @@ This sections describes the main goals of this project
 ## Download Magnet URI
 
 ```
-     @Test
+    
+    @Test
     fun downloadMagnetUri(): Unit = runBlocking(Dispatchers.IO) {
         val uri = 
             "magnet:?xt=urn:btih:..." // needs a valid magnet Uri
