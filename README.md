@@ -4,8 +4,8 @@
 
 The **Loki** Bittorrent library implements the download of **magnet** URIs. 
 
-The used DHT base on 
-[Mainline DHT](https://en.wikipedia.org/wiki/Mainline_DHT)
+The implemented DHT based on 
+[Mainline DHT](https://en.wikipedia.org/wiki/Mainline_DHT).
 The specification can be found here [Bittorrent](https://www.bittorrent.org/beps/bep_0000.html).
 
 
