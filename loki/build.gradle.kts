@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.remmerw"
-version = "0.2.0"
+version = "0.2.1"
 
 kotlin {
 
@@ -25,6 +25,7 @@ kotlin {
         }
     }
 
+
     jvm()
     iosX64()
     iosArm64()
@@ -33,6 +34,7 @@ kotlin {
     linuxX64()
     linuxArm64()
     wasmJs()
+    // todo wasmWasi()
     js()
 
     sourceSets {
