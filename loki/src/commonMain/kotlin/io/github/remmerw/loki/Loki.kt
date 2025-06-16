@@ -47,10 +47,12 @@ interface Storage {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class)
-suspend fun CoroutineScope.downloadTorrent(
-    root: Path, port: Int, torrentId: TorrentId, progress: (State) -> Unit
+suspend fun CoroutineScope.download(
+    magnetUri: MagnetUri,
+    directory: Path, port: Int, progress: (State) -> Unit
 ): Storage {
-    val path = Path(root, torrentId.bytes.toHexString())
+    val torrentId = magnetUri.torrentId
+    val path = Path(directory, torrentId.bytes.toHexString())
     val data = newData(path)
     DataStorage(data).use { dataStorage ->
 

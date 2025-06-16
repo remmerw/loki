@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.mdht
 
-import org.kotlincrypto.random.CryptoRand
 import kotlin.experimental.inv
+import kotlin.random.Random
 
 
 @Suppress("ArrayInDataClass")
@@ -53,7 +53,7 @@ internal fun setBitKey(idx: Int): ByteArray {
 
 
 internal fun createRandomKey(length: Int): ByteArray {
-    return CryptoRand.Default.nextBytes(ByteArray(length))
+    return Random.nextBytes(ByteArray(length))
 }
 
 /**

@@ -24,7 +24,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             ...
-            implementation("io.github.remmerw:loki:0.1.2")
+            implementation("io.github.remmerw:loki:0.2.0")
         }
         ...
     }
@@ -41,12 +41,12 @@ kotlin {
             "magnet:?xt=urn:btih:..." // needs a valid magnet Uri
 
         val magnetUri = parseMagnetUri(uri)
-        val torrentId = magnetUri.torrentId
         val cacheDir = SystemTemporaryDirectory // temp directory where to store intermediate data
+        val port = 7777 // port the DHT is working on
 
 
         val storage =
-            downloadTorrent(cacheDir, 7777, torrentId) { torrentState: State ->
+            download( magnetUri, cacheDir, port) { torrentState: State ->
                 val completePieces = torrentState.piecesComplete
                 val totalPieces = torrentState.piecesTotal
 
