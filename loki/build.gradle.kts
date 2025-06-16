@@ -1,6 +1,8 @@
+@file:OptIn(ExperimentalWasmDsl::class)
 
 import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -14,7 +16,7 @@ version = "0.2.0"
 
 kotlin {
 
-    jvm()
+
     androidTarget {
         publishLibraryVariants("release")
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -22,11 +24,16 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
+
+    jvm()
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+    linuxArm64()
     linuxX64()
-
+    linuxArm64()
+    wasmJs()
+    js()
 
     sourceSets {
         commonMain {
@@ -43,21 +50,6 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
-            }
-        }
-
-        jvmMain {
-            dependencies {
-            }
-        }
-
-        androidMain {
-            dependencies {
-            }
-        }
-
-        iosMain {
-            dependencies {
             }
         }
     }
