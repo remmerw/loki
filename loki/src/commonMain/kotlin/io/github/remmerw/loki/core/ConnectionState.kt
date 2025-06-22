@@ -111,9 +111,9 @@ internal open class ConnectionState : ConnectionAgent() {
         }
     }
 
-    fun pendingRequests(): Set<Long> {
+    fun pendingRequests(): List<Long> {
         lock.withLock {
-            return pendingRequests
+            return pendingRequests.toList()
         }
     }
 

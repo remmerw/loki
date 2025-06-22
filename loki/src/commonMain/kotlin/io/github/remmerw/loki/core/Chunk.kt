@@ -8,7 +8,7 @@ internal data class Chunk(
     private val blockSize: Int,
     private val checksum: ByteArray
 ) {
-    private val data: MutableMap<Int, ByteArray> = mutableMapOf()
+    private val data: MutableMap<Int, ByteArray> = mutableMapOf() // todo Memory issue here
     private val blockSet = createBlockSet(size, blockSize)
 
     private fun digest(): ByteArray {
