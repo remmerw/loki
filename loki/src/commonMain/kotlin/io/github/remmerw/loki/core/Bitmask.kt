@@ -177,71 +177,6 @@ internal class Bitmask(bits: Int) {
 
 
     /**
-     * Returns the index of the first bit that is set to `true`
-     * that occurs on or after the specified starting index. If no such
-     * bit exists then `-1` is returned.
-     *
-     *
-     * To iterate over the `true` bits in a `Bitmask`,
-     * use the following loop:
-     *
-     * <pre> `for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
-     * // operate on index i here
-     * if (i == Integer.MAX_VALUE) {
-     * break; // or (i+1) would overflow
-     * }
-     * }`</pre>
-     *
-     * @param fromIndex the index to start checking from (inclusive)
-     * @return the index of the next set bit, or `-1` if there
-     * is no such bit
-     * @throws IndexOutOfBoundsException if the specified index is negative
-     */
-    fun nextSetBit(fromIndex: Int): Int {
-        if (fromIndex < 0) throw IndexOutOfBoundsException("fromIndex < 0: $fromIndex")
-
-
-        var u: Int = wordIndex(fromIndex)
-        if (u >= wordsInUse) return -1
-
-        var word = words[u] and (WORD_MASK shl fromIndex)
-
-
-        while (true) {
-            if (word != 0L) return (u * BITS_PER_WORD) + word.countTrailingZeroBits()
-            if (++u == wordsInUse) return -1
-            word = words[u]
-        }
-    }
-
-    /**
-     * Returns the index of the first bit that is set to `false`
-     * that occurs on or after the specified starting index.
-     *
-     * @param fromIndex the index to start checking from (inclusive)
-     * @return the index of the next clear bit
-     * @throws IndexOutOfBoundsException if the specified index is negative
-     */
-    fun nextClearBit(fromIndex: Int): Int {
-        // Neither spec nor implementation handle bitmasks of maximal length.
-        // See 4816253.
-        if (fromIndex < 0) throw IndexOutOfBoundsException("fromIndex < 0: $fromIndex")
-
-
-        var u: Int = wordIndex(fromIndex)
-        if (u >= wordsInUse) return fromIndex
-
-        var word = words[u].inv() and (WORD_MASK shl fromIndex)
-
-        while (true) {
-            if (word != 0L) return (u * BITS_PER_WORD) + word.countTrailingZeroBits()
-            if (++u == wordsInUse) return wordsInUse * BITS_PER_WORD
-            word = words[u].inv()
-        }
-    }
-
-
-    /**
      * Returns the number of bits set to `true` in this `Bitmask`.
      *
      * @return the number of bits set to `true` in this `Bitmask`
@@ -386,63 +321,9 @@ internal class Bitmask(bits: Int) {
         }
     }
 
-
-    /**
-     * Returns a string representation of this bit set. For every index
-     * for which this `Bitmask` contains a bit in the set
-     * state, the decimal representation of that index is included in
-     * the result. Such indices are listed in order from lowest to
-     * highest, separated by ",&nbsp;" (a comma and a space) and
-     * surrounded by braces, resulting in the usual mathematical
-     * notation for a set of integers.
-     *
-     *
-     * Example:
-     * <pre>
-     * Bitmask drPepper = new Bitmask();</pre>
-     * Now `drPepper.toString()` returns "`{}`".
-     * <pre>
-     * drPepper.set(2);</pre>
-     * Now `drPepper.toString()` returns "`{2}`".
-     * <pre>
-     * drPepper.set(4);
-     * drPepper.set(10);</pre>
-     * Now `drPepper.toString()` returns "`{2, 4, 10}`".
-     *
-     * @return a string representation of this bit set
-     */
-    override fun toString(): String {
-
-        val maxInitialCapacity = Int.Companion.MAX_VALUE - 8
-        val numBits = if (wordsInUse > 128) cardinality() else wordsInUse * BITS_PER_WORD
-        // Avoid overflow in the case of a humongous numBits
-        val initialCapacity =
-            if (numBits <= (maxInitialCapacity - 2) / 6) 6 * numBits + 2 else maxInitialCapacity
-        val b = StringBuilder(initialCapacity)
-        b.append('{')
-
-        var i = nextSetBit(0)
-        if (i != -1) {
-            b.append(i)
-            while (true) {
-                if (++i < 0) break
-                if ((nextSetBit(i).also { i = it }) < 0) break
-                val endOfRun = nextClearBit(i)
-                do {
-                    b.append(", ").append(i)
-                } while (++i != endOfRun)
-            }
-        }
-
-        b.append('}')
-        return b.toString()
-    }
-
-
     companion object {
 
         private const val ADDRESS_BITS_PER_WORD = 6
-        private const val BITS_PER_WORD = 1 shl ADDRESS_BITS_PER_WORD
 
         /* Used to shift left or right for a partial word mask */
         private const val WORD_MASK = -0x1L
