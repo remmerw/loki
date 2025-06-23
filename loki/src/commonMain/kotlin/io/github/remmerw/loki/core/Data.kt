@@ -17,6 +17,7 @@ class Data(private val directory: Path) {
         cleanupDirectory(directory)
     }
 
+    // todo random file access
     fun readBlockSlice(cid: Int, offset: Int, length: Int): ByteArray {
         val file = path(cid)
         require(SystemFileSystem.exists(file)) { "Block does not exists" }
@@ -26,6 +27,7 @@ class Data(private val directory: Path) {
         }
     }
 
+    // todo random file access
     fun readBlockSlice(cid: Int, offset: Int): ByteArray {
         val file = path(cid)
         require(SystemFileSystem.exists(file)) { "Block does not exists" }
