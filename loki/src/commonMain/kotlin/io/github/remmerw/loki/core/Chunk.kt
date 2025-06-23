@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import org.kotlincrypto.hash.sha1.SHA1
 
 @Suppress("ArrayInDataClass")
 internal data class Chunk(
@@ -11,19 +10,12 @@ internal data class Chunk(
     private val data: MutableMap<Int, ByteArray> = mutableMapOf() // todo Memory issue here
     private val blockSet = createBlockSet(size, blockSize)
 
-    private fun digest(): ByteArray {
-        val digest = SHA1()
-        bytes().forEach { data -> digest.update(data) }
-        return digest.digest()
+    fun checksum(): ByteArray {
+        return checksum
     }
 
     internal fun bytes(): List<ByteArray> {
         return data.keys.sorted().map { entry -> data[entry]!! }
-    }
-
-    internal fun verify(): Boolean {
-        val actual = digest()
-        return checksum.contentEquals(actual)
     }
 
     fun writeBlock(offset: Int, bytes: ByteArray) {

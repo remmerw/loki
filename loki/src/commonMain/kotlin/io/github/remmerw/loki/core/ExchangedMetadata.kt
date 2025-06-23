@@ -1,9 +1,11 @@
 package io.github.remmerw.loki.core
 
+import dev.whyoleg.cryptography.CryptographyProvider
+import dev.whyoleg.cryptography.DelicateCryptographyApi
+import dev.whyoleg.cryptography.algorithms.SHA1
 import io.github.remmerw.loki.BLOCK_SIZE
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
-import org.kotlincrypto.hash.sha1.SHA1
 
 
 /**
@@ -40,12 +42,15 @@ internal data class ExchangedMetadata(
         get() = metadataBlocks.isComplete
 
 
+    @OptIn(DelicateCryptographyApi::class)
     fun digest(): ByteArray {
         lock.withLock {
             check(metadataBlocks.isComplete) { "Metadata is not complete" }
-            val instance = SHA1()
-            instance.update(data)
-            return instance.digest()
+            return CryptographyProvider.Default
+                .get(SHA1)
+                .hasher()
+                .hashBlocking(data)
+
         }
     }
 

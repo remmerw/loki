@@ -158,13 +158,20 @@ internal data class DataStorage(val data: Data) : Storage, AutoCloseable {
         dataBitfield!!.markVerified(piece)
     }
 
-    internal fun storeChunk(piece: Int, chunk: Chunk) {
+    internal fun storeChunk(piece: Int, chunk: Chunk): Boolean {
         data.storeBlock(piece, chunk.bytes())
-        chunks.remove(piece)
+        if (data.verifyBlock(piece, chunk.checksum())) {
+            chunks.remove(piece)
+            dataBitfield!!.markVerified(piece)
+            return true
+        } else {
+            data.deleteBlock(piece)
+            chunk.reset()
+            return false
+        }
     }
 
     internal fun verifiedPieces(totalPieces: Int) {
-
 
         var mask: Bitmask? = null
         if (SystemFileSystem.exists(bitmask)) {

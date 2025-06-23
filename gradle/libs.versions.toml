@@ -3,7 +3,7 @@ agp = "8.10.1"
 atomicfu = "0.28.0"
 kotlin = "2.1.21"
 kotlinxIoCore = "0.7.0"
-sha1 = "0.7.0"
+cryptographyCore = "0.4.0"
 ktor = "3.2.0"
 uriKmp = "0.0.19"
 
@@ -12,7 +12,9 @@ atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu"
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIoCore" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
-sha1 = { module = "org.kotlincrypto.hash:sha1", version.ref = "sha1" }
+cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptographyCore" }
+cryptography-provider-jdk = { module = "dev.whyoleg.cryptography:cryptography-provider-jdk", version.ref = "cryptographyCore" }
+cryptography-provider-apple = { module = "dev.whyoleg.cryptography:cryptography-provider-apple", version.ref = "cryptographyCore" }
 ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 

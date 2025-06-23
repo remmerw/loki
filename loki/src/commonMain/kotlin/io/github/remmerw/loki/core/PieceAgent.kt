@@ -74,16 +74,10 @@ internal class PieceAgent(
             chunk.writeBlock(piece.offset, piece.data)
 
             if (chunk.isComplete) {
-                val verified = chunk.verify()
-                if (verified) {
-                    dataStorage.storeChunk(piece.pieceIndex, chunk)
-                    dataStorage.markVerified(piece.pieceIndex)
+                if (dataStorage.storeChunk(piece.pieceIndex, chunk)) {
                     lock.withLock {
                         completedPieces.add(piece.pieceIndex)
                     }
-                } else {
-                    // reset data
-                    chunk.reset()
                 }
             }
         } catch (throwable: Throwable) {
