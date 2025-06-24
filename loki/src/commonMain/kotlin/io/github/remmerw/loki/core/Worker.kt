@@ -77,7 +77,7 @@ internal class Worker(
         }
     }
 
-    internal fun purgedConnections(): List<Connection> {
+    fun purgedConnections(): List<Connection> {
         lock.withLock {
             val purged: MutableList<Connection> = mutableListOf()
             val removing: MutableList<Connection> = mutableListOf()
@@ -105,14 +105,10 @@ internal class Worker(
         }
     }
 
-    private fun count(): Int {
+    fun mightAdd(): Boolean {
         lock.withLock {
-            return connections.count()
+            return connections.count() < MAX_PEER_CONNECTIONS
         }
-    }
-
-    internal fun mightAdd(): Boolean {
-        return count() < MAX_PEER_CONNECTIONS
     }
 
     fun addConnection(connection: Connection) {
@@ -122,7 +118,7 @@ internal class Worker(
     }
 
 
-    internal fun purgeConnection(connection: Connection) {
+    fun purgeConnection(connection: Connection) {
         lock.withLock {
             connections.remove(connection.peer())
         }
