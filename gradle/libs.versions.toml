@@ -1,7 +1,7 @@
 [versions]
 agp = "8.10.1"
 atomicfu = "0.28.0"
-kotlin = "2.1.21"
+kotlin = "2.2.0"
 kotlinxIoCore = "0.7.0"
 cryptographyCore = "0.4.0"
 ktor = "3.2.0"
