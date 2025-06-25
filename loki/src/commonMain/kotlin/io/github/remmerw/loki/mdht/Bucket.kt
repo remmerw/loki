@@ -2,8 +2,8 @@ package io.github.remmerw.loki.mdht
 
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
-import kotlinx.atomicfu.locks.reentrantLock
-import kotlinx.atomicfu.locks.withLock
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicArray
 import kotlin.concurrent.atomics.AtomicInt
@@ -22,7 +22,7 @@ internal class Bucket internal constructor() {
     // using arraylist here since reading/iterating is far more common than writing.
     @Volatile
     private var entries: List<Peer> = emptyList()
-    private val lock = reentrantLock()
+    private val lock = Mutex()
 
 
     /**
@@ -31,7 +31,7 @@ internal class Bucket internal constructor() {
      *
      * @param newEntry The entry to insert
      */
-    fun insertOrRefresh(newEntry: Peer) {
+    suspend fun insertOrRefresh(newEntry: Peer) {
 
 
         val entriesRef = entries
@@ -88,7 +88,7 @@ internal class Bucket internal constructor() {
      * mostly meant for internal use or transfering entries into a new bucket.
      * to update a bucket properly use [.insertOrRefresh]
      */
-    fun modifyMainBucket(toRemove: Peer?, toInsert: Peer?) {
+    suspend fun modifyMainBucket(toRemove: Peer?, toInsert: Peer?) {
         // we're synchronizing all modifications, therefore we can freely reference
         // the old entry list, it will not be modified concurrently
 
@@ -176,7 +176,7 @@ internal class Bucket internal constructor() {
      */
 
     @OptIn(ExperimentalAtomicApi::class)
-    fun onTimeout(address: InetSocketAddress) {
+    suspend fun onTimeout(address: InetSocketAddress) {
         val entriesRef = entries
         run {
             var i = 0
@@ -212,7 +212,7 @@ internal class Bucket internal constructor() {
      * @param entry Entry to insert
      * @return true if replace was successful
      */
-    private fun replaceBadEntry(entry: Peer): Boolean {
+    private suspend fun replaceBadEntry(entry: Peer): Boolean {
         val entriesRef = entries
         var i = 0
         val n = entriesRef.size
@@ -336,7 +336,7 @@ internal class Bucket internal constructor() {
      * @param toRemove Entry to remove, if its bad
 
      */
-    private fun removeEntryIfBad(toRemove: Peer) {
+    private suspend fun removeEntryIfBad(toRemove: Peer) {
         val entriesRef = entries
         if (entriesRef.contains(toRemove) && toRemove.needsReplacement()) {
             val replacement = pollVerifiedReplacementEntry()

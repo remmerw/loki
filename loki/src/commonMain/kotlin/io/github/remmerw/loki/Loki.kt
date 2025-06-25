@@ -141,6 +141,7 @@ suspend fun CoroutineScope.download(
             throw throwable
         } finally {
 
+            debug("Loki finalize begin ...")
             try {
                 selectorManager.close()
             } catch (throwable: Throwable) {
@@ -150,6 +151,7 @@ suspend fun CoroutineScope.download(
             mdht.shutdown()
 
             worker.shutdown()
+            debug("Loki finalize end")
 
         }
     }
@@ -396,7 +398,7 @@ fun bootstrap(): List<InetSocketAddress> {
 
 @Suppress("SameReturnValue")
 private val isError: Boolean
-    get() = false
+    get() = true
 
 internal fun debug(text: String) {
     if (isError) {

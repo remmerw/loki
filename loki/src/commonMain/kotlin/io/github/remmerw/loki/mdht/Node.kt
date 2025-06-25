@@ -6,9 +6,8 @@ import io.github.remmerw.loki.buri.decode
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.Datagram
 import io.ktor.network.sockets.InetSocketAddress
+import io.ktor.util.collections.ConcurrentMap
 import io.ktor.utils.io.core.remaining
-import kotlinx.atomicfu.locks.reentrantLock
-import kotlinx.atomicfu.locks.withLock
 import kotlinx.coroutines.channels.Channel
 import kotlinx.io.Buffer
 import kotlinx.io.Source
@@ -21,15 +20,13 @@ import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
     private var numEntriesInRoutingTable: Int = 0
 
-    private val cowLock = reentrantLock()
     private val unsolicitedThrottle: MutableMap<InetSocketAddress, Long> =
         mutableMapOf() // runs in same thread
 
 
     // keeps track of RTT histogram for nodes not in our routing table
     val timeoutFilter: ResponseTimeoutFilter = ResponseTimeoutFilter()
-    private val requestCalls: MutableMap<Int, Call> = mutableMapOf()
-    private val requestCallsLock = reentrantLock()
+    private val requestCalls: ConcurrentMap<Int, Call> = ConcurrentMap()
 
     private val database: Database = Database()
 
@@ -39,11 +36,9 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
     @Volatile
     var routingTable = RoutingTable()
 
+    internal suspend fun timeout(call: Call) {
+        requestCalls.remove(call.request.tid.contentHashCode())
 
-    internal fun timeout(call: Call) {
-        requestCallsLock.withLock {
-            requestCalls.remove(call.request.tid.contentHashCode())
-        }
         // don't timeout anything if we don't have a connection
         if (call.expectedID != null) {
             routingTable.entryForId(call.expectedID).bucket.onTimeout(
@@ -172,7 +167,7 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
     }
 
 
-    fun recieved(msg: Message, associatedCall: Call?) {
+    suspend fun recieved(msg: Message, associatedCall: Call?) {
         val ip = msg.address
         val id = msg.id
 
@@ -251,7 +246,7 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
     }
 
 
-    private fun insertEntry(toInsert: Peer, opts: Set<InsertOptions>) {
+    private suspend fun insertEntry(toInsert: Peer, opts: Set<InsertOptions>) {
         if (peerId.contentEquals(toInsert.id)) return
 
         var currentTable = routingTable
@@ -322,27 +317,27 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
         return threeWayDistance(peerId, max.id, toInsert.id) > 0
     }
 
-    private fun splitEntry(expect: RoutingTable, entry: RoutingTableEntry) {
-        cowLock.withLock {
-            val current = routingTable
-            if (current != expect) return
+    private suspend fun splitEntry(expect: RoutingTable, entry: RoutingTableEntry) {
 
-            val a = RoutingTableEntry(
-                splitPrefixBranch(entry.prefix, false), Bucket()
-            )
-            val b = RoutingTableEntry(
-                splitPrefixBranch(entry.prefix, true), Bucket()
-            )
+        val current = routingTable
+        if (current != expect) return
 
-            routingTable = current.modify(listOf(entry), listOf(a, b))
+        val a = RoutingTableEntry(
+            splitPrefixBranch(entry.prefix, false), Bucket()
+        )
+        val b = RoutingTableEntry(
+            splitPrefixBranch(entry.prefix, true), Bucket()
+        )
 
-            // suppress recursive splitting to relinquish the lock faster.
-            // this method is generally called in a loop anyway
-            for (e in entry.bucket.getEntries()) insertEntry(
-                e,
-                setOf(InsertOptions.NEVER_SPLIT, InsertOptions.FORCE_INTO_MAIN_BUCKET)
-            )
-        }
+        routingTable = current.modify(listOf(entry), listOf(a, b))
+
+        // suppress recursive splitting to relinquish the lock faster.
+        // this method is generally called in a loop anyway
+        for (e in entry.bucket.getEntries()) insertEntry(
+            e,
+            setOf(InsertOptions.NEVER_SPLIT, InsertOptions.FORCE_INTO_MAIN_BUCKET)
+        )
+
 
         // replacements are less important, transfer outside lock
         for (e in entry.bucket.replacementEntries) insertEntry(
@@ -370,9 +365,8 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
     suspend fun doRequestCall(call: Call) {
 
         onOutgoingRequest(call)
-        requestCallsLock.withLock {
-            requestCalls.put(call.request.tid.contentHashCode(), call)
-        }
+        requestCalls.put(call.request.tid.contentHashCode(), call)
+
 
         val es = EnqueuedSend(call.request, call)
         channel.send(es)
@@ -471,9 +465,9 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
             // checks to also verify a stable port
             if (call.request.address == msg.address) {
                 // remove call first in case of exception
-                requestCallsLock.withLock {
-                    requestCalls.remove(msg.tid.contentHashCode())
-                }
+
+                requestCalls.remove(msg.tid.contentHashCode())
+
 
                 call.response(msg)
 

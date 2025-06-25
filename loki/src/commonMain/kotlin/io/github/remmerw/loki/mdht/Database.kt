@@ -1,47 +1,45 @@
 package io.github.remmerw.loki.mdht
 
-import kotlinx.atomicfu.locks.reentrantLock
-import kotlinx.atomicfu.locks.withLock
+import io.ktor.util.collections.ConcurrentMap
 import kotlin.random.Random
 
 internal class Database internal constructor() {
     private val tokenManager = TokenManager()
-    private val items: MutableMap<Int, MutableList<Address>> = mutableMapOf()
-    private val lock = reentrantLock()
+    private val items: ConcurrentMap<Int, MutableList<Address>> = ConcurrentMap()
 
     fun store(key: ByteArray, address: Address) {
-        lock.withLock {
-            val keyEntry = items[key.contentHashCode()]
-            if (keyEntry != null) {
-                add(keyEntry, address)
-            } else {
-                val peers = mutableListOf<Address>()
-                peers.add(address)
-                items[key.contentHashCode()] = peers
-            }
+
+        val keyEntry = items[key.contentHashCode()]
+        if (keyEntry != null) {
+            add(keyEntry, address)
+        } else {
+            val peers = mutableListOf<Address>()
+            peers.add(address)
+            items[key.contentHashCode()] = peers
         }
+
     }
 
     fun sample(key: ByteArray, maxEntries: Int): List<Address> {
-        lock.withLock {
-            val keyEntry = items[key.contentHashCode()] ?: return emptyList()
-            return snapshot(keyEntry, maxEntries)
-        }
+
+        val keyEntry = items[key.contentHashCode()] ?: return emptyList()
+        return snapshot(keyEntry, maxEntries)
+
     }
 
 
     fun insertForKeyAllowed(key: ByteArray): Boolean {
-        lock.withLock {
-            val entries = items[key.contentHashCode()] ?: return true
 
-            val size = entries.size
+        val entries = items[key.contentHashCode()] ?: return true
 
-            if (size < MAX_DB_ENTRIES_PER_KEY / 5) return true
+        val size = entries.size
 
-            if (size >= MAX_DB_ENTRIES_PER_KEY) return false
+        if (size < MAX_DB_ENTRIES_PER_KEY / 5) return true
 
-            return size < Random.nextInt(MAX_DB_ENTRIES_PER_KEY)
-        }
+        if (size >= MAX_DB_ENTRIES_PER_KEY) return false
+
+        return size < Random.nextInt(MAX_DB_ENTRIES_PER_KEY)
+
     }
 
 
@@ -50,9 +48,9 @@ internal class Database internal constructor() {
         address: ByteArray,
         key: ByteArray
     ): ByteArray {
-        lock.withLock {
-            return tokenManager.generateToken(nodeId, address, key)
-        }
+
+        return tokenManager.generateToken(nodeId, address, key)
+
     }
 
 
@@ -62,9 +60,7 @@ internal class Database internal constructor() {
         address: ByteArray,
         lookup: ByteArray
     ): Boolean {
-        lock.withLock {
-            return tokenManager.checkToken(token, nodeId, address, lookup)
-        }
+        return tokenManager.checkToken(token, nodeId, address, lookup)
     }
 
     private fun add(items: MutableList<Address>, toAdd: Address) {
