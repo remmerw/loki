@@ -44,32 +44,12 @@ kotlin {
                 implementation(libs.uri.kmp)
                 implementation(libs.atomicfu) // todo remove
                 implementation(libs.ktor.network)
-                //implementation(libs.cryptography.core)
             }
         }
 
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
-            }
-        }
-        androidMain {
-            dependencies {
-                implementation(libs.cryptography.provider.jdk)
-            }
-        }
-
-        jvmMain {
-            dependencies {
-                implementation(libs.cryptography.provider.jdk)
-            }
-        }
-
-        iosMain {
-            dependencies {
-                implementation(libs.cryptography.provider.apple)
-                // or openssl3 provider with better algorithms coverage and other native targets support
-                // implementation("dev.whyoleg.cryptography:cryptography-provider-openssl3-prebuilt:0.4.0")
             }
         }
     }
