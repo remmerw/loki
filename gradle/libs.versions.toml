@@ -1,5 +1,5 @@
 [versions]
-agp = "8.10.1"
+agp = "8.11.0"
 atomicfu = "0.28.0"
 kotlin = "2.2.0"
 kotlinxIoCore = "0.7.0"

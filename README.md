@@ -41,7 +41,9 @@ kotlin {
             "magnet:?xt=urn:btih:..." // needs a valid magnet Uri
 
         val magnetUri = parseMagnetUri(uri)
-        val cacheDir = SystemTemporaryDirectory // temp directory where to store intermediate data
+        
+        // temp directory where to store intermediate files
+        val cacheDir = SystemTemporaryDirectory 
         val port = 7777 // port the DHT is working on
 
 
