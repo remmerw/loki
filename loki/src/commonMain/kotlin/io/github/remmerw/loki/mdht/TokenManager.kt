@@ -1,8 +1,6 @@
 package io.github.remmerw.loki.mdht
 
-import dev.whyoleg.cryptography.CryptographyProvider
-import dev.whyoleg.cryptography.DelicateCryptographyApi
-import dev.whyoleg.cryptography.algorithms.SHA1
+import io.ktor.util.sha1
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlin.random.Random
@@ -34,7 +32,6 @@ internal class TokenManager {
 
     }
 
-    @OptIn(DelicateCryptographyApi::class)
     fun generateToken(
         nodeId: ByteArray,
         address: ByteArray,
@@ -55,14 +52,12 @@ internal class TokenManager {
         // shorten 4bytes to not waste packet size
         // the chance of guessing correctly would be 1 : 4 million
         // and only be valid for a single infohash
-        return CryptographyProvider.Default
-            .get(SHA1)
-            .hasher()
-            .hashBlocking(bb.readByteArray()).copyOf(4)
+
+        return sha1(bb.readByteArray()).copyOf(4)
 
     }
 
-    @OptIn(DelicateCryptographyApi::class)
+
     private fun checkToken(
         token: ByteArray,
         nodeId: ByteArray,
@@ -77,10 +72,7 @@ internal class TokenManager {
         bb.writeLong(timeStamp)
         bb.write(lookup)
         bb.write(sessionSecret)
-        val rawToken = CryptographyProvider.Default
-            .get(SHA1)
-            .hasher()
-            .hashBlocking(bb.readByteArray()).copyOf(4)
+        val rawToken = sha1(bb.readByteArray()).copyOf(4)
 
         return token.contentEquals(rawToken)
     }

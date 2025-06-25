@@ -44,7 +44,7 @@ kotlin {
                 implementation(libs.uri.kmp)
                 implementation(libs.atomicfu) // todo remove
                 implementation(libs.ktor.network)
-                implementation(libs.cryptography.core)
+                //implementation(libs.cryptography.core)
             }
         }
 

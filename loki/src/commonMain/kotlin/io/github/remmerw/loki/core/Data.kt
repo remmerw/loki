@@ -1,8 +1,6 @@
 package io.github.remmerw.loki.core
 
-import dev.whyoleg.cryptography.CryptographyProvider
-import dev.whyoleg.cryptography.DelicateCryptographyApi
-import dev.whyoleg.cryptography.algorithms.SHA1
+import io.ktor.util.sha1
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -51,16 +49,13 @@ class Data(private val directory: Path) {
         SystemFileSystem.delete(file, true)
     }
 
-    @OptIn(DelicateCryptographyApi::class)
+
     fun verifyBlock(cid: Int, checksum: ByteArray): Boolean {
         val file = path(cid)
         require(SystemFileSystem.exists(file)) { "Block does not exists" }
-        SystemFileSystem.source(file).use { source ->
-            val digest = CryptographyProvider.Default
-                .get(SHA1)
-                .hasher()
-                .hashBlocking(source)
-            return checksum.contentEquals(digest.toByteArray())
+        SystemFileSystem.source(file).buffered().use { source ->
+            val digest = sha1(source.readByteArray())
+            return checksum.contentEquals(digest)
         }
 
     }
