@@ -132,45 +132,31 @@ internal class Worker(
     }
 
 
-    fun onConnected(connection: Connection) {
-
-        if (mightAdd()) {
-            val worker = ConnectionWorker(connection, this)
-            connection.connectionWorker = worker
-        }
-
-    }
-
-
     fun consume(connection: Connection, message: Message) {
-        val worker = connection.connectionWorker
-        worker?.accept(message)
+        connection.accept(message)
     }
 
     fun produce(connection: Connection): Message? {
 
-        val worker = connection.connectionWorker
-        if (worker != null) {
-            val bitfield = dataStorage.dataBitfield()
+        val bitfield = dataStorage.dataBitfield()
 
-            if (bitfield != null &&
-                (bitfield.piecesRemaining() > 0 || assignments.count() > 0)
-            ) {
-                inspectAssignment(connection, assignments)
-                if (shouldUpdateAssignments(assignments)) {
-                    connection.interestUpdate = null
-                    updateAssignments(assignments)
-                }
-                val interestUpdate = connection.interestUpdate
+        if (bitfield != null &&
+            (bitfield.piecesRemaining() > 0 || assignments.count() > 0)
+        ) {
+            inspectAssignment(connection, assignments)
+            if (shouldUpdateAssignments(assignments)) {
                 connection.interestUpdate = null
-                return interestUpdate ?: worker.message()
-
-            } else {
-                return worker.message()
+                updateAssignments(assignments)
             }
+            val interestUpdate = connection.interestUpdate
+            connection.interestUpdate = null
+            return interestUpdate ?: connection.nextMessage()
+
+        } else {
+            return connection.nextMessage()
         }
 
-        return null
+
     }
 
 
@@ -214,13 +200,10 @@ internal class Worker(
         val ready: MutableSet<Connection> = mutableSetOf()
         val choking: MutableSet<Connection> = mutableSetOf()
         purgedConnections().forEach { connection ->
-            val worker = connection.connectionWorker
-            if (worker != null) {
-                if (connection.isPeerChoking) {
-                    choking.add(connection)
-                } else {
-                    ready.add(connection)
-                }
+            if (connection.isPeerChoking) {
+                choking.add(connection)
+            } else {
+                ready.add(connection)
             }
         }
 
@@ -228,28 +211,22 @@ internal class Worker(
 
         ready.forEach { connection: Connection ->
             if (!interesting.contains(connection)) {
-                val worker = connection.connectionWorker
-                if (worker != null) {
-                    if (connection.isInterested) {
-                        connection.interestUpdate = notInterested()
-                        connection.isInterested = false
-                    }
+                if (connection.isInterested) {
+                    connection.interestUpdate = notInterested()
+                    connection.isInterested = false
                 }
             }
         }
 
         choking.forEach { connection: Connection ->
-            val worker = connection.connectionWorker
-            if (worker != null) {
-                if (interesting.contains(connection)) {
-                    if (!connection.isInterested) {
-                        connection.interestUpdate = interested()
-                        connection.isInterested = true
-                    }
-                } else if (connection.isInterested) {
-                    connection.interestUpdate = notInterested()
-                    connection.isInterested = false
+            if (interesting.contains(connection)) {
+                if (!connection.isInterested) {
+                    connection.interestUpdate = interested()
+                    connection.isInterested = true
                 }
+            } else if (connection.isInterested) {
+                connection.interestUpdate = notInterested()
+                connection.isInterested = false
             }
         }
 

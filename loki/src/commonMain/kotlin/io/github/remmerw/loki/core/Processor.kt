@@ -107,7 +107,6 @@ internal fun CoroutineScope.processMessages(
 
 
     channel.consumeEach { connection ->
-        worker.onConnected(connection)
         launch {
             while (!connection.isClosed) {
                 ensureActive()

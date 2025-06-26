@@ -29,7 +29,7 @@ internal class Connection internal constructor(
     private val worker: Worker,
     private val socket: Socket,
     private val grid: Grid
-) : ConnectionState() {
+) : ConnectionWorker(worker) {
     @Volatile
     var lastActive: ValueTimeMark = TimeSource.Monotonic.markNow()
 
@@ -115,4 +115,6 @@ internal class Connection internal constructor(
             }
         }
     }
+
+
 }

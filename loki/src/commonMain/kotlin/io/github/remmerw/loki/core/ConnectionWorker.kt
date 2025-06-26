@@ -11,22 +11,20 @@ import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 import kotlin.time.TimeSource
 
-internal data class ConnectionWorker(
-    private val connection: Connection,
+internal open class ConnectionWorker(
     private val worker: Worker
-) {
+) : ConnectionState() {
     private val outgoingMessages: ArrayDeque<Message> = ArrayDeque()
     private val pieceAnnouncements: MutableList<Have> = mutableListOf()
     private val lock = reentrantLock()
 
-    private fun appendHave(have: Have) {
+    internal fun appendHave(have: Have) {
         lock.withLock {
             pieceAnnouncements.add(have)
         }
     }
 
-
-    fun message(): Message? {
+    fun nextMessage(): Message? {
         var message: Message? = lock.withLock { pieceAnnouncements.removeFirstOrNull() }
         if (message != null) {
             return message
@@ -36,19 +34,12 @@ internal data class ConnectionWorker(
         if (message != null && Type.Have == message.type) {
             val have = message as Have
             worker.purgedConnections().forEach { connection: Connection ->
-                val worker = connection.connectionWorker
-                if (this !== worker) {
-                    worker?.appendHave(have)
-                }
+                connection.appendHave(have)
             }
         }
         return message
     }
 
-    fun accept(message: Message) {
-        worker.consume(message, connection)
-        updateConnection()
-    }
 
     private fun postMessage(message: Message) {
         if (isUrgent(message)) {
@@ -66,13 +57,6 @@ internal data class ConnectionWorker(
         outgoingMessages.addFirst(message)
     }
 
-    fun getMessage(): Message? {
-        if (outgoingMessages.isEmpty()) {
-            worker.produce(connection) { message: Message -> this.postMessage(message) }
-            updateConnection()
-        }
-        return postProcessOutgoingMessage(outgoingMessages.removeFirstOrNull())
-    }
 
     private fun postProcessOutgoingMessage(message: Message?): Message? {
         if (message == null) {
@@ -90,16 +74,16 @@ internal data class ConnectionWorker(
             }
         }
         if (Type.Interested == messageType) {
-            connection.isInterested = true
+            isInterested = true
         }
         if (Type.NotInterested == messageType) {
-            connection.isInterested = false
+            isInterested = false
         }
         if (Type.Choke == messageType) {
-            connection.shouldChoke = true
+            shouldChoke = true
         }
         if (Type.Unchoke == messageType) {
-            connection.shouldChoke = false
+            shouldChoke = false
         }
 
         return message
@@ -109,43 +93,54 @@ internal data class ConnectionWorker(
         val pieceIndex = piece.pieceIndex
         val offset = piece.offset
 
-        return connection.isCanceled(key(pieceIndex, offset))
+        return isCanceled(key(pieceIndex, offset))
     }
 
     private fun updateConnection() {
-        handleConnection(connection) { message: Message -> postMessage(message) }
+        handleConnection { message: Message -> postMessage(message) }
     }
 
+    fun accept(message: Message) {
+        worker.consume(message, this as Connection)
+        updateConnection()
+    }
+
+    fun getMessage(): Message? {
+        if (outgoingMessages.isEmpty()) {
+            worker.produce(this as Connection) { message: Message -> this.postMessage(message) }
+            updateConnection()
+        }
+        return postProcessOutgoingMessage(outgoingMessages.removeFirstOrNull())
+    }
 
     /**
      * Inspects connection state and yields choke/unchoke messages when appropriate.
      */
-    private fun handleConnection(connection: Connection, messageConsumer: (Message) -> Unit) {
-        var shouldChoke = connection.shouldChoke
-        val choking = connection.choking
-        val peerInterested = connection.isPeerInterested
+    private fun handleConnection(messageConsumer: (Message) -> Unit) {
+        var shouldChokeCheck = shouldChoke
+        val chokingCheck = choking
 
-        if (shouldChoke == null) {
-            if (peerInterested && choking) {
-                if (mightUnchoke(connection)) {
-                    shouldChoke = false // should unchoke
+        if (shouldChokeCheck == null) {
+            if (isPeerInterested && chokingCheck) {
+                if (mightUnchoke()) {
+                    shouldChokeCheck = false // should unchoke
                 }
-            } else if (!peerInterested && !choking) {
-                shouldChoke = true
+            } else if (!isPeerInterested && !chokingCheck) {
+                shouldChokeCheck = true
             }
         }
 
-        if (shouldChoke != null) {
-            if (shouldChoke != choking) {
-                if (shouldChoke) {
+        if (shouldChokeCheck != null) {
+            if (shouldChokeCheck != chokingCheck) {
+                if (shouldChokeCheck) {
                     // choke immediately
-                    connection.choking = true
-                    connection.shouldChoke = null
+                    choking = true
+                    shouldChoke = null
                     messageConsumer.invoke(choke())
-                    connection.lastChoked = TimeSource.Monotonic.markNow()
-                } else if (mightUnchoke(connection)) {
-                    connection.choking = false
-                    connection.shouldChoke = null
+                    lastChoked = TimeSource.Monotonic.markNow()
+                } else if (mightUnchoke()) {
+                    choking = false
+                    shouldChoke = null
                     messageConsumer.invoke(unchoke())
                 }
             }
@@ -157,9 +152,9 @@ internal data class ConnectionWorker(
         return Type.Choke == messageType || Type.Unchoke == messageType || Type.Cancel == messageType
     }
 
-    private fun mightUnchoke(connection: Connection): Boolean {
+    private fun mightUnchoke(): Boolean {
         // unchoke depending on last choked time to avoid fibrillation
-        val time = connection.lastChoked
+        val time = lastChoked
         if (time == null) {
             return true
         }
