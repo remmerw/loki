@@ -1,12 +1,13 @@
 package io.github.remmerw.loki.core
 
+import io.ktor.util.collections.ConcurrentSet
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.decrementAndFetch
 import kotlin.concurrent.atomics.incrementAndFetch
 
 internal class Assignments(private val dataStorage: DataStorage) {
-    private val assignedPieces: MutableSet<Int> = mutableSetOf()
+    private val assignedPieces: MutableSet<Int> = ConcurrentSet()
 
     @OptIn(ExperimentalAtomicApi::class)
     private val assignments: AtomicInt = AtomicInt(0)
