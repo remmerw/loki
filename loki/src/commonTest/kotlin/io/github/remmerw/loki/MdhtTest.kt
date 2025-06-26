@@ -13,7 +13,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
-class IdunTest {
+class MdhtTest {
     @Test
     fun randomKey(): Unit = runBlocking(Dispatchers.IO) {
         assertFailsWith<TimeoutCancellationException> {
