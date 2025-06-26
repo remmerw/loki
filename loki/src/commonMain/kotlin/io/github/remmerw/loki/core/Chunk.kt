@@ -1,5 +1,10 @@
 package io.github.remmerw.loki.core
 
+import com.ditchoom.buffer.AllocationZone
+import com.ditchoom.buffer.ByteOrder
+import com.ditchoom.buffer.PlatformBuffer
+import com.ditchoom.buffer.allocate
+
 
 @Suppress("ArrayInDataClass")
 internal data class Chunk(
@@ -7,19 +12,26 @@ internal data class Chunk(
     private val blockSize: Int,
     private val checksum: ByteArray
 ) {
-    private val data: MutableMap<Int, ByteArray> = mutableMapOf() // todo Memory issue here
+    val data = PlatformBuffer.allocate(
+        size,
+        zone = AllocationZone.SharedMemory,
+        byteOrder = ByteOrder.BIG_ENDIAN
+    )
+
     private val blockSet = createBlockSet(size, blockSize)
 
     fun checksum(): ByteArray {
         return checksum
     }
 
-    internal fun bytes(): List<ByteArray> {
-        return data.keys.sorted().map { entry -> data[entry]!! }
+    internal fun bytes(): ByteArray {
+        data.position(0)
+        return data.readByteArray(size)
     }
 
     fun writeBlock(offset: Int, bytes: ByteArray) {
-        data.put(offset, bytes)
+        data.position(offset)
+        data.writeBytes(bytes)
         blockSet.markAvailable(offset, bytes.size)
     }
 
@@ -43,7 +55,10 @@ internal data class Chunk(
         get() = blockSet.isComplete
 
     fun reset() {
-        data.clear()
         blockSet.clear()
+    }
+
+    suspend fun close() {
+        data.close()
     }
 }

@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import io.ktor.util.sha1
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -36,10 +35,10 @@ class Data(private val directory: Path) {
         }
     }
 
-    fun storeBlock(cid: Int, bytes: List<ByteArray>) {
+    fun storeBlock(cid: Int, bytes: ByteArray) {
         val file = path(cid)
         SystemFileSystem.sink(file, false).buffered().use { source ->
-            bytes.forEach { data -> source.write(data) }
+            source.write(bytes)
         }
     }
 
@@ -49,16 +48,6 @@ class Data(private val directory: Path) {
         SystemFileSystem.delete(file, true)
     }
 
-
-    fun verifyBlock(cid: Int, checksum: ByteArray): Boolean {
-        val file = path(cid)
-        require(SystemFileSystem.exists(file)) { "Block does not exists" }
-        SystemFileSystem.source(file).buffered().use { source ->
-            val digest = sha1(source.readByteArray())
-            return checksum.contentEquals(digest)
-        }
-
-    }
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun path(cid: Int): Path {

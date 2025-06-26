@@ -3,6 +3,8 @@ package io.github.remmerw.loki.core
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
+import io.ktor.util.sha1
+import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -159,15 +161,25 @@ internal data class DataStorage(val data: Data) : Storage, AutoCloseable {
     }
 
     internal fun storeChunk(piece: Int, chunk: Chunk): Boolean {
-        data.storeBlock(piece, chunk.bytes())
-        if (data.verifyBlock(piece, chunk.checksum())) {
+        val bytes = chunk.bytes()
+        val digest = sha1(bytes)
+        val result = digest.contentEquals(chunk.checksum())
+        if (result) {
+            data.storeBlock(piece, bytes)
             chunks.remove(piece)
+            close(chunk)
             dataBitfield!!.markVerified(piece)
             return true
         } else {
             data.deleteBlock(piece)
             chunk.reset()
             return false
+        }
+    }
+
+    private fun close(chunk: Chunk){
+        runBlocking { // todo closing
+            chunk.close()
         }
     }
 
@@ -202,6 +214,8 @@ internal data class DataStorage(val data: Data) : Storage, AutoCloseable {
                     sink.write(buffer, buffer.size)
                 }
             }
+            val set = chunks.values.toSet()
+            set.forEach { chunk -> close(chunk) }
         } catch (e: Exception) {
             debug("ContentStorageUnit", e)
         }
