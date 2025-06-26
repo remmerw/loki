@@ -25,7 +25,6 @@ import io.github.remmerw.loki.grid.PeerExchangeHandler
 import io.github.remmerw.loki.grid.TorrentId
 import io.github.remmerw.loki.grid.UtMetadataHandler
 import io.github.remmerw.loki.mdht.lookupKey
-import io.github.remmerw.loki.mdht.newMdht
 import io.github.remmerw.loki.mdht.peerId
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
@@ -56,106 +55,102 @@ suspend fun CoroutineScope.download(
     val data = newData(path)
     val dataStorage = DataStorage(data)
 
-        val selectorManager = SelectorManager(Dispatchers.IO)
+    val selectorManager = SelectorManager(Dispatchers.IO)
 
-        val peerId = peerId()
-        val mdht = newMdht(peerId, port)
+    val peerId = peerId()
 
 
-        val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
-            PeerExchangeHandler(),
-            UtMetadataHandler()
+    val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
+        PeerExchangeHandler(),
+        UtMetadataHandler()
+    )
+    val grid = Grid(extendedMessagesHandler)
+
+    // add default handshake handlers to the beginning of the connection handling chain
+    val handshakeHandlers = setOf(
+        BitfieldConnectionHandler(dataStorage),
+        ExtendedProtocolHandshakeHandler(
+            dataStorage,
+            extendedMessagesHandler,
+            port,
+            VERSION
         )
-        val grid = Grid(extendedMessagesHandler)
+    )
 
-        // add default handshake handlers to the beginning of the connection handling chain
-        val handshakeHandlers = setOf(
-            BitfieldConnectionHandler(dataStorage),
-            ExtendedProtocolHandshakeHandler(
-                dataStorage,
-                extendedMessagesHandler,
-                port,
-                VERSION
-            )
+    val metadataConsumer = MetadataConsumer(dataStorage, torrentId)
+    // need to also receive Bitfields and Haves (without validation for the number of pieces...)
+    val bitfieldConsumer = BitfieldCollectingConsumer(dataStorage)
+
+
+    val worker = Worker(
+        dataStorage, listOf(
+            GenericConsumer(dataStorage),
+            BitfieldConsumer(dataStorage), ExtendedHandshakeConsumer(),
+            MetadataAgent(dataStorage), RequestProducer(dataStorage),
+            PeerRequestAgent(dataStorage), PieceAgent(dataStorage),
+            metadataConsumer, bitfieldConsumer
         )
-
-        val metadataConsumer = MetadataConsumer(dataStorage, torrentId)
-        // need to also receive Bitfields and Haves (without validation for the number of pieces...)
-        val bitfieldConsumer = BitfieldCollectingConsumer(dataStorage)
+    )
 
 
-        val worker = Worker(
-            dataStorage, listOf(
-                GenericConsumer(dataStorage),
-                BitfieldConsumer(dataStorage), ExtendedHandshakeConsumer(),
-                MetadataAgent(dataStorage), RequestProducer(dataStorage),
-                PeerRequestAgent(dataStorage), PieceAgent(dataStorage),
-                metadataConsumer, bitfieldConsumer
-            )
+    try {
+
+        val addresses = lookupKey(peerId, port, bootstrap(), torrentId.bytes)
+        val connections = performConnection(grid, worker, selectorManager, addresses)
+        val handshakes = performHandshake(
+            peerId, torrentId, handshakeHandlers, worker, connections
         )
+        processMessages(worker, handshakes)
 
+        metadataConsumer.waitForTorrent()
+
+
+        // process bitfields and haves that we received while fetching metadata
+        bitfieldConsumer.processMessages()
+
+
+        val dataBitfield = dataStorage.dataBitfield()!! // must be defined
+
+        while (true) {
+            if (dataBitfield.piecesRemaining() == 0) {
+
+                progress.invoke(
+                    State(
+                        dataBitfield.piecesTotal,
+                        dataBitfield.piecesComplete()
+                    )
+                )
+                coroutineContext.cancelChildren()
+                break
+            } else {
+                progress.invoke(
+                    State(
+                        dataBitfield.piecesTotal,
+                        dataBitfield.piecesComplete()
+                    )
+                )
+                delay(1000)
+            }
+        }
+        return dataStorage
+    } finally {
+
+        debug("Loki finalize begin ...")
+
+        dataStorage.shutdown()
+
+        worker.shutdown()
 
         try {
-            mdht.startup(bootstrap())
-
-            val addresses = lookupKey(mdht, torrentId.bytes)
-            val connections = performConnection(grid, worker, selectorManager, addresses)
-            val handshakes = performHandshake(
-                peerId, torrentId, handshakeHandlers, worker, connections
-            )
-            processMessages(worker, handshakes)
-
-            metadataConsumer.waitForTorrent()
-
-
-            // process bitfields and haves that we received while fetching metadata
-            bitfieldConsumer.processMessages()
-
-
-            val dataBitfield = dataStorage.dataBitfield()!! // must be defined
-
-            while (true) {
-                if (dataBitfield.piecesRemaining() == 0) {
-
-                    progress.invoke(
-                        State(
-                            dataBitfield.piecesTotal,
-                            dataBitfield.piecesComplete()
-                        )
-                    )
-                    coroutineContext.cancelChildren()
-                    break
-                } else {
-                    progress.invoke(
-                        State(
-                            dataBitfield.piecesTotal,
-                            dataBitfield.piecesComplete()
-                        )
-                    )
-                    delay(1000)
-                }
-            }
-            return dataStorage
-        } finally {
-
-            debug("Loki finalize begin ...")
-
-            dataStorage.shutdown()
-
-            mdht.shutdown()
-
-            worker.shutdown()
-
-            try {
-                selectorManager.close()
-            } catch (throwable: Throwable) {
-                debug("Loki", throwable)
-            }
-
-
-            debug("Loki finalize end")
-
+            selectorManager.close()
+        } catch (throwable: Throwable) {
+            debug("Loki", throwable)
         }
+
+
+        debug("Loki finalize end")
+
+    }
 
 }
 

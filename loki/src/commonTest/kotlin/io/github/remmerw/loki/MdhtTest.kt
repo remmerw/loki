@@ -3,7 +3,6 @@ package io.github.remmerw.loki
 import io.github.remmerw.loki.mdht.SHA1_HASH_LENGTH
 import io.github.remmerw.loki.mdht.createRandomKey
 import io.github.remmerw.loki.mdht.lookupKey
-import io.github.remmerw.loki.mdht.newMdht
 import io.github.remmerw.loki.mdht.peerId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -13,26 +12,19 @@ import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
+
 class MdhtTest {
     @Test
     fun randomKey(): Unit = runBlocking(Dispatchers.IO) {
         assertFailsWith<TimeoutCancellationException> {
-            val mdht = newMdht(peerId(), 4657)
-            mdht.startup(bootstrap())
-            try {
-                withTimeout(30 * 1000) {
-                    val key =
-                        createRandomKey(SHA1_HASH_LENGTH) // note random key (probably nobody has)
+            withTimeout(30 * 1000) {
+                val key = createRandomKey(SHA1_HASH_LENGTH)
 
-                    val channel = lookupKey(mdht, key)
+                val channel = lookupKey(peerId(), 4657, bootstrap(), key)
 
-                    for (peer in channel) {
-                        println(peer.toString())
-                    }
+                for (peer in channel) {
+                    println(peer.toString())
                 }
-            } finally {
-                mdht.shutdown()
-                println("done so far")
             }
         }
     }

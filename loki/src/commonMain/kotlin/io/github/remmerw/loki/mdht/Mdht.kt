@@ -24,11 +24,15 @@ import kotlinx.io.writeUShort
 import kotlin.random.Random
 
 
-class Mdht internal constructor(peerId: ByteArray, val port: Int) {
+private class Mdht(peerId: ByteArray, val port: Int) {
     private val channel = Channel<EnqueuedSend>()
-    internal val node: Node = Node(peerId, channel)
+    private val node: Node = Node(peerId, channel)
     private val selectorManager = SelectorManager(Dispatchers.IO)
     private var socket: BoundDatagramSocket? = null
+
+    fun node(): Node {
+        return node
+    }
 
     suspend fun startup(addresses: List<InetSocketAddress>) {
         socket = aSocket(selectorManager).udp().bind(
@@ -102,125 +106,135 @@ class Mdht internal constructor(peerId: ByteArray, val port: Int) {
     }
 }
 
-
 const val LOOKUP_DELAY: Long = 5000
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.lookupKey(mdht: Mdht, key: ByteArray): ReceiveChannel<Address> = produce {
+fun CoroutineScope.lookupKey(
+    peerId: ByteArray, port: Int,
+    bootstrap: List<InetSocketAddress>,
+    key: ByteArray
+): ReceiveChannel<Address> = produce {
+
+
+    val mdht = Mdht(peerId, port)
+    mdht.startup(bootstrap)
+
     val peers: MutableSet<Address> = mutableSetOf()
-    val node = mdht.node
-    while (isActive) {
+    val node = mdht.node()
 
-        val closest = ClosestSet(key)
-        val candidates = Candidates(key)
-        val inFlight: MutableSet<Call> = mutableSetOf()
+    try {
+        while (isActive) {
 
-        val kns = ClosestSearch(key, MAX_ENTRIES_PER_BUCKET * 4, node)
-        // unlike NodeLookups we do not use unverified nodes here. this avoids
-        // rewarding spoofers with useful lookup target IDs
-        kns.fill { peer: Peer -> peer.eligibleForNodesList() }
-        candidates.addCandidates(null, kns.entries())
+            val closest = ClosestSet(key)
+            val candidates = Candidates(key)
+            val inFlight: MutableSet<Call> = mutableSetOf()
 
-        do {
-            ensureActive()
+            val kns = ClosestSearch(key, MAX_ENTRIES_PER_BUCKET * 4, node)
+            // unlike NodeLookups we do not use unverified nodes here. this avoids
+            // rewarding spoofers with useful lookup target IDs
+            kns.fill { peer: Peer -> peer.eligibleForNodesList() }
+            candidates.addCandidates(null, kns.entries())
 
             do {
                 ensureActive()
 
-                val peer = candidates.next { peer: Peer ->
-                    goodForRequest(peer, closest, candidates, inFlight)
-                }
+                do {
+                    ensureActive()
 
-                if (peer == null) {
-                    break
-                }
+                    val peer = candidates.next { peer: Peer ->
+                        goodForRequest(peer, closest, candidates, inFlight)
+                    }
 
-                val tid = createRandomKey(TID_LENGTH)
+                    if (peer == null) {
+                        break
+                    }
 
-                val request = GetPeersRequest(peer.address, node.peerId, tid, key)
+                    val tid = createRandomKey(TID_LENGTH)
 
-                val call = Call(request, peer.id)
-                call.builtFromEntry(peer)
-                candidates.addCall(call, peer)
-                inFlight.add(call)
-                node.doRequestCall(call)
-            } while (isActive)
+                    val request = GetPeersRequest(peer.address, node.peerId, tid, key)
+
+                    val call = Call(request, peer.id)
+                    call.builtFromEntry(peer)
+                    candidates.addCall(call, peer)
+                    inFlight.add(call)
+                    node.doRequestCall(call)
+                } while (isActive)
 
 
-            val removed: MutableList<Call> = mutableListOf()
-            inFlight.forEach { call ->
-                when (call.state()) {
-                    CallState.RESPONDED -> {
-                        removed.add(call)
-                        candidates.decreaseFailures(call)
+                val removed: MutableList<Call> = mutableListOf()
+                inFlight.forEach { call ->
+                    when (call.state()) {
+                        CallState.RESPONDED -> {
+                            removed.add(call)
+                            candidates.decreaseFailures(call)
 
-                        val rsp = call.response
-                        if (rsp is GetPeersResponse) {
-                            val match = candidates.acceptResponse(call)
+                            val rsp = call.response
+                            if (rsp is GetPeersResponse) {
+                                val match = candidates.acceptResponse(call)
 
-                            if (match != null) {
-                                val returnedNodes: MutableSet<Peer> = mutableSetOf()
+                                if (match != null) {
+                                    val returnedNodes: MutableSet<Peer> = mutableSetOf()
 
-                                rsp.nodes6.filter { peer: Peer ->
-                                    !node.isLocalId(peer.id)
-                                }.forEach { e: Peer -> returnedNodes.add(e) }
+                                    rsp.nodes6.filter { peer: Peer ->
+                                        !node.isLocalId(peer.id)
+                                    }.forEach { e: Peer -> returnedNodes.add(e) }
 
-                                rsp.nodes.filter { peer: Peer ->
-                                    !node.isLocalId(peer.id)
-                                }.forEach { e: Peer -> returnedNodes.add(e) }
+                                    rsp.nodes.filter { peer: Peer ->
+                                        !node.isLocalId(peer.id)
+                                    }.forEach { e: Peer -> returnedNodes.add(e) }
 
-                                candidates.addCandidates(match, returnedNodes)
+                                    candidates.addCandidates(match, returnedNodes)
 
-                                for (item in rsp.items) {
-                                    if (peers.add(item)) {
-                                        send(item)
+                                    for (item in rsp.items) {
+                                        if (peers.add(item)) {
+                                            send(item)
+                                        }
+                                    }
+
+                                    // if we scrape we don't care about tokens.
+                                    // otherwise we're only done if we have found the closest
+                                    // nodes that also returned tokens
+                                    if (rsp.token != null) {
+                                        closest.insert(match)
                                     }
                                 }
+                            }
+                        }
 
-                                // if we scrape we don't care about tokens.
-                                // otherwise we're only done if we have found the closest
-                                // nodes that also returned tokens
-                                if (rsp.token != null) {
-                                    closest.insert(match)
+                        CallState.ERROR, CallState.STALLED -> {
+                            removed.add(call)
+                            candidates.increaseFailures(call)
+                        }
+
+                        else -> {
+                            val sendTime = call.sentTime
+                            if (sendTime != null) {
+                                val elapsed = sendTime.elapsedNow().inWholeMilliseconds
+                                if (elapsed > RPC_CALL_TIMEOUT_MAX) {
+                                    removed.add(call)
+                                    candidates.increaseFailures(call)
+                                    node.timeout(call)
                                 }
                             }
+
                         }
-                    }
-
-                    CallState.ERROR, CallState.STALLED -> {
-                        removed.add(call)
-                        candidates.increaseFailures(call)
-                    }
-
-                    else -> {
-                        val sendTime = call.sentTime
-                        if (sendTime != null) {
-                            val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                            if (elapsed > RPC_CALL_TIMEOUT_MAX) {
-                                removed.add(call)
-                                candidates.increaseFailures(call)
-                                node.timeout(call)
-                            }
-                        }
-
                     }
                 }
-            }
 
-            inFlight.removeAll(removed)
+                inFlight.removeAll(removed)
 
-            yield()
+                yield()
 
 
-        } while (!inFlight.isEmpty())
+            } while (!inFlight.isEmpty())
 
-        delay(LOOKUP_DELAY)
+            delay(LOOKUP_DELAY)
+        }
+    } finally {
+        mdht.shutdown()
     }
 }
 
-fun newMdht(peerId: ByteArray, port: Int): Mdht {
-    return Mdht(peerId, port)
-}
 
 fun peerId(): ByteArray {
     val peerId = ByteArray(SHA1_HASH_LENGTH)
