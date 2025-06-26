@@ -30,8 +30,6 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
 
     private val database: Database = Database()
 
-    @Volatile
-    var isShutdown: Boolean = false
 
     @Volatile
     var routingTable = RoutingTable()
@@ -46,11 +44,6 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
             )
         }
     }
-
-    internal fun shutdown() {
-        isShutdown = true
-    }
-
 
     suspend fun ping(request: PingRequest) {
 

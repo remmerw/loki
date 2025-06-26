@@ -81,7 +81,6 @@ class Mdht internal constructor(peerId: ByteArray, val port: Int) {
     }
 
     fun shutdown() {
-        node.shutdown()
 
         try {
             channel.close()
@@ -110,7 +109,7 @@ const val LOOKUP_DELAY: Long = 5000
 fun CoroutineScope.lookupKey(mdht: Mdht, key: ByteArray): ReceiveChannel<Address> = produce {
     val peers: MutableSet<Address> = mutableSetOf()
     val node = mdht.node
-    while (!node.isShutdown) {
+    while (isActive) {
 
         val closest = ClosestSet(key)
         val candidates = Candidates(key)
@@ -126,6 +125,8 @@ fun CoroutineScope.lookupKey(mdht: Mdht, key: ByteArray): ReceiveChannel<Address
             ensureActive()
 
             do {
+                ensureActive()
+
                 val peer = candidates.next { peer: Peer ->
                     goodForRequest(peer, closest, candidates, inFlight)
                 }
@@ -143,7 +144,7 @@ fun CoroutineScope.lookupKey(mdht: Mdht, key: ByteArray): ReceiveChannel<Address
                 candidates.addCall(call, peer)
                 inFlight.add(call)
                 node.doRequestCall(call)
-            } while (true)
+            } while (isActive)
 
 
             val removed: MutableList<Call> = mutableListOf()
