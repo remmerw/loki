@@ -75,7 +75,7 @@ class TorrentParserTest {
         assertFalse(dataStorage.isVerified(1))
         assertFalse(dataStorage.isVerified(9))
 
-        dataStorage.close()
+        dataStorage.shutdown()
         data.reset()
     }
 

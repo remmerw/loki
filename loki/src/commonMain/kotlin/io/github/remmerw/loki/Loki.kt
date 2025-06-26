@@ -54,7 +54,7 @@ suspend fun CoroutineScope.download(
     val torrentId = magnetUri.torrentId
     val path = Path(directory, torrentId.bytes.toHexString())
     val data = newData(path)
-    DataStorage(data).use { dataStorage ->
+    val dataStorage = DataStorage(data)
 
         val selectorManager = SelectorManager(Dispatchers.IO)
 
@@ -136,25 +136,27 @@ suspend fun CoroutineScope.download(
                 }
             }
             return dataStorage
-        } catch (throwable: Throwable) {
-            debug("Loki", throwable)
-            throw throwable
         } finally {
 
             debug("Loki finalize begin ...")
+
+            dataStorage.shutdown()
+
+            mdht.shutdown()
+
+            worker.shutdown()
+
             try {
                 selectorManager.close()
             } catch (throwable: Throwable) {
                 debug("Loki", throwable)
             }
 
-            mdht.shutdown()
 
-            worker.shutdown()
             debug("Loki finalize end")
 
         }
-    }
+
 }
 
 

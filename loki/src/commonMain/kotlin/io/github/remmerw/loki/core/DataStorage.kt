@@ -12,7 +12,7 @@ import kotlinx.io.readByteArray
 import kotlin.concurrent.Volatile
 import kotlin.math.min
 
-internal data class DataStorage(val data: Data) : Storage, AutoCloseable {
+internal data class DataStorage(val data: Data) : Storage {
 
     private val validPieces: MutableSet<Int> = mutableSetOf()
     private val chunks: MutableMap<Int, Chunk> = mutableMapOf()
@@ -204,7 +204,7 @@ internal data class DataStorage(val data: Data) : Storage, AutoCloseable {
 
     }
 
-    override fun close() {
+    fun shutdown() {
         try {
             if (dataBitfield != null) {
                 val buffer = Buffer()
@@ -216,8 +216,8 @@ internal data class DataStorage(val data: Data) : Storage, AutoCloseable {
             }
             val set = chunks.values.toSet()
             set.forEach { chunk -> close(chunk) }
-        } catch (e: Exception) {
-            debug("ContentStorageUnit", e)
+        } catch (throwable: Throwable) {
+            debug("DataStorage", throwable)
         }
     }
 
