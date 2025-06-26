@@ -50,8 +50,6 @@ class MagnetTest {
     }
 
 
-
-
     @Test
     fun bootstrapTest() {
         val address = bootstrap()

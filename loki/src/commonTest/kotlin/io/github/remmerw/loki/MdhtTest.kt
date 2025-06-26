@@ -20,7 +20,7 @@ class MdhtTest {
             val mdht = newMdht(peerId(), 4657)
             mdht.startup(bootstrap())
             try {
-                withTimeout(30* 1000) {
+                withTimeout(30 * 1000) {
                     val key =
                         createRandomKey(SHA1_HASH_LENGTH) // note random key (probably nobody has)
 
@@ -32,6 +32,7 @@ class MdhtTest {
                 }
             } finally {
                 mdht.shutdown()
+                println("done so far")
             }
         }
     }
