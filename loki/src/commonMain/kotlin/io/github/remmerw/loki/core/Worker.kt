@@ -10,8 +10,7 @@ import io.github.remmerw.loki.grid.Peer
 import io.github.remmerw.loki.grid.Type
 import io.github.remmerw.loki.grid.interested
 import io.github.remmerw.loki.grid.notInterested
-import kotlinx.atomicfu.locks.reentrantLock
-import kotlinx.atomicfu.locks.withLock
+import io.ktor.util.collections.ConcurrentMap
 import kotlin.concurrent.Volatile
 import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
@@ -21,12 +20,10 @@ internal class Worker(
     private val dataStorage: DataStorage,
     agents: List<Agent>
 ) {
-    private val connections: MutableMap<Peer, Connection> = mutableMapOf()
+    private val connections: MutableMap<Peer, Connection> = ConcurrentMap()
 
     @Volatile
     private var lastUpdatedAssignments: ValueTimeMark = TimeSource.Monotonic.markNow()
-    private val lock = reentrantLock()
-
     private val assignments: Assignments = Assignments(dataStorage)
     private val consumers: Map<Type, List<MessageConsumer>>
     private val producers: Set<MessageProducer>
@@ -78,70 +75,70 @@ internal class Worker(
     }
 
     fun purgedConnections(): List<Connection> {
-        lock.withLock {
-            val purged: MutableList<Connection> = mutableListOf()
-            val removing: MutableList<Connection> = mutableListOf()
-            connections.values.forEach { connection: Connection ->
-                if (connection.isClosed) {
-                    removing.add(connection)
-                } else if (
-                    connection.lastActive.elapsedNow().inWholeMilliseconds
-                    >= PEER_INACTIVITY_THRESHOLD
-                ) {
-                    removing.add(connection)
-                } else {
-                    purged.add(connection)
-                }
+
+        val purged: MutableList<Connection> = mutableListOf()
+        val removing: MutableList<Connection> = mutableListOf()
+        connections.values.forEach { connection: Connection ->
+            if (connection.isClosed) {
+                removing.add(connection)
+            } else if (
+                connection.lastActive.elapsedNow().inWholeMilliseconds
+                >= PEER_INACTIVITY_THRESHOLD
+            ) {
+                removing.add(connection)
+            } else {
+                purged.add(connection)
             }
-            removing.forEach { connection -> purgeConnection(connection) }
-            return purged.toList()
         }
+        removing.forEach { connection -> purgeConnection(connection) }
+        return purged.toList()
+
     }
 
 
     fun getConnection(peer: Peer): Connection? {
-        lock.withLock {
-            return connections[peer]
-        }
+
+        return connections[peer]
+
     }
 
     fun mightAdd(): Boolean {
-        lock.withLock {
-            return connections.count() < MAX_PEER_CONNECTIONS
-        }
+
+        return connections.count() < MAX_PEER_CONNECTIONS
+
     }
 
     fun addConnection(connection: Connection) {
-        lock.withLock {
-            check(connections.put(connection.peer(), connection) == null)
-        }
+
+        check(connections.put(connection.peer(), connection) == null)
+
     }
 
 
     fun purgeConnection(connection: Connection) {
-        lock.withLock {
-            connections.remove(connection.peer())
-        }
+
+        connections.remove(connection.peer())
+
         assignments.remove(connection)
         dataStorage.pieceStatistics()?.removeBitfield(connection)
         connection.close()
     }
 
     fun shutdown() {
-        val connections = lock.withLock {
+        val connections =
             connections.values.toList()
-        }
+
         connections.forEach { connection: Connection -> connection.close() }
     }
 
 
     fun onConnected(connection: Connection) {
-        lock.withLock {
-            if (mightAdd()) {
-                val worker = ConnectionWorker(connection, this)
-                connection.connectionWorker = worker
-            }
+
+        if (mightAdd()) {
+            val worker = ConnectionWorker(connection, this)
+            connection.connectionWorker = worker
         }
+
     }
 
 

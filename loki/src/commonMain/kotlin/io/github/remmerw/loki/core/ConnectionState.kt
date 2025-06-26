@@ -2,19 +2,17 @@ package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.grid.Cancel
 import io.github.remmerw.loki.grid.Request
-import kotlinx.atomicfu.locks.reentrantLock
-import kotlinx.atomicfu.locks.withLock
+import io.ktor.util.collections.ConcurrentSet
 import kotlin.concurrent.Volatile
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 
 internal open class ConnectionState : ConnectionAgent() {
-    private val cancelledPeerRequests: MutableSet<Long> = mutableSetOf()
-    private val pendingRequests: MutableSet<Long> = mutableSetOf()
-    private val pieces: MutableSet<Int> = mutableSetOf()
-    private val requests: ArrayDeque<Request> = ArrayDeque()
+    private val cancelledPeerRequests: MutableSet<Long> = ConcurrentSet()
+    private val pendingRequests: MutableSet<Long> = ConcurrentSet()
+    private val pieces: MutableSet<Int> = ConcurrentSet()
+    private val requests: ArrayDeque<Request> = ArrayDeque() // no concurrency
 
-    private val lock = reentrantLock()
 
     @Volatile
     var isInterested = false
@@ -37,39 +35,28 @@ internal open class ConnectionState : ConnectionAgent() {
 
 
     fun removePiece(piece: Int) {
-        lock.withLock {
-            pieces.remove(piece)
-        }
+        pieces.remove(piece)
     }
 
     fun addPiece(piece: Int): Boolean {
-        lock.withLock {
-            return pieces.add(piece)
-        }
+        return pieces.add(piece)
     }
 
     fun clearPieces() {
-        lock.withLock {
-            pieces.clear()
-        }
+        pieces.clear()
     }
 
+
     fun firstRequest(): Request? {
-        lock.withLock {
-            return requests.removeFirstOrNull()
-        }
+        return requests.removeFirstOrNull()
     }
 
     fun clearRequests() {
-        lock.withLock {
-            requests.clear()
-        }
+        requests.clear()
     }
 
     fun addRequests(requests: List<Request>) {
-        lock.withLock {
-            this.requests.addAll(requests)
-        }
+        this.requests.addAll(requests)
     }
 
 
@@ -77,55 +64,39 @@ internal open class ConnectionState : ConnectionAgent() {
      * Signal that remote peer has cancelled a previously issued block request.
      */
     fun onCancel(cancel: Cancel) {
-        lock.withLock {
-            cancelledPeerRequests.add(
-                key(
-                    cancel.pieceIndex, cancel.offset
-                )
+        cancelledPeerRequests.add(
+            key(
+                cancel.pieceIndex, cancel.offset
             )
-        }
+        )
     }
 
     fun isCanceled(key: Long): Boolean {
-        lock.withLock {
-            return cancelledPeerRequests.remove(key)
-        }
+        return cancelledPeerRequests.remove(key)
     }
 
 
     fun pendingRequestsAdd(key: Long) {
-        lock.withLock {
-            pendingRequests.add(key)
-        }
+        pendingRequests.add(key)
     }
 
     fun pendingRequestsSize(): Int {
-        lock.withLock {
-            return pendingRequests.size
-        }
+        return pendingRequests.size
     }
 
     fun pendingRequestsHas(key: Long): Boolean {
-        lock.withLock {
-            return pendingRequests.contains(key)
-        }
+        return pendingRequests.contains(key)
     }
 
     fun pendingRequests(): List<Long> {
-        lock.withLock {
-            return pendingRequests.toList()
-        }
+        return pendingRequests.toList()
     }
 
     fun pendingRequestsClear() {
-        lock.withLock {
-            pendingRequests.clear()
-        }
+        pendingRequests.clear()
     }
 
     fun pendingRequestsRemove(key: Long): Boolean {
-        lock.withLock {
-            return pendingRequests.remove(key)
-        }
+        return pendingRequests.remove(key)
     }
 }

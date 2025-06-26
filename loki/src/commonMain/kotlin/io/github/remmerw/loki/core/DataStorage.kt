@@ -177,7 +177,7 @@ internal data class DataStorage(val data: Data) : Storage {
         }
     }
 
-    private fun close(chunk: Chunk){
+    private fun close(chunk: Chunk) {
         runBlocking { // todo closing
             chunk.close()
         }

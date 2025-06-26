@@ -1,18 +1,15 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.debug
 import io.github.remmerw.loki.grid.Have
 import io.github.remmerw.loki.grid.Message
 import io.github.remmerw.loki.grid.Piece
 import io.github.remmerw.loki.grid.Type
-import kotlinx.atomicfu.locks.reentrantLock
-import kotlinx.atomicfu.locks.withLock
+import io.ktor.util.collections.ConcurrentSet
 
 internal class PieceAgent(
     private val dataStorage: DataStorage
 ) : Produces, Consumers {
-    private val completedPieces: MutableList<Int> = mutableListOf()
-    private val lock = reentrantLock()
+    private val completedPieces: MutableSet<Int> = ConcurrentSet()
 
 
     override val consumers: List<MessageConsumer>
@@ -57,44 +54,35 @@ internal class PieceAgent(
     }
 
     private fun addBlock(connection: Connection, piece: Piece) {
-        try {
-            val assignment = connection.assignment
-            if (assignment != null) {
-                if (assignment.isAssigned(piece.pieceIndex)) {
-                    assignment.check()
-                }
+
+        val assignment = connection.assignment
+        if (assignment != null) {
+            if (assignment.isAssigned(piece.pieceIndex)) {
+                assignment.check()
             }
-
-            val chunk = dataStorage.chunk(piece.pieceIndex)
-
-            if (chunk.isComplete) {
-                return
-            }
-
-            chunk.writeBlock(piece.offset, piece.data)
-
-            if (chunk.isComplete) {
-                if (dataStorage.storeChunk(piece.pieceIndex, chunk)) {
-                    lock.withLock {
-                        completedPieces.add(piece.pieceIndex)
-                    }
-                }
-            }
-        } catch (throwable: Throwable) {
-            debug("PieceAgent", throwable)
         }
+
+        val chunk = dataStorage.chunk(piece.pieceIndex)
+
+        if (chunk.isComplete) {
+            return
+        }
+
+        chunk.writeBlock(piece.offset, piece.data)
+
+        if (chunk.isComplete) {
+            if (dataStorage.storeChunk(piece.pieceIndex, chunk)) {
+                completedPieces.add(piece.pieceIndex)
+            }
+        }
+
     }
 
 
     override fun produce(connection: Connection, messageConsumer: (Message) -> Unit) {
         if (dataStorage.initializeDone()) {
-            lock.withLock {
-                do {
-                    val completedPiece = completedPieces.removeFirstOrNull()
-                    if (completedPiece != null) {
-                        messageConsumer.invoke(Have(completedPiece))
-                    }
-                } while (completedPiece != null)
+            completedPieces.forEach { index ->
+                messageConsumer.invoke(Have(index))
             }
         }
     }
