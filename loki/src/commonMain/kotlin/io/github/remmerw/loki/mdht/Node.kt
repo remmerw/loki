@@ -34,7 +34,7 @@ internal class Node(val peerId: ByteArray, val channel: Channel<EnqueuedSend>) {
     @Volatile
     var routingTable = RoutingTable()
 
-    internal suspend fun timeout(call: Call) {
+    internal fun timeout(call: Call) {
         requestCalls.remove(call.request.tid.contentHashCode())
 
         // don't timeout anything if we don't have a connection

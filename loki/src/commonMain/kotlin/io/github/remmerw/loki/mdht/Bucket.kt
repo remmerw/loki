@@ -2,8 +2,6 @@ package io.github.remmerw.loki.mdht
 
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicArray
 import kotlin.concurrent.atomics.AtomicInt
@@ -22,7 +20,6 @@ internal class Bucket internal constructor() {
     // using arraylist here since reading/iterating is far more common than writing.
     @Volatile
     private var entries: List<Peer> = emptyList()
-    private val lock = Mutex()
 
 
     /**
@@ -31,7 +28,7 @@ internal class Bucket internal constructor() {
      *
      * @param newEntry The entry to insert
      */
-    suspend fun insertOrRefresh(newEntry: Peer) {
+    fun insertOrRefresh(newEntry: Peer) {
 
 
         val entriesRef = entries
@@ -80,7 +77,7 @@ internal class Bucket internal constructor() {
     }
 
     fun refresh(toRefresh: Peer) {
-        val e = entries.filter { other: Peer? -> toRefresh.equals(other) }.randomOrNull()
+        val e = entries.filter { other: Peer -> toRefresh.equals(other) }.randomOrNull()
         e?.mergeInTimestamps(toRefresh)
     }
 
@@ -88,51 +85,51 @@ internal class Bucket internal constructor() {
      * mostly meant for internal use or transfering entries into a new bucket.
      * to update a bucket properly use [.insertOrRefresh]
      */
-    suspend fun modifyMainBucket(toRemove: Peer?, toInsert: Peer?) {
+    fun modifyMainBucket(toRemove: Peer?, toInsert: Peer?) {
         // we're synchronizing all modifications, therefore we can freely reference
         // the old entry list, it will not be modified concurrently
 
-        lock.withLock {
-            if (toInsert != null && entries
-                    .any { other: Peer? -> toInsert.matchIPorID(other) }
-            ) return
-            val newEntries: MutableList<Peer> = entries.toMutableList()
-            var removed = false
-            var added = false
 
-            // removal never violates ordering constraint, no checks required
-            if (toRemove != null) removed = newEntries.remove(toRemove)
+        if (toInsert != null && entries
+                .any { other: Peer? -> toInsert.matchIPorID(other) }
+        ) return
+        val newEntries: MutableList<Peer> = entries.toMutableList()
+        var removed = false
+        var added = false
+
+        // removal never violates ordering constraint, no checks required
+        if (toRemove != null) removed = newEntries.remove(toRemove)
 
 
-            if (toInsert != null) {
-                val oldSize = newEntries.size
-                val wasFull = oldSize >= MAX_ENTRIES_PER_BUCKET
-                val youngest = if (oldSize > 0) newEntries[oldSize - 1] else null
-                val unorderedInsert =
-                    youngest != null && toInsert.creationTime < youngest.creationTime
-                added = !wasFull || unorderedInsert
-                if (added) {
-                    newEntries.add(toInsert)
-                    val entry = removeFromReplacement(toInsert)
-                    entry?.mergeInTimestamps(toInsert)
-                } else {
-                    insertInReplacementBucket(toInsert)
-                }
-                /**
-                 * ascending order for timeCreated, i.e. the first value will be the oldest
-                 */
-                if (unorderedInsert) newEntries.sortBy { peer: Peer ->
-                    peer.creationTime.elapsedNow().inWholeMilliseconds
-                }
-
-                if (wasFull && added) while (newEntries.size > MAX_ENTRIES_PER_BUCKET) insertInReplacementBucket(
-                    newEntries.removeAt(newEntries.size - 1)
-                )
+        if (toInsert != null) {
+            val oldSize = newEntries.size
+            val wasFull = oldSize >= MAX_ENTRIES_PER_BUCKET
+            val youngest = if (oldSize > 0) newEntries[oldSize - 1] else null
+            val unorderedInsert =
+                youngest != null && toInsert.creationTime < youngest.creationTime
+            added = !wasFull || unorderedInsert
+            if (added) {
+                newEntries.add(toInsert)
+                val entry = removeFromReplacement(toInsert)
+                entry?.mergeInTimestamps(toInsert)
+            } else {
+                insertInReplacementBucket(toInsert)
+            }
+            /**
+             * ascending order for timeCreated, i.e. the first value will be the oldest
+             */
+            if (unorderedInsert) newEntries.sortBy { peer: Peer ->
+                peer.creationTime.elapsedNow().inWholeMilliseconds
             }
 
-            // make changes visible
-            if (added || removed) entries = newEntries
+            if (wasFull && added) while (newEntries.size > MAX_ENTRIES_PER_BUCKET) insertInReplacementBucket(
+                newEntries.removeAt(newEntries.size - 1)
+            )
         }
+
+        // make changes visible
+        if (added || removed) entries = newEntries
+
     }
 
     val numEntries: Int
@@ -176,7 +173,7 @@ internal class Bucket internal constructor() {
      */
 
     @OptIn(ExperimentalAtomicApi::class)
-    suspend fun onTimeout(address: InetSocketAddress) {
+    fun onTimeout(address: InetSocketAddress) {
         val entriesRef = entries
         run {
             var i = 0
@@ -212,7 +209,7 @@ internal class Bucket internal constructor() {
      * @param entry Entry to insert
      * @return true if replace was successful
      */
-    private suspend fun replaceBadEntry(entry: Peer): Boolean {
+    private fun replaceBadEntry(entry: Peer): Boolean {
         val entriesRef = entries
         var i = 0
         val n = entriesRef.size
@@ -336,7 +333,7 @@ internal class Bucket internal constructor() {
      * @param toRemove Entry to remove, if its bad
 
      */
-    private suspend fun removeEntryIfBad(toRemove: Peer) {
+    private fun removeEntryIfBad(toRemove: Peer) {
         val entriesRef = entries
         if (entriesRef.contains(toRemove) && toRemove.needsReplacement()) {
             val replacement = pollVerifiedReplacementEntry()

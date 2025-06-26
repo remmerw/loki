@@ -320,7 +320,7 @@ private fun parseResponse(
                             val port: UShort = ((buffer[4]
                                 .toInt() and 0xFF) shl 8 or (buffer[5].toInt() and 0xFF)).toUShort()
 
-                            if(port > 0.toUShort() && port <= 65535.toUShort()) {
+                            if (port > 0.toUShort() && port <= 65535.toUShort()) {
                                 addresses.add(Address(address, port))
                             }
                         }
@@ -332,7 +332,7 @@ private fun parseResponse(
                             val port: UShort = ((buffer[16]
                                 .toInt() and 0xFF) shl 8 or (buffer[17].toInt() and 0xFF)).toUShort()
 
-                            if(port > 0.toUShort() && port <= 65535.toUShort()) {
+                            if (port > 0.toUShort() && port <= 65535.toUShort()) {
                                 addresses.add(Address(address, port))
                             }
                         }
