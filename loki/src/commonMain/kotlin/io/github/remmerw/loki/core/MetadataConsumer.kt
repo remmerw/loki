@@ -30,7 +30,7 @@ internal class MetadataConsumer internal constructor(
     private var metadata: ExchangedMetadata? = null
 
     @Volatile
-    private var doConsume: Boolean = true
+    private var doConsume: Boolean = !dataStorage.initializeDone()
 
     private fun doConsume(message: Message, connection: Connection) {
         if (message is ExtendedHandshake) {
@@ -135,7 +135,8 @@ internal class MetadataConsumer internal constructor(
 
                     if (fetchedTorrent != null) {
 
-                        dataStorage.initialize(fetchedTorrent, metadata!!.metadata())
+                        dataStorage.metadata(metadata!!.metadata())
+                        dataStorage.initialize(fetchedTorrent)
 
                         done.store(true)
                         connection.requestedFirst = null

@@ -45,9 +45,11 @@ class TorrentParserTest {
             assertNotNull(torrent)
 
             assertEquals(torrent.chunkHashes.size, 12576)
+
             val metadata = allocateMemory(bytes.size)
             metadata.writeBytes(bytes, 0)
-            dataStorage.initialize(torrent, metadata)
+            dataStorage.metadata(metadata)
+            dataStorage.initialize(torrent)
             val dataBitfield = dataStorage.dataBitfield()
             assertNotNull(dataBitfield)
 

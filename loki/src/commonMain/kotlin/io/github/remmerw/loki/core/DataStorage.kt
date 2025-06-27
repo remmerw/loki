@@ -1,11 +1,13 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.grid.Memory
+import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
 import io.ktor.util.sha1
 import kotlinx.io.Buffer
+import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
@@ -18,8 +20,21 @@ internal data class DataStorage(val data: Data) : Storage {
     private val chunks: MutableMap<Int, Chunk> = mutableMapOf()
     private val skeletons: MutableList<Skeleton> = mutableListOf()
     private var pieceFiles: MutableMap<Int, List<TorrentFile>> = mutableMapOf()
-    private val bitmask = Path(data.directory(), "bitmask.db")
+    private val bitmaskDatabase = Path(data.directory(), "bitmask.db")
+    private val torrentDatabase = Path(data.directory(), "torrent.db")
 
+    init {
+        if (SystemFileSystem.exists(torrentDatabase)) {
+            SystemFileSystem.source(torrentDatabase).buffered().use { source ->
+                val bytes = source.readByteArray()
+                val torrent = buildTorrent(bytes)
+                val metadata = allocateMemory(bytes.size)
+                metadata.writeBytes(bytes, 0)
+                metadata(metadata)
+                initialize(torrent)
+            }
+        }
+    }
     @Volatile
     private var metadata: Memory? = null
 
@@ -64,10 +79,18 @@ internal data class DataStorage(val data: Data) : Storage {
         return dataBitfield?.isVerified(piece) == true
     }
 
-    fun initialize(torrent: Torrent, metadata: Memory) {
+    fun metadata(metadata: Memory){
+        this.metadata = metadata
+        if (!SystemFileSystem.exists(torrentDatabase)) {
+            SystemFileSystem.sink(torrentDatabase, false).use { sink ->
+                metadata.transferTo(sink)
+            }
+        }
+    }
+    fun initialize(torrent: Torrent) {
+        require(!initializeDone) {"Initialisation is already done"}
 
         this.torrent = torrent
-        this.metadata = metadata
         var transferSize = BLOCK_SIZE
         val totalSize = torrent.size
         val chunkSize = torrent.chunkSize
@@ -120,6 +143,7 @@ internal data class DataStorage(val data: Data) : Storage {
                 dataBitfield!!.skip(pieceIndex)
             }
         }
+
         initializeDone = true
 
     }
@@ -179,9 +203,9 @@ internal data class DataStorage(val data: Data) : Storage {
     internal fun verifiedPieces(totalPieces: Int) {
 
         var mask: Bitmask? = null
-        if (SystemFileSystem.exists(bitmask)) {
-            val size = SystemFileSystem.metadataOrNull(bitmask)!!.size
-            SystemFileSystem.source(bitmask).use { source ->
+        if (SystemFileSystem.exists(bitmaskDatabase)) {
+            val size = SystemFileSystem.metadataOrNull(bitmaskDatabase)!!.size
+            SystemFileSystem.source(bitmaskDatabase).use { source ->
                 val buffer = Buffer()
                 buffer.write(source, size)
 
@@ -203,7 +227,7 @@ internal data class DataStorage(val data: Data) : Storage {
                 val buffer = Buffer()
                 buffer.write(dataBitfield!!.encode())
 
-                SystemFileSystem.sink(bitmask, false).use { sink ->
+                SystemFileSystem.sink(bitmaskDatabase, false).use { sink ->
                     sink.write(buffer, buffer.size)
                 }
             }

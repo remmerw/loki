@@ -54,7 +54,6 @@ suspend fun CoroutineScope.download(
     val path = Path(directory, torrentId.bytes.toHexString())
     val data = newData(path)
     val dataStorage = DataStorage(data)
-
     val selectorManager = SelectorManager(Dispatchers.IO)
 
     val peerId = peerId()
@@ -94,7 +93,6 @@ suspend fun CoroutineScope.download(
 
 
     try {
-
         val addresses = lookupKey(peerId, port, bootstrap(), torrentId.bytes)
         val connections = performConnection(messages, worker, selectorManager, addresses)
         val handshakes = performHandshake(
@@ -102,7 +100,9 @@ suspend fun CoroutineScope.download(
         )
         processMessages(worker, handshakes)
 
-        metadataConsumer.waitForTorrent()
+        if(!dataStorage.initializeDone()) {
+            metadataConsumer.waitForTorrent()
+        }
 
 
         // process bitfields and haves that we received while fetching metadata
