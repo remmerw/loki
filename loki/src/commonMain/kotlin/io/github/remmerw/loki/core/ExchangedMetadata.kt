@@ -1,5 +1,7 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.grid.Memory
+import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.ktor.util.sha1
 import kotlinx.atomicfu.locks.reentrantLock
@@ -13,22 +15,22 @@ internal data class ExchangedMetadata(
     val totalSize: Int
 ) {
     private val lock = reentrantLock()
-    private val data: ByteArray = ByteArray(totalSize)
+    private val metadata = allocateMemory(totalSize)
     private val metadataBlocks: BlockSet = createBlockSet(totalSize, BLOCK_SIZE)
 
     fun isBlockPresent(blockIndex: Int): Boolean {
         return metadataBlocks.isPresent(blockIndex)
     }
 
-    fun data(): ByteArray {
-        return data
+    fun metadata(): Memory {
+        return metadata
     }
 
     fun setBlock(blockIndex: Int, block: ByteArray) {
         lock.withLock {
             validateBlockIndex(blockIndex)
             val offset = blockIndex * BLOCK_SIZE
-            block.copyInto(data, offset)
+            metadata.writeBytes(block, offset)
             metadataBlocks.markAvailable(offset, block.size)
         }
     }
@@ -43,7 +45,7 @@ internal data class ExchangedMetadata(
     fun digest(): ByteArray {
         lock.withLock {
             check(metadataBlocks.isComplete) { "Metadata is not complete" }
-            return sha1(data)
+            return sha1(metadata.readBytes(0, metadata.size()))
         }
     }
 

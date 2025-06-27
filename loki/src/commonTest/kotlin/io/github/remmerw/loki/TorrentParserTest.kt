@@ -1,5 +1,6 @@
 package io.github.remmerw.loki
 
+import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.core.newData
@@ -40,12 +41,14 @@ class TorrentParserTest {
         val dataStorage = DataStorage(data)
         SystemFileSystem.source(file).buffered().use { source ->
             val bytes = source.readByteArray()
+            // todo allocateMemory
             val torrent = buildTorrent(bytes)
             assertNotNull(torrent)
 
             assertEquals(torrent.chunkHashes.size, 12576)
-
-            dataStorage.initialize(torrent, bytes)
+            val metadata = allocateMemory(bytes.size)
+            metadata.writeBytes(bytes, 0)
+            dataStorage.initialize(torrent, metadata)
             val dataBitfield = dataStorage.dataBitfield()
             assertNotNull(dataBitfield)
 

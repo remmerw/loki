@@ -45,7 +45,7 @@ kotlin {
                 implementation(libs.uri.kmp)
                 implementation(libs.atomicfu) // todo remove
                 implementation(libs.ktor.network)
-                implementation("com.ditchoom:buffer:1.4.2") // todo remove future
+                implementation("io.github.remmerw:grid:0.0.1") // todo version 2 with allocateMemory(data)
             }
         }
 

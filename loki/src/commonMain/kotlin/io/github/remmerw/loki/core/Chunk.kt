@@ -1,9 +1,6 @@
 package io.github.remmerw.loki.core
 
-import com.ditchoom.buffer.AllocationZone
-import com.ditchoom.buffer.ByteOrder
-import com.ditchoom.buffer.PlatformBuffer
-import com.ditchoom.buffer.allocate
+import io.github.remmerw.grid.allocateMemory
 
 
 @Suppress("ArrayInDataClass")
@@ -12,11 +9,7 @@ internal data class Chunk(
     private val blockSize: Int,
     private val checksum: ByteArray
 ) {
-    val data = PlatformBuffer.allocate(
-        size,
-        zone = AllocationZone.SharedMemory,
-        byteOrder = ByteOrder.BIG_ENDIAN
-    )
+    val memory = allocateMemory(size)
 
     private val blockSet = createBlockSet(size, blockSize)
 
@@ -25,13 +18,11 @@ internal data class Chunk(
     }
 
     internal fun bytes(): ByteArray {
-        data.position(0)
-        return data.readByteArray(size)
+        return memory.readBytes(0, size)
     }
 
     fun writeBlock(offset: Int, bytes: ByteArray) {
-        data.position(offset)
-        data.writeBytes(bytes)
+        memory.writeBytes(bytes, offset)
         blockSet.markAvailable(offset, bytes.size)
     }
 
@@ -58,7 +49,4 @@ internal data class Chunk(
         blockSet.clear()
     }
 
-    suspend fun close() {
-        data.close()
-    }
 }

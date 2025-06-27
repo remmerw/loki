@@ -1,10 +1,10 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.grid.Memory
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
 import io.ktor.util.sha1
-import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -21,7 +21,7 @@ internal data class DataStorage(val data: Data) : Storage {
     private val bitmask = Path(data.directory(), "bitmask.db")
 
     @Volatile
-    private var metadata: ByteArray? = null
+    private var metadata: Memory? = null
 
     @Volatile
     private var dataBitfield: DataBitfield? = null
@@ -64,7 +64,7 @@ internal data class DataStorage(val data: Data) : Storage {
         return dataBitfield?.isVerified(piece) == true
     }
 
-    fun initialize(torrent: Torrent, metadata: ByteArray) {
+    fun initialize(torrent: Torrent, metadata: Memory) {
 
         this.torrent = torrent
         this.metadata = metadata
@@ -149,11 +149,11 @@ internal data class DataStorage(val data: Data) : Storage {
     }
 
     internal fun sliceMetadata(offset: Int, length: Int): ByteArray {
-        return metadata!!.copyOfRange(offset, offset + length)
+        return metadata!!.readBytes(offset, length)
     }
 
     internal fun metadataSize(): Int {
-        return metadata?.size ?: -1
+        return metadata?.size() ?: -1
     }
 
     internal fun markVerified(piece: Int) {
@@ -167,19 +167,12 @@ internal data class DataStorage(val data: Data) : Storage {
         if (result) {
             data.storeBlock(piece, bytes)
             chunks.remove(piece)
-            close(chunk)
             dataBitfield!!.markVerified(piece)
             return true
         } else {
             data.deleteBlock(piece)
             chunk.reset()
             return false
-        }
-    }
-
-    private fun close(chunk: Chunk) {
-        runBlocking { // todo closing
-            chunk.close()
         }
     }
 
@@ -214,8 +207,6 @@ internal data class DataStorage(val data: Data) : Storage {
                     sink.write(buffer, buffer.size)
                 }
             }
-            val set = chunks.values.toSet()
-            set.forEach { chunk -> close(chunk) }
         } catch (throwable: Throwable) {
             debug("DataStorage", throwable)
         }

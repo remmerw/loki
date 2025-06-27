@@ -125,7 +125,9 @@ internal class MetadataConsumer internal constructor(
 
                     var fetchedTorrent: Torrent? = null
                     try {
-                        fetchedTorrent = buildTorrent(metadata!!.data())
+                        val meta = metadata!!.metadata()
+                        fetchedTorrent = buildTorrent(meta.readBytes(0,
+                            meta.size()))
                     } catch (throwable: Throwable) {
                         debug("MetadataConsumer", throwable)
                         metadata = null
@@ -133,7 +135,7 @@ internal class MetadataConsumer internal constructor(
 
                     if (fetchedTorrent != null) {
 
-                        dataStorage.initialize(fetchedTorrent, metadata!!.data())
+                        dataStorage.initialize(fetchedTorrent, metadata!!.metadata())
 
                         done.store(true)
                         connection.requestedFirst = null
