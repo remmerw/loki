@@ -41,7 +41,6 @@ class TorrentParserTest {
         val dataStorage = DataStorage(data)
         SystemFileSystem.source(file).buffered().use { source ->
             val bytes = source.readByteArray()
-            // todo allocateMemory
             val torrent = buildTorrent(bytes)
             assertNotNull(torrent)
 
