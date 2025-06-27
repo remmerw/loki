@@ -3,9 +3,9 @@ package io.github.remmerw.loki
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.core.newData
-import io.github.remmerw.loki.grid.Peer
-import io.github.remmerw.loki.grid.UtMetadataHandler
-import io.github.remmerw.loki.grid.data
+import io.github.remmerw.loki.data.Peer
+import io.github.remmerw.loki.data.UtMetadataHandler
+import io.github.remmerw.loki.data.data
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.runBlocking

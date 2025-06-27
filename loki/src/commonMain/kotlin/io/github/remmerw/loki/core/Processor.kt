@@ -1,11 +1,11 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.grid.Grid
-import io.github.remmerw.loki.grid.HANDSHAKE_RESERVED_LENGTH
-import io.github.remmerw.loki.grid.Handshake
-import io.github.remmerw.loki.grid.PROTOCOL_NAME
-import io.github.remmerw.loki.grid.Peer
-import io.github.remmerw.loki.grid.TorrentId
+import io.github.remmerw.loki.data.Messages
+import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
+import io.github.remmerw.loki.data.Handshake
+import io.github.remmerw.loki.data.PROTOCOL_NAME
+import io.github.remmerw.loki.data.Peer
+import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.mdht.Address
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
@@ -152,7 +152,7 @@ internal fun CoroutineScope.performHandshake(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.performConnection(
-    grid: Grid,
+    messages: Messages,
     worker: Worker,
     selectorManager: SelectorManager,
     channel: ReceiveChannel<Address>
@@ -164,7 +164,7 @@ internal fun CoroutineScope.performConnection(
                 try {
                     val socket = connectAddress(selectorManager, address)
                     val peer = Peer(address.address, address.port)
-                    val connection = Connection(peer, worker, socket, grid)
+                    val connection = Connection(peer, worker, socket, messages)
                     send(connection)
                 } catch (_: Throwable) {
                     // this is the normal case when address is unreachable or timeouted

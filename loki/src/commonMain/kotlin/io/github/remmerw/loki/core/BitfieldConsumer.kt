@@ -1,9 +1,9 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.grid.Bitfield
-import io.github.remmerw.loki.grid.Have
-import io.github.remmerw.loki.grid.Message
-import io.github.remmerw.loki.grid.Type
+import io.github.remmerw.loki.data.Bitfield
+import io.github.remmerw.loki.data.Have
+import io.github.remmerw.loki.data.Message
+import io.github.remmerw.loki.data.Type
 
 
 internal class BitfieldConsumer(

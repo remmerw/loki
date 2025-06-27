@@ -1,14 +1,14 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.debug
-import io.github.remmerw.loki.grid.Grid
-import io.github.remmerw.loki.grid.HANDSHAKE_RESERVED_LENGTH
-import io.github.remmerw.loki.grid.Handshake
-import io.github.remmerw.loki.grid.Message
-import io.github.remmerw.loki.grid.Peer
-import io.github.remmerw.loki.grid.SHA1_HASH_LENGTH
-import io.github.remmerw.loki.grid.TORRENT_ID_LENGTH
-import io.github.remmerw.loki.grid.TorrentId
+import io.github.remmerw.loki.data.Messages
+import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
+import io.github.remmerw.loki.data.Handshake
+import io.github.remmerw.loki.data.Message
+import io.github.remmerw.loki.data.Peer
+import io.github.remmerw.loki.data.SHA1_HASH_LENGTH
+import io.github.remmerw.loki.data.TORRENT_ID_LENGTH
+import io.github.remmerw.loki.data.TorrentId
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -28,7 +28,7 @@ internal class Connection internal constructor(
     private val peer: Peer,
     private val worker: Worker,
     private val socket: Socket,
-    private val grid: Grid
+    private val messages: Messages
 ) : ConnectionWorker(worker) {
     @Volatile
     var lastActive: ValueTimeMark = TimeSource.Monotonic.markNow()
@@ -50,7 +50,7 @@ internal class Connection internal constructor(
             val buffer = receiveChannel.readBuffer(read)
             require(read == buffer.size.toInt()) { "Invalid number of data received" }
 
-            return grid.decode(peer, buffer)
+            return messages.decode(peer, buffer)
         } catch (_: Throwable) {
             close()
         }
@@ -92,7 +92,7 @@ internal class Connection internal constructor(
         lastActive = TimeSource.Monotonic.markNow()
         val buffer = Buffer()
         try {
-            grid.encode(peer, message, buffer)
+            messages.encode(peer, message, buffer)
             sendChannel.writeBuffer(buffer)
         } catch (_: Throwable) {
             close()

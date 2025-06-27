@@ -1,6 +1,6 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.grid.Handshake
+import io.github.remmerw.loki.data.Handshake
 
 internal interface HandshakeHandler {
     /**

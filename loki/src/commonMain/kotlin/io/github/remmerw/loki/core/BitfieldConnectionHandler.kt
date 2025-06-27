@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.grid.Bitfield
-import io.github.remmerw.loki.grid.Handshake
+import io.github.remmerw.loki.data.Bitfield
+import io.github.remmerw.loki.data.Handshake
 
 internal data class BitfieldConnectionHandler(
     private val dataStorage: DataStorage,

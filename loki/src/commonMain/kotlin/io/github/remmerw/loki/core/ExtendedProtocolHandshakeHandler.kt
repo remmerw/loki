@@ -4,9 +4,9 @@ import io.github.remmerw.loki.buri.BEInteger
 import io.github.remmerw.loki.buri.BEMap
 import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.BEString
-import io.github.remmerw.loki.grid.ExtendedHandshake
-import io.github.remmerw.loki.grid.ExtendedMessageHandler
-import io.github.remmerw.loki.grid.Handshake
+import io.github.remmerw.loki.data.ExtendedHandshake
+import io.github.remmerw.loki.data.ExtendedMessageHandler
+import io.github.remmerw.loki.data.Handshake
 
 internal data class ExtendedProtocolHandshakeHandler(
     private val dataStorage: DataStorage,

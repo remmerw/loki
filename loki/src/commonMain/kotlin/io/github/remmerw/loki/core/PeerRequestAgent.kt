@@ -1,9 +1,9 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.grid.Message
-import io.github.remmerw.loki.grid.Piece
-import io.github.remmerw.loki.grid.Request
-import io.github.remmerw.loki.grid.Type
+import io.github.remmerw.loki.data.Message
+import io.github.remmerw.loki.data.Piece
+import io.github.remmerw.loki.data.Request
+import io.github.remmerw.loki.data.Type
 
 internal class PeerRequestAgent(
     private val dataStorage: DataStorage

@@ -1,8 +1,8 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.grid.Cancel
-import io.github.remmerw.loki.grid.Message
-import io.github.remmerw.loki.grid.Type
+import io.github.remmerw.loki.data.Cancel
+import io.github.remmerw.loki.data.Message
+import io.github.remmerw.loki.data.Type
 
 internal class GenericConsumer(private val dataStorage: DataStorage) : Consumers {
     override val consumers: List<MessageConsumer>

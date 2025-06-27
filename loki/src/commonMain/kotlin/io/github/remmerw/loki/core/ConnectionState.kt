@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.grid.Cancel
-import io.github.remmerw.loki.grid.Request
+import io.github.remmerw.loki.data.Cancel
+import io.github.remmerw.loki.data.Request
 import io.ktor.util.collections.ConcurrentSet
 import kotlin.concurrent.Volatile
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark

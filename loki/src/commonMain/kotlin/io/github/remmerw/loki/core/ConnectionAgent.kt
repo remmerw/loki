@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.grid.Message
-import io.github.remmerw.loki.grid.Request
+import io.github.remmerw.loki.data.Message
+import io.github.remmerw.loki.data.Request
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 import kotlin.concurrent.Volatile

@@ -2,10 +2,10 @@ package io.github.remmerw.loki
 
 import io.github.remmerw.loki.core.Bitmask
 import io.github.remmerw.loki.core.ExchangedMetadata
-import io.github.remmerw.loki.grid.MetaType
-import io.github.remmerw.loki.grid.Peer
-import io.github.remmerw.loki.grid.UtMetadata
-import io.github.remmerw.loki.grid.UtMetadataHandler
+import io.github.remmerw.loki.data.MetaType
+import io.github.remmerw.loki.data.Peer
+import io.github.remmerw.loki.data.UtMetadata
+import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.loki.mdht.peerId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

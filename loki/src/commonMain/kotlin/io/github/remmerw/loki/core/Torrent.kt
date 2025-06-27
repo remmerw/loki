@@ -6,7 +6,7 @@ import io.github.remmerw.loki.buri.BEMap
 import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.BEString
 import io.github.remmerw.loki.buri.decode
-import io.github.remmerw.loki.grid.Message
+import io.github.remmerw.loki.data.Message
 import kotlinx.io.Buffer
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
