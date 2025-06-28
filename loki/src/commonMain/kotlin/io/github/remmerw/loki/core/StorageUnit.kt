@@ -1,9 +1,11 @@
 package io.github.remmerw.loki.core
 
 import io.ktor.utils.io.core.writeFully
+import kotlinx.io.Sink
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readByteArray
 
 class StorageUnit internal constructor(
     private val dataStorage: DataStorage,
@@ -28,39 +30,47 @@ class StorageUnit internal constructor(
         return torrentFile.size
     }
 
-    fun hasData(): Boolean {
-        return index <= lastIndex
-    }
-
-    fun data(): ByteArray {
-        val piece = torrentFile.pieces[index]
-        try {
-            if (index == 0) {
-                val offset = startPos.rem(chunkSize)
-                if (lastIndex == 0) {
-                    val remaining = endPos.rem(chunkSize) - offset
-                    return dataStorage.readBlock(piece, offset.toInt(), remaining.toInt())
+    fun transferTo(sink: Sink) {
+        while (index <= lastIndex) {
+            val piece = torrentFile.pieces[index]
+            try {
+                if (index == 0) {
+                    val offset = startPos.rem(chunkSize)
+                    if (lastIndex == 0) {
+                        val remaining = endPos.rem(chunkSize) - offset
+                        dataStorage.rawSource(piece).buffered().use { source ->
+                            source.skip(offset)
+                            val bytes = source.readByteArray(remaining.toInt())
+                            sink.writeFully(bytes)
+                        }
+                    } else {
+                        dataStorage.rawSource(piece).buffered().use { source ->
+                            source.skip(offset)
+                            source.transferTo(sink)
+                        }
+                    }
+                } else if (index == lastIndex) {
+                    val remaining = endPos.rem(chunkSize)
+                    dataStorage.rawSource(piece).buffered().use { source ->
+                        val bytes = source.readByteArray(remaining.toInt())
+                        sink.writeFully(bytes)
+                    }
                 } else {
-                    return dataStorage.readBlock(piece, offset.toInt())
+                    dataStorage.rawSource(piece).buffered().use { source ->
+                        source.transferTo(sink)
+                    }
                 }
-            } else if (index == lastIndex) {
-                val remaining = endPos.rem(chunkSize)
-                return dataStorage.readBlock(piece, 0, remaining.toInt())
-            } else {
-                return dataStorage.readBlock(piece, 0)
+            } finally {
+                index++
             }
-        } finally {
-            index++
         }
+
     }
 
     fun storeTo(directory: Path) {
-
         val file = getFilePath(directory, torrentFile)
         SystemFileSystem.sink(file, false).buffered().use { sink ->
-            while (hasData()) {
-                sink.writeFully(data())
-            }
+            transferTo(sink)
         }
     }
 }

@@ -1,10 +1,9 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.grid.Memory
-import kotlinx.io.buffered
+import kotlinx.io.RawSource
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readByteArray
 
 
 class Data(private val directory: Path) {
@@ -16,24 +15,11 @@ class Data(private val directory: Path) {
         cleanupDirectory(directory)
     }
 
-    // todo random file access
-    fun readBlockSlice(cid: Int, offset: Int, length: Int): ByteArray {
-        val file = path(cid)
-        require(SystemFileSystem.exists(file)) { "Block does not exists" }
-        SystemFileSystem.source(file).buffered().use { source ->
-            source.skip(offset.toLong())
-            return source.readByteArray(length)
-        }
-    }
 
-    // todo random file access
-    fun readBlockSlice(cid: Int, offset: Int): ByteArray {
+    fun rawSource(cid: Int): RawSource {
         val file = path(cid)
         require(SystemFileSystem.exists(file)) { "Block does not exists" }
-        SystemFileSystem.source(file).buffered().use { source ->
-            source.skip(offset.toLong())
-            return source.readByteArray()
-        }
+        return SystemFileSystem.source(file)
     }
 
     fun storeBlock(cid: Int, memory: Memory) {

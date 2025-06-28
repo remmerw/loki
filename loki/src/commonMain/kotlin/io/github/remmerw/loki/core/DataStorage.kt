@@ -6,6 +6,7 @@ import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
 import kotlinx.io.Buffer
+import kotlinx.io.RawSource
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -236,11 +237,15 @@ internal data class DataStorage(val data: Data) : Storage {
     }
 
     internal fun readBlock(piece: Int, offset: Int, length: Int): ByteArray {
-        return data.readBlockSlice(piece, offset, length)
+        // todo maybe buffer a piece into memory (and then read it out)
+        rawSource(piece).buffered().use { source ->
+            source.skip(offset.toLong())
+            return source.readByteArray(length)
+        }
     }
 
-    internal fun readBlock(piece: Int, offset: Int): ByteArray {
-        return data.readBlockSlice(piece, offset)
+    internal fun rawSource(piece: Int): RawSource {
+        return data.rawSource(piece)
     }
 
 

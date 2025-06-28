@@ -350,6 +350,7 @@ private fun parseResponse(
             if (addresses.isNotEmpty() || nodes6.isNotEmpty() || nodes.isNotEmpty()) {
                 msg = GetPeersResponse(address, id, tid, token, nodes, nodes6, addresses)
             } else {
+                // todo maybe just ignoring exceptions
                 throw MessageException(
                     "Neither nodes nor values in get_peers response",
                     PROTOCOL_ERROR
