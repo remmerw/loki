@@ -17,7 +17,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.writeUShort
@@ -222,9 +221,6 @@ fun CoroutineScope.lookupKey(
                 }
 
                 inFlight.removeAll(removed)
-
-                yield()
-
 
             } while (!inFlight.isEmpty())
 
