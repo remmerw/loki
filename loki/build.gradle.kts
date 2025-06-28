@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.remmerw"
-version = "0.2.2"
+version = "0.2.3"
 
 kotlin {
 
@@ -45,10 +45,31 @@ kotlin {
                 implementation(libs.uri.kmp)
                 implementation(libs.atomicfu) // todo remove
                 implementation(libs.ktor.network)
-                implementation("io.github.remmerw:grid:0.0.1")
+                implementation(libs.cryptography.core)
+                implementation("io.github.remmerw:grid:0.0.2")
             }
         }
 
+
+        androidMain {
+            dependencies {
+                implementation(libs.cryptography.provider.jdk)
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                implementation(libs.cryptography.provider.jdk)
+            }
+        }
+
+        iosMain {
+            dependencies {
+                implementation(libs.cryptography.provider.apple)
+                // or openssl3 provider with better algorithms coverage and other native targets support
+                // implementation("dev.whyoleg.cryptography:cryptography-provider-openssl3-prebuilt:0.4.0")
+            }
+        }
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)

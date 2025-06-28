@@ -1,5 +1,8 @@
 package io.github.remmerw.loki.core
 
+import dev.whyoleg.cryptography.CryptographyProvider
+import dev.whyoleg.cryptography.DelicateCryptographyApi
+import dev.whyoleg.cryptography.algorithms.SHA1
 import io.github.remmerw.grid.allocateMemory
 
 
@@ -9,16 +12,16 @@ internal data class Chunk(
     private val blockSize: Int,
     private val checksum: ByteArray
 ) {
-    val memory = allocateMemory(size)
-
+    internal val memory = allocateMemory(size)
     private val blockSet = createBlockSet(size, blockSize)
 
-    fun checksum(): ByteArray {
-        return checksum
-    }
-
-    internal fun bytes(): ByteArray {
-        return memory.readBytes(0, size)
+    @OptIn(DelicateCryptographyApi::class)
+    internal fun digest(): Boolean {
+        val digest = CryptographyProvider.Default
+            .get(SHA1)
+            .hasher()
+            .hashBlocking(memory.rawSource()).toByteArray()
+        return digest.contentEquals(checksum)
     }
 
     fun writeBlock(offset: Int, bytes: ByteArray) {

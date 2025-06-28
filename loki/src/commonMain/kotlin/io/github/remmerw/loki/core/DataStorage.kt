@@ -1,11 +1,10 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.grid.Memory
+import io.github.remmerw.grid.ReadOnlyMemory
 import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
-import io.ktor.util.sha1
 import kotlinx.io.Buffer
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -35,8 +34,9 @@ internal data class DataStorage(val data: Data) : Storage {
             }
         }
     }
+
     @Volatile
-    private var metadata: Memory? = null
+    private var metadata: ReadOnlyMemory? = null
 
     @Volatile
     private var dataBitfield: DataBitfield? = null
@@ -79,7 +79,7 @@ internal data class DataStorage(val data: Data) : Storage {
         return dataBitfield?.isVerified(piece) == true
     }
 
-    fun metadata(metadata: Memory){
+    fun metadata(metadata: ReadOnlyMemory) {
         this.metadata = metadata
         if (!SystemFileSystem.exists(torrentDatabase)) {
             SystemFileSystem.sink(torrentDatabase, false).use { sink ->
@@ -87,8 +87,9 @@ internal data class DataStorage(val data: Data) : Storage {
             }
         }
     }
+
     fun initialize(torrent: Torrent) {
-        require(!initializeDone) {"Initialisation is already done"}
+        require(!initializeDone) { "Initialisation is already done" }
 
         this.torrent = torrent
         var transferSize = BLOCK_SIZE
@@ -185,11 +186,9 @@ internal data class DataStorage(val data: Data) : Storage {
     }
 
     internal fun storeChunk(piece: Int, chunk: Chunk): Boolean {
-        val bytes = chunk.bytes()
-        val digest = sha1(bytes)
-        val result = digest.contentEquals(chunk.checksum())
+        val result = chunk.digest()
         if (result) {
-            data.storeBlock(piece, bytes)
+            data.storeBlock(piece, chunk.memory)
             chunks.remove(piece)
             dataBitfield!!.markVerified(piece)
             return true

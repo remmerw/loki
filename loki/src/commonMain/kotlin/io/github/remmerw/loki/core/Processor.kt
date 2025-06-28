@@ -1,8 +1,8 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.data.Messages
 import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
+import io.github.remmerw.loki.data.Messages
 import io.github.remmerw.loki.data.PROTOCOL_NAME
 import io.github.remmerw.loki.data.Peer
 import io.github.remmerw.loki.data.TorrentId

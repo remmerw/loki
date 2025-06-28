@@ -5,6 +5,7 @@ kotlin = "2.2.0"
 kotlinxIoCore = "0.8.0"
 ktor = "3.2.0"
 uriKmp = "0.0.19"
+cryptographyCore = "0.4.0"
 
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
@@ -13,6 +14,9 @@ kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.re
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
+cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptographyCore" }
+cryptography-provider-jdk = { module = "dev.whyoleg.cryptography:cryptography-provider-jdk", version.ref = "cryptographyCore" }
+cryptography-provider-apple = { module = "dev.whyoleg.cryptography:cryptography-provider-apple", version.ref = "cryptographyCore" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }

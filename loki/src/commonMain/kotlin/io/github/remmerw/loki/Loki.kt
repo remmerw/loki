@@ -100,7 +100,7 @@ suspend fun CoroutineScope.download(
         )
         processMessages(worker, handshakes)
 
-        if(!dataStorage.initializeDone()) {
+        if (!dataStorage.initializeDone()) {
             metadataConsumer.waitForTorrent()
         }
 

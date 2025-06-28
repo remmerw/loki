@@ -3,7 +3,6 @@ package io.github.remmerw.loki.core
 import io.github.remmerw.loki.FIRST_BLOCK_ARRIVAL_TIMEOUT
 import io.github.remmerw.loki.META_EXCHANGE_MAX_SIZE
 import io.github.remmerw.loki.WAIT_BEFORE_REREQUESTING_AFTER_REJECT
-import io.github.remmerw.loki.debug
 import io.github.remmerw.loki.data.ExtendedHandshake
 import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.MetaType
@@ -11,6 +10,7 @@ import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.Type
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.request
+import io.github.remmerw.loki.debug
 import kotlinx.coroutines.delay
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -126,8 +126,12 @@ internal class MetadataConsumer internal constructor(
                     var fetchedTorrent: Torrent? = null
                     try {
                         val meta = metadata!!.metadata()
-                        fetchedTorrent = buildTorrent(meta.readBytes(0,
-                            meta.size()))
+                        fetchedTorrent = buildTorrent(
+                            meta.readBytes(
+                                0,
+                                meta.size()
+                            )
+                        )
                     } catch (throwable: Throwable) {
                         debug("MetadataConsumer", throwable)
                         metadata = null

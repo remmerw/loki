@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.grid.Memory
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -35,10 +36,10 @@ class Data(private val directory: Path) {
         }
     }
 
-    fun storeBlock(cid: Int, bytes: ByteArray) {
+    fun storeBlock(cid: Int, memory: Memory) {
         val file = path(cid)
-        SystemFileSystem.sink(file, false).buffered().use { source ->
-            source.write(bytes)
+        SystemFileSystem.sink(file, false).use { source ->
+            memory.transferTo(source)
         }
     }
 
