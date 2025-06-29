@@ -9,7 +9,6 @@ internal data class Piece(
 
     init {
         require(!(pieceIndex < 0 || offset < 0)) { "Invalid arguments" }
-
     }
 
     override val type: Type

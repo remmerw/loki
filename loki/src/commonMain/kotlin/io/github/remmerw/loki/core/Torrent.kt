@@ -8,6 +8,7 @@ import io.github.remmerw.loki.buri.BEString
 import io.github.remmerw.loki.buri.decode
 import io.github.remmerw.loki.data.Message
 import kotlinx.io.Buffer
+import kotlinx.io.bytestring.ByteString
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlin.math.ceil
@@ -65,7 +66,7 @@ private const val CHUNK_HASH_LENGTH = 20
 internal data class Torrent(
     val name: String,
     val files: List<TorrentFile>,
-    val chunkHashes: List<ByteArray>,
+    val chunkHashes: List<ByteString>,
     val size: Long,
     val chunkSize: Int,
     val isPrivate: Boolean,
@@ -108,13 +109,14 @@ internal data class Torrent(
 
 }
 
-fun buildHashes(hashes: ByteArray): List<ByteArray> {
-    val result: MutableList<ByteArray> = mutableListOf()
+fun buildHashes(hashes: ByteArray): List<ByteString> {
+    val result: MutableList<ByteString> = mutableListOf()
     var read = 0
     while (read < hashes.size) {
         val start = read
         read += CHUNK_HASH_LENGTH
-        result.add(hashes.copyOfRange(start, read))
+        val data = hashes.copyOfRange(start, read)
+        result.add(ByteString(data))
     }
     return result
 }
@@ -240,7 +242,7 @@ internal fun createTorrent(
         singleFile = true
     }
 
-    val hashes: List<ByteArray> = buildHashes(chunkHashes)
+    val hashes: List<ByteString> = buildHashes(chunkHashes)
 
     val torrent = Torrent(
         name, torrentFiles, hashes,

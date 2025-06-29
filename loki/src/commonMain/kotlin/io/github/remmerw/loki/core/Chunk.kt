@@ -4,13 +4,13 @@ import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.DelicateCryptographyApi
 import dev.whyoleg.cryptography.algorithms.SHA1
 import io.github.remmerw.grid.allocateMemory
+import kotlinx.io.bytestring.ByteString
 
 
-@Suppress("ArrayInDataClass")
 internal data class Chunk(
     private val size: Int,
     private val blockSize: Int,
-    private val checksum: ByteArray
+    private val checksum: ByteString
 ) {
     internal val memory = allocateMemory(size)
     private val blockSet = createBlockSet(size, blockSize)
@@ -20,8 +20,8 @@ internal data class Chunk(
         val digest = CryptographyProvider.Default
             .get(SHA1)
             .hasher()
-            .hashBlocking(memory.rawSource()).toByteArray()
-        return digest.contentEquals(checksum)
+            .hashBlocking(memory.rawSource())
+        return digest == checksum
     }
 
     fun writeBlock(offset: Int, bytes: ByteArray) {
