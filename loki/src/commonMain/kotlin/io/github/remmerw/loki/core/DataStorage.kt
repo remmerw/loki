@@ -237,7 +237,7 @@ internal data class DataStorage(val data: Data) : Storage {
     }
 
     internal fun readBlock(piece: Int, offset: Int, length: Int): ByteArray {
-        // todo maybe buffer a piece into memory (and then read it out)
+        // TODO [Low Priority] maybe buffer a piece into memory (and then read it out)
         rawSource(piece).buffered().use { source ->
             source.skip(offset.toLong())
             return source.readByteArray(length)

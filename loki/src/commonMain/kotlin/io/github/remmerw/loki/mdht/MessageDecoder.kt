@@ -48,32 +48,28 @@ private fun parseError(
     return Error(address, id, tid, errorCode, errorMsg.encodeToByteArray())
 }
 
-@Throws(MessageException::class)
 private fun extractNodes6(
     args: Map<String, BEObject>
 ): List<Peer> {
     val raw = arrayGet(args[Names.NODES6])
     if (raw == null) return emptyList()
-    if (raw.size % NODE_ENTRY_LENGTH_IPV6 != 0) throw MessageException(
+    require(raw.size % NODE_ENTRY_LENGTH_IPV6 == 0) {
         "expected length to be a multiple of " +
-                NODE_ENTRY_LENGTH_IPV6 + ", received " + raw.size,
-        PROTOCOL_ERROR
-    )
+                NODE_ENTRY_LENGTH_IPV6 + ", received " + raw.size
+    }
     return readBuckets(raw, ADDRESS_LENGTH_IPV6)
 }
 
 
-@Throws(MessageException::class)
 private fun extractNodes(
     args: Map<String, BEObject>
 ): List<Peer> {
     val raw = arrayGet(args[Names.NODES])
     if (raw == null) return emptyList()
-    if (raw.size % NODE_ENTRY_LENGTH_IPV4 != 0) throw MessageException(
+    require(raw.size % NODE_ENTRY_LENGTH_IPV4 == 0) {
         "expected length to be a multiple of " +
-                NODE_ENTRY_LENGTH_IPV4 + ", received " + raw.size,
-        PROTOCOL_ERROR
-    )
+                NODE_ENTRY_LENGTH_IPV4 + ", received " + raw.size
+    }
     return readBuckets(raw, ADDRESS_LENGTH_IPV4)
 }
 
@@ -112,16 +108,16 @@ internal fun readBuckets(src: ByteArray, length: Int): List<Peer> {
 }
 
 
-@Throws(MessageException::class)
 internal fun parseMessage(
     address: InetSocketAddress,
     map: Map<String, BEObject>,
     tidMapper: (ByteArray) -> (Request?),
-): Message {
+): Message? {
     val msgType = stringGet(map[Names.Y])
 
     if (msgType == null) {
-        throw MessageException("message type (y) missing", PROTOCOL_ERROR)
+        debug("message type (y) missing")
+        return null
     }
 
     return when (msgType) {
@@ -137,16 +133,16 @@ internal fun parseMessage(
             parseError(address, map)
         }
 
-        else -> throw MessageException("unknown RPC type (y=$msgType)", GENERIC_ERROR)
+        else -> {
+            debug("unknown RPC type (y=$msgType)")
+            return null
+        }
     }
 
 }
 
-@Throws(MessageException::class)
-private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>): Message {
-    val root = map[Names.A] as? BEMap ?: throw MessageException(
-        "expected a bencoded dictionary under key a", PROTOCOL_ERROR
-    )
+private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>): Message? {
+    val root = map[Names.A] as BEMap
 
     val args = root.map
 
@@ -169,17 +165,13 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
             }
 
             if (hash == null) {
-                throw MessageException(
-                    "missing/invalid target key in request",
-                    PROTOCOL_ERROR
-                )
+                debug("missing/invalid target key in request")
+                return null
             }
 
             if (hash.size != SHA1_HASH_LENGTH) {
-                throw MessageException(
-                    "invalid target key in request",
-                    PROTOCOL_ERROR
-                )
+                debug("invalid target key in request")
+                return null
             }
 
 
@@ -188,7 +180,10 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
 
                 Names.GET_PEERS -> GetPeersRequest(address, id, tid, hash)
 
-                else -> throw IllegalStateException("not handled branch")
+                else -> {
+                    debug("not handled branch $requestMethod")
+                    return null
+                }
             }
         }
 
@@ -207,68 +202,58 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
 
             val token = arrayGet(args[Names.TOKEN])
 
-            if (token == null) throw MessageException(
-                "missing or invalid mandatory arguments (info_hash, port, token) for announce",
-                PROTOCOL_ERROR
-            )
-            if (token.isEmpty()) throw MessageException(
+            require(token != null) {
+                "missing or invalid mandatory arguments (info_hash, port, token) for announce"
+            }
+
+            require(!token.isEmpty()) {
                 "zero-length token in announce_peer request. see BEP33 for reasons why " +
-                        "tokens might not have been issued by get_peers response",
-                PROTOCOL_ERROR
-            )
+                        "tokens might not have been issued by get_peers response"
+            }
             val name = arrayGet(args[Names.NAME])
             AnnounceRequest(address, id, tid, infoHash, port.toInt(), token, name)
 
         }
 
         else -> {
-            throw MessageException(
-                "method unknown in request",
-                METHOD_UNKNOWN
-            )
+            debug("method unknown in request")
+            return null
         }
     }
 }
 
-@Throws(MessageException::class)
 private fun parseResponse(
     address: InetSocketAddress,
     map: Map<String, BEObject>,
     tidMapper: (ByteArray) -> (Request?)
-): Message {
+): Message? {
     val tid = arrayGet(map[Names.T])
-    if (tid == null || tid.isEmpty()) throw MessageException(
-        "missing transaction ID",
-        PROTOCOL_ERROR
-    )
+
+    if (tid == null || tid.isEmpty()) {
+        debug("missing transaction ID")
+        return null
+    }
 
     // responses don't have explicit methods, need to match them to a request to figure that one out
     val request = tidMapper.invoke(tid)
-    if (request == null) throw MessageException(
-        "unknown message type",
-        PROTOCOL_ERROR
-    )
+    if (request == null) {
+        debug("unknown message type")
+        return null
+    }
     return parseResponse(address, map, request, tid)
 }
 
 
-@Throws(MessageException::class)
 private fun parseResponse(
     address: InetSocketAddress,
     map: Map<String, BEObject>,
     request: Request, tid: ByteArray
-): Message {
+): Message? {
     val args = (map[Names.R] as BEMap).map
 
     val id = arrayGet(args[Names.ID])
-        ?: throw MessageException(
-            "mandatory parameter 'id' missing",
-            PROTOCOL_ERROR
-        )
-
-    if (id.size != SHA1_HASH_LENGTH) {
-        throw MessageException("invalid or missing origin ID", PROTOCOL_ERROR)
-    }
+    require(id != null) { "mandatory parameter 'id' missing" }
+    require(id.size == SHA1_HASH_LENGTH) { "invalid or missing origin ID" }
 
     val msg: Message
 
@@ -276,10 +261,10 @@ private fun parseResponse(
         is PingRequest -> msg = PingResponse(address, id, tid)
         is AnnounceRequest -> msg = AnnounceResponse(address, id, tid)
         is FindNodeRequest -> {
-            if (!args.containsKey(Names.NODES) && !args.containsKey(Names.NODES6)) throw MessageException(
+            require(args.containsKey(Names.NODES) || args.containsKey(Names.NODES6)) {
                 "received response to find_node request with " +
-                        "neither 'nodes' nor 'nodes6' entry", PROTOCOL_ERROR
-            )
+                        "neither 'nodes' nor 'nodes6' entry"
+            }
             val nodes6 = extractNodes6(args)
             val nodes = extractNodes(args)
             msg = FindNodeResponse(address, id, tid, nodes, nodes6)
@@ -294,16 +279,8 @@ private fun parseResponse(
             var vals: List<ByteArray> = listOf()
             val values = args[Names.VALUES]
             if (values != null) {
-                if (values is BEList) {
-                    vals = values.list.map { it ->
-                        (it as BEString).content
-                    }
-                } else {
-                    throw MessageException(
-                        "expected 'values' " +
-                                "field in get_peers to be list of strings",
-                        PROTOCOL_ERROR
-                    )
+                vals = (values as BEList).list.map { it ->
+                    (it as BEString).content
                 }
             }
 
@@ -338,10 +315,8 @@ private fun parseResponse(
                         }
 
                         else -> {
-                            throw MessageException(
-                                "not accepted node " +
-                                        vals[i].contentToString(), PROTOCOL_ERROR
-                            )
+                            debug("not accepted address length")
+                            return null
                         }
                     }
                 }
@@ -350,19 +325,14 @@ private fun parseResponse(
             if (addresses.isNotEmpty() || nodes6.isNotEmpty() || nodes.isNotEmpty()) {
                 msg = GetPeersResponse(address, id, tid, token, nodes, nodes6, addresses)
             } else {
-                // todo maybe just ignoring exceptions
-                throw MessageException(
-                    "Neither nodes nor values in get_peers response",
-                    PROTOCOL_ERROR
-                )
+                debug("Neither nodes nor values in get_peers response")
+                return null
             }
         }
 
         else -> {
-            throw MessageException(
-                "not handled request response",
-                PROTOCOL_ERROR
-            )
+            debug("not handled request response")
+            return null
         }
     }
 
@@ -425,4 +395,3 @@ internal fun hostname(address: ByteArray): String {
 internal const val GENERIC_ERROR = 201
 internal const val SERVER_ERROR = 202
 internal const val PROTOCOL_ERROR = 203
-internal const val METHOD_UNKNOWN = 204

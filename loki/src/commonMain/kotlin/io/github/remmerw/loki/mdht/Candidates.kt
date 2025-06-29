@@ -35,10 +35,10 @@ internal class Candidates internal constructor(
     private val callsByIp: MutableMap<InetSocketAddress, MutableSet<Call>> = mutableMapOf()
     private val acceptedInets: MutableCollection<InetSocketAddress> = mutableSetOf()
     private val acceptedKeys: MutableCollection<Int> = mutableSetOf()
-    private val candidates: MutableMap<Peer, GraphNode> = mutableMapOf()
+    private val candidates: MutableMap<Peer, Node> = mutableMapOf()
 
 
-    private fun lookup(node: GraphNode): Boolean {
+    private fun lookup(node: Node): Boolean {
         val peer = node.peer
         if (node.unreachable) return false
 
@@ -151,7 +151,7 @@ internal class Candidates internal constructor(
 
         val sourceNode = if (source != null) candidates[source] else null
 
-        val children: MutableList<GraphNode> = mutableListOf()
+        val children: MutableList<Node> = mutableListOf()
 
         for (peer in entries) {
 
@@ -169,7 +169,7 @@ internal class Candidates internal constructor(
                 // -2 - 19 -> 5% chance to let even the worst stuff still
                 // through to keep the counters going up
                 val unreachable = min((failures - 2).toDouble(), 19.0) > rnd
-                GraphNode(peer, root, unreachable)
+                Node(peer, root, unreachable)
             }
 
             if (sourceNode != null) node.addSource(sourceNode)
@@ -181,7 +181,7 @@ internal class Candidates internal constructor(
     }
 
 
-    private fun sortedLookups(): List<GraphNode> {
+    private fun sortedLookups(): List<Node> {
         return candidates.values.sortedWith { a, b ->
             val res = threeWayDistance(target, a.peer.id, b.peer.id)
             if (res == 0) {
@@ -199,7 +199,7 @@ internal class Candidates internal constructor(
         // and that is more expensive than the sorting
 
         var node = sortedLookups()
-            .filter { node: GraphNode -> node.hasNoCalls() }.firstOrNull { node ->
+            .filter { node: Node -> node.hasNoCalls() }.firstOrNull { node ->
                 lookup(node)
             }
 
@@ -222,7 +222,7 @@ internal class Candidates internal constructor(
 
     }
 
-    fun nodeForEntry(e: Peer): GraphNode? {
+    fun nodeForEntry(e: Peer): Node? {
         return candidates[e]
     }
 

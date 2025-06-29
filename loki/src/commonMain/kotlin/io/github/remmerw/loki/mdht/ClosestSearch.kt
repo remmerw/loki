@@ -5,7 +5,7 @@ import kotlin.math.sign
 internal class ClosestSearch(
     private val key: ByteArray,
     private val maxEntries: Int,
-    private val node: Node
+    private val mdht: Mdht
 ) {
     private val entries: MutableSet<Peer> = mutableSetOf()
 
@@ -48,7 +48,7 @@ internal class ClosestSearch(
     }
 
     fun fill(filter: (Peer) -> Boolean) {
-        val table = node.routingTable
+        val table = mdht.routingTable
 
 
         val initialIdx = table.indexForId(key)

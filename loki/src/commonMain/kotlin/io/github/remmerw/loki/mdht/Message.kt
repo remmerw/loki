@@ -21,14 +21,6 @@ internal interface Response : Message
 internal interface Request : Message
 
 
-internal class MessageException : Exception {
-    val errorCode: Int
-
-    constructor(message: String, code: Int) : super(message) {
-        this.errorCode = code
-    }
-}
-
 @Suppress("ArrayInDataClass")
 internal data class AnnounceRequest(
     override val address: InetSocketAddress,
