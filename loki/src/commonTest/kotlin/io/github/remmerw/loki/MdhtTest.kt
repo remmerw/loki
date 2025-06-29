@@ -17,7 +17,7 @@ class MdhtTest {
     @Test
     fun randomKey(): Unit = runBlocking(Dispatchers.IO) {
         assertFailsWith<TimeoutCancellationException> {
-            withTimeout(120 * 1000) {
+            withTimeout(30 * 1000) {
                 val key = createRandomKey(SHA1_HASH_LENGTH)
 
                 val channel = lookupKey(peerId(), 4657, bootstrap(), key)

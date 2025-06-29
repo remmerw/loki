@@ -48,7 +48,7 @@ kotlin {
 
 
         val storage =
-            download( magnetUri, cacheDir, port) { torrentState: State ->
+            download(magnetUri, cacheDir, port) { torrentState: State ->
                 val completePieces = torrentState.piecesComplete
                 val totalPieces = torrentState.piecesTotal
 
