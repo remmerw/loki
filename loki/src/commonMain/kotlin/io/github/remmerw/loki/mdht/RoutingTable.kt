@@ -103,12 +103,13 @@ internal class RoutingTable internal constructor(
     }
 
     fun modify(
-        toRemove: Collection<RoutingTableEntry>?,
-        toAdd: Collection<RoutingTableEntry>?
+        toRemove: Collection<RoutingTableEntry>,
+        toAdd: Collection<RoutingTableEntry>
     ): RoutingTable {
-        val temp: MutableList<RoutingTableEntry> = ArrayList(entries)
-        if (toRemove != null) temp.removeAll(toRemove)
-        if (toAdd != null) temp.addAll(toAdd)
+        val temp: MutableList<RoutingTableEntry> = entries.toMutableList()
+        temp.removeAll(toRemove)
+        temp.addAll(toAdd)
         return RoutingTable(temp)
     }
+
 }

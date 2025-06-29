@@ -43,7 +43,7 @@ kotlin {
                 implementation(libs.kotlin.stdlib)
                 implementation(libs.kotlinx.io.core)
                 implementation(libs.uri.kmp)
-                implementation(libs.atomicfu) // todo remove
+                implementation(libs.atomicfu)
                 implementation(libs.ktor.network)
                 implementation(libs.cryptography.core)
                 implementation("io.github.remmerw:grid:0.0.2")
@@ -70,11 +70,17 @@ kotlin {
                 // implementation("dev.whyoleg.cryptography:cryptography-provider-openssl3-prebuilt:0.4.0")
             }
         }
+
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
             }
         }
+
+        androidUnitTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
+
         androidInstrumentedTest.dependencies {
             implementation(libs.kotlin.test)
             implementation("androidx.test:runner:1.6.2")
