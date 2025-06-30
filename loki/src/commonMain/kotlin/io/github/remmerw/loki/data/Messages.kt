@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.data
 
-import io.github.remmerw.loki.debug
 import io.ktor.utils.io.core.remaining
 import kotlinx.io.Buffer
 
