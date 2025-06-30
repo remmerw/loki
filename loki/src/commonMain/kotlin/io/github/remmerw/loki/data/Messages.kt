@@ -124,19 +124,6 @@ internal fun unchoke(): Unchoke {
     return unchoke
 }
 
-internal fun request(pieceIndex: Int): UtMetadata {
-    return UtMetadata(MetaType.REQUEST, pieceIndex)
-}
-
-internal fun data(pieceIndex: Int, totalSize: Int, data: ByteArray): UtMetadata {
-    return UtMetadata(MetaType.DATA, pieceIndex, totalSize, data)
-}
-
-internal fun reject(pieceIndex: Int): UtMetadata {
-    return UtMetadata(MetaType.REJECT, pieceIndex)
-}
-
-
 const val UPPER_RESERVED_BOUND = 8 * 8 - 1
 internal const val HANDSHAKE_RESERVED_LENGTH = 8
 internal const val TORRENT_ID_LENGTH: Int = 20

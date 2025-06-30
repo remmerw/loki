@@ -9,12 +9,9 @@ import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.Type
 import io.github.remmerw.loki.data.UtMetadata
-import io.github.remmerw.loki.data.request
 import io.github.remmerw.loki.debug
 import kotlinx.coroutines.delay
 import kotlin.concurrent.Volatile
-import kotlin.concurrent.atomics.AtomicBoolean
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.TimeSource
 
 internal class MetadataConsumer internal constructor(
@@ -23,8 +20,8 @@ internal class MetadataConsumer internal constructor(
 ) : Produces, Consumers {
 
     // set immediately after metadata has been fetched and verified
-    @OptIn(ExperimentalAtomicApi::class)
-    private val done = AtomicBoolean(false)
+    @Volatile
+    private var done = false
 
     @Volatile
     private var metadata: ExchangedMetadata? = null
@@ -106,7 +103,6 @@ internal class MetadataConsumer internal constructor(
         }
     }
 
-    @OptIn(ExperimentalAtomicApi::class)
     private fun processMetadataBlock(
         connection: Connection,
         pieceIndex: Int, totalSize: Int, data: ByteArray
@@ -142,7 +138,7 @@ internal class MetadataConsumer internal constructor(
                         dataStorage.metadata(metadata!!.metadata())
                         dataStorage.initialize(fetchedTorrent)
 
-                        done.store(true)
+                        done = true
                         connection.requestedFirst = null
                         connection.requestedAllPeers = false
 
@@ -158,10 +154,9 @@ internal class MetadataConsumer internal constructor(
     }
 
 
-    @OptIn(ExperimentalAtomicApi::class)
     override fun produce(connection: Connection, messageConsumer: (Message) -> Unit) {
         // stop here if metadata has already been fetched
-        if (done.load()) {
+        if (done) {
             return
         }
 
@@ -182,13 +177,17 @@ internal class MetadataConsumer internal constructor(
                     ) {
                         connection.requestedFirst = TimeSource.Monotonic.markNow()
                         // start with the first piece of metadata
-                        messageConsumer.invoke(request(0))
+                        if (doConsume) {
+                            messageConsumer.invoke(UtMetadata(MetaType.REQUEST, 0))
+                        }
                     }
                 } else if (!connection.requestedAllPeers) {
                     connection.requestedAllPeers = true
                     // starting with block #1 because by now we should have already received block #0
                     for (i in 1 until metadata!!.blockCount) {
-                        messageConsumer.invoke(request(i))
+                        if (doConsume) {
+                            messageConsumer.invoke(UtMetadata(MetaType.REQUEST, i))
+                        }
                     }
                 }
             }
@@ -198,9 +197,8 @@ internal class MetadataConsumer internal constructor(
     /**
      * @return Torrent, blocking the calling thread if it hasn't been fetched yet
      */
-    @OptIn(ExperimentalAtomicApi::class)
     suspend fun waitForTorrent() {
-        while (!done.load()) {
+        while (!done) {
             delay(100)
         }
     }

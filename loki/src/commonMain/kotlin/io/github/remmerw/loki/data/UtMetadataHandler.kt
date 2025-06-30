@@ -34,20 +34,20 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
     private fun decodeMetadata(buffer: Buffer): Message {
 
         val map = decode(buffer)
-        val messageType = checkNotNull(getMessageType(map))
-        val pieceIndex = checkNotNull(getPieceIndex(map))
-        val totalSize = checkNotNull(getTotalSize(map))
+        val messageType = getMessageType(map)
+        val pieceIndex = getPieceIndex(map)
+        val totalSize = getTotalSize(map)
         return when (messageType) {
             MetaType.REQUEST -> {
-                request(pieceIndex)
+                UtMetadata(MetaType.REQUEST, pieceIndex)
             }
 
             MetaType.DATA -> {
-                data(pieceIndex, totalSize, buffer.readByteArray())
+                UtMetadata(MetaType.DATA, pieceIndex, totalSize, buffer.readByteArray())
             }
 
             MetaType.REJECT -> {
-                reject(pieceIndex)
+                UtMetadata(MetaType.REJECT, pieceIndex)
             }
         }
 

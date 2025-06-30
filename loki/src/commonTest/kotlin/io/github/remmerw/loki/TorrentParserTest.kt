@@ -4,9 +4,10 @@ import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.core.newData
+import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.Peer
+import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.loki.data.data
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.runBlocking
@@ -86,7 +87,8 @@ class TorrentParserTest {
     @Test
     fun testMetadata() {
         val data = Buffer()
-        val utMetadata = data(0, 100, ByteArray(500))
+        val utMetadata =  UtMetadata(MetaType.DATA,0, 100,
+            ByteArray(500))
         val handler = UtMetadataHandler()
 
         val peer = Peer(

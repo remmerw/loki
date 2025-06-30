@@ -5,8 +5,6 @@ import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.Type
 import io.github.remmerw.loki.data.UtMetadata
-import io.github.remmerw.loki.data.data
-import io.github.remmerw.loki.data.reject
 import kotlin.math.min
 
 
@@ -48,19 +46,19 @@ internal class MetadataAgent(
         if (dataStorage.torrent()!!.isPrivate) {
             // reject all requests if:
             // - torrent is private
-            response = reject(pieceIndex)
+            response = UtMetadata(MetaType.REJECT, pieceIndex)
         } else {
 
             val size = dataStorage.metadataSize()
             val offset = pieceIndex * BLOCK_SIZE
             if (offset > size) {
-                response = reject(pieceIndex) // not valid piece index
+                response = UtMetadata(MetaType.REJECT, pieceIndex) // not valid piece index
             } else {
                 val length = min(size - offset, BLOCK_SIZE)
 
                 val data = dataStorage.sliceMetadata(offset, length)
 
-                response = data(pieceIndex, size, data)
+                response = UtMetadata(MetaType.DATA, pieceIndex, size, data)
             }
         }
 
