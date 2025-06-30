@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.data
 
+import io.github.remmerw.loki.debug
 import kotlinx.io.Buffer
 
 internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) : MessageHandler {
@@ -63,8 +64,14 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
 
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
         message as ExtendedMessage
-        if (Type.ExtendedHandshake == message.type) {
-            buffer.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
+
+
+        // todo seems expensive [too many objects]
+        debug(message.toString()) // todo remove
+        val bufferMsg = Buffer()
+
+        if (message is ExtendedHandshake) {
+            bufferMsg.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
         } else {
             val typeName = getTypeNameForJavaType(message.type)
             var typeId: Int? = null
@@ -74,10 +81,15 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
                 }
             }
             checkNotNull(typeId) { "Peer does not support extension message: $typeName" }
-            buffer.writeByte(typeId.toByte())
+            bufferMsg.writeByte(typeId.toByte())
         }
+        checkNotNull(handlers[message.type]).doEncode(peer, message, bufferMsg)
 
-        checkNotNull(handlers[message.type]).doEncode(peer, message, buffer)
+        val payloadLength = bufferMsg.size
+        val size = (payloadLength + MESSAGE_TYPE_SIZE).toInt()
+        buffer.writeInt(size)
+        buffer.writeByte(message.messageId)
+        buffer.transferFrom(bufferMsg)
 
     }
 

@@ -68,26 +68,12 @@ class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
         requireNotNull(messageId) { "Unknown message type: $messageId" }
 
         if (messageId == EXTENDED_MESSAGE_ID) {
-            encodeExtended(peer, message, buffer)
+            val extended = handlers[EXTENDED_MESSAGE_ID]!!
+            extended.doEncode(peer, message, buffer)
         } else {
             message.encode(buffer)
         }
     }
-
-    fun encodeExtended(peer: Peer, message: Message, buffer: Buffer) {
-        val extended = handlers[EXTENDED_MESSAGE_ID]!!
-
-        // todo seems expensive [too many objects]
-        debug(message.toString()) // todo remove
-        val bufferMsg = Buffer()
-        extended.doEncode(peer, message, bufferMsg)
-        val payloadLength = bufferMsg.size
-        val size = (payloadLength + MESSAGE_TYPE_SIZE).toInt()
-        buffer.writeInt(size)
-        buffer.writeByte(message.messageId)
-        buffer.transferFrom(bufferMsg)
-    }
-
 }
 
 
