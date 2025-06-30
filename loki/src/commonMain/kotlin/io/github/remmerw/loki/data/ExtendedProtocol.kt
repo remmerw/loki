@@ -41,7 +41,7 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
         return nameMap[typeId]!!
     }
 
-    fun getTypeNameForJavaType(type: Type): String {
+    fun getTypeNameFor(type: Type): String {
         return typeMap[type]!!
     }
 
@@ -68,7 +68,7 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
         if (message is ExtendedHandshake) {
             temp.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
         } else {
-            val typeName = getTypeNameForJavaType(message.type)
+            val typeName = getTypeNameFor(message.type)
             var typeId: Int? = null
             for (entry in extendedHandshakeHandler.getPeerTypeMapping(peer)) {
                 if (entry.value == typeName) {
