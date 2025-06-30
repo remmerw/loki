@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.data
 
+import io.github.remmerw.loki.debug
 import io.ktor.utils.io.core.remaining
 import kotlinx.io.Buffer
 
@@ -46,6 +47,7 @@ class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
             return keepAlive() // keep has length 0
         }
         val messageType = buffer.readByte()
+
         val handler = checkNotNull(handlers[messageType])
         return handler.doDecode(peer, buffer)
     }
@@ -53,24 +55,22 @@ class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
 
     fun encode(peer: Peer, message: Message, buffer: Buffer) {
 
-        val messageId = idMap[message.type]
-
         if (message is Handshake) {
-            writeHandshake(message, buffer)
+            message.encode(buffer)
             return
         }
         if (message is KeepAlive) {
-            writeKeepAlive(buffer)
+            message.encode(buffer)
             return
         }
 
+        val messageId = idMap[message.type]
         requireNotNull(messageId) { "Unknown message type: $messageId" }
 
         if (messageId == EXTENDED_MESSAGE_ID) {
             encodeExtended(peer, message, buffer)
         } else {
-            val messageHandler = handlers[messageId]!!
-            messageHandler.doEncode(peer, message, buffer)
+            message.encode(buffer)
         }
     }
 
@@ -78,6 +78,7 @@ class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
         val extended = handlers[EXTENDED_MESSAGE_ID]!!
 
         // todo seems expensive [too many objects]
+        debug(message.toString()) // todo remove
         val bufferMsg = Buffer()
         extended.doEncode(peer, message, bufferMsg)
         val payloadLength = bufferMsg.size
@@ -85,25 +86,6 @@ class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
         buffer.writeInt(size)
         buffer.writeByte(message.messageId)
         buffer.transferFrom(bufferMsg)
-    }
-
-
-    // keep-alive: <len=0000>
-    private fun writeKeepAlive(buffer: Buffer) {
-        buffer.write(KEEPALIVE)
-    }
-
-    // handshake: <pstrlen><pstr><reserved><info_hash><peer_id>
-    private fun writeHandshake(
-        handshake: Handshake,
-        buffer: Buffer
-    ) {
-        val data = handshake.name.encodeToByteArray()
-        buffer.writeByte(data.size.toByte())
-        buffer.write(data)
-        buffer.write(handshake.reserved)
-        buffer.write(handshake.torrentId.bytes)
-        buffer.write(handshake.peerId)
     }
 
 }

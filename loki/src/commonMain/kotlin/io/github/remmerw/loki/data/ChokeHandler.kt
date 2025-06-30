@@ -8,9 +8,7 @@ internal class ChokeHandler : UniqueMessageHandler(Type.Choke) {
     }
 
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
-
-        val size = MESSAGE_TYPE_SIZE
-        buffer.writeInt(size)
-        buffer.writeByte(message.messageId)
+        val choke = message as Choke
+        choke.encode(buffer)
     }
 }

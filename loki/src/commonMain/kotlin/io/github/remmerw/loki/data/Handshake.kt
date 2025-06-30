@@ -1,5 +1,7 @@
 package io.github.remmerw.loki.data
 
+import kotlinx.io.Buffer
+
 
 /**
  * Standard handshake message.
@@ -60,6 +62,16 @@ internal data class Handshake(
 
     override val type: Type
         get() = Type.Handshake
+
+    override fun encode(buffer: Buffer) {
+        // handshake: <pstrlen><pstr><reserved><info_hash><peer_id>
+        val data = name.encodeToByteArray()
+        buffer.writeByte(data.size.toByte())
+        buffer.write(data)
+        buffer.write(reserved)
+        buffer.write(torrentId.bytes)
+        buffer.write(peerId)
+    }
 
     override val messageId: Byte
         get() {

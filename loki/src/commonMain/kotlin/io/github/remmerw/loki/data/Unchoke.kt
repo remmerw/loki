@@ -1,10 +1,18 @@
 package io.github.remmerw.loki.data
 
+import kotlinx.io.Buffer
+
 internal class Unchoke : Message {
     override val messageId: Byte
         get() = UNCHOKE_ID
     override val type: Type
         get() = Type.Unchoke
+
+    override fun encode(buffer: Buffer) {
+        val size = MESSAGE_TYPE_SIZE
+        buffer.writeInt(size)
+        buffer.writeByte(messageId)
+    }
 }
 
 

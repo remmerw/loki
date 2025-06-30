@@ -14,6 +14,8 @@ import io.github.remmerw.loki.buri.BEObject
  *
  */
 internal data class ExtendedHandshake(val data: Map<String, BEObject>) : ExtendedMessage {
+
+
     override val type: Type
         get() = Type.ExtendedHandshake
 

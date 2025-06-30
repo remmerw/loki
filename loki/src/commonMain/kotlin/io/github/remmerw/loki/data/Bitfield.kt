@@ -1,5 +1,7 @@
 package io.github.remmerw.loki.data
 
+import kotlinx.io.Buffer
+
 internal data class Bitfield(val bitfield: ByteArray) : Message {
     override val messageId: Byte
         get() = BITFIELD_ID
@@ -23,5 +25,13 @@ internal data class Bitfield(val bitfield: ByteArray) : Message {
         result = 31 * result + messageId
         result = 31 * result + type.hashCode()
         return result
+    }
+
+    override fun encode(buffer: Buffer) {
+        val payloadLength = bitfield.size
+        val size = (payloadLength + MESSAGE_TYPE_SIZE)
+        buffer.writeInt(size)
+        buffer.writeByte(messageId)
+        buffer.write(bitfield)
     }
 }

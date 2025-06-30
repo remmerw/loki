@@ -8,8 +8,7 @@ internal class InterestedHandler : UniqueMessageHandler(Type.Interested) {
     }
 
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
-        val size = (MESSAGE_TYPE_SIZE)
-        buffer.writeInt(size)
-        buffer.writeByte(message.messageId)
+        val interested = message as Interested
+        interested.encode(buffer)
     }
 }

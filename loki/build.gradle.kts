@@ -16,7 +16,6 @@ version = "0.2.4"
 
 kotlin {
 
-
     androidTarget {
         instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
         publishLibraryVariants("release")
