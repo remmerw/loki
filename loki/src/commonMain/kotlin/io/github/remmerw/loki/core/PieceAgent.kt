@@ -41,7 +41,7 @@ internal class PieceAgent(
         }
 
         // discard blocks for pieces that have already been verified
-        if (dataStorage.isComplete(piece.pieceIndex)) {
+        if (dataStorage.isComplete(piece.piece)) {
             return
         }
 
@@ -49,7 +49,7 @@ internal class PieceAgent(
     }
 
     private fun checkBlockIsExpected(connection: Connection, piece: Piece): Boolean {
-        val key = key(piece.pieceIndex, piece.offset)
+        val key = key(piece.piece, piece.offset)
         return connection.pendingRequestsRemove(key)
     }
 
@@ -57,12 +57,12 @@ internal class PieceAgent(
 
         val assignment = connection.assignment
         if (assignment != null) {
-            if (assignment.isAssigned(piece.pieceIndex)) {
+            if (assignment.isAssigned(piece.piece)) {
                 assignment.check()
             }
         }
 
-        val chunk = dataStorage.chunk(piece.pieceIndex)
+        val chunk = dataStorage.chunk(piece.piece)
 
         if (chunk.isComplete) {
             return
@@ -71,8 +71,8 @@ internal class PieceAgent(
         chunk.writeBlock(piece.offset, piece.data)
 
         if (chunk.isComplete) {
-            if (dataStorage.storeChunk(piece.pieceIndex, chunk)) {
-                completedPieces.add(piece.pieceIndex)
+            if (dataStorage.storeChunk(piece.piece, chunk)) {
+                completedPieces.add(piece.piece)
             }
         }
 

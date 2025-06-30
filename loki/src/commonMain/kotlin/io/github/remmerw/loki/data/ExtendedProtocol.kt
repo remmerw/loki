@@ -62,16 +62,11 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
     }
 
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
-        val extendedMessage = message as ExtendedMessage
-        doEncode(peer, extendedMessage, extendedMessage.type, buffer)
-    }
-
-
-    private fun doEncode(peer: Peer, message: Message, type: Type, buffer: Buffer) {
-        if (Type.ExtendedHandshake == type) {
+        message as ExtendedMessage
+        if (Type.ExtendedHandshake == message.type) {
             buffer.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
         } else {
-            val typeName = getTypeNameForJavaType(type)
+            val typeName = getTypeNameForJavaType(message.type)
             var typeId: Int? = null
             for (entry in extendedHandshakeHandler.getPeerTypeMapping(peer)) {
                 if (entry.value == typeName) {
@@ -82,7 +77,7 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
             buffer.writeByte(typeId.toByte())
         }
 
-        checkNotNull(handlers[type]).doEncode(peer, message, buffer)
+        checkNotNull(handlers[message.type]).doEncode(peer, message, buffer)
 
     }
 

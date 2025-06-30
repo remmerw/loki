@@ -15,8 +15,13 @@ internal class PieceHandler : UniqueMessageHandler(Type.Piece) {
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
         val piece = message as Piece
 
+        val payloadLength = piece.data.size + (2 * Int.SIZE_BYTES)
+        val size = (payloadLength + MESSAGE_TYPE_SIZE)
+        buffer.writeInt(size)
+        buffer.writeByte(message.messageId)
+
         // piece: <len=0009+X><id=7><index><begin><block>
-        val pieceIndex = piece.pieceIndex
+        val pieceIndex = piece.piece
         val offset = piece.offset
 
         buffer.writeInt(pieceIndex)

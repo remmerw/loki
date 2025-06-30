@@ -90,7 +90,7 @@ internal open class ConnectionWorker(
     }
 
     private fun isCancelled(piece: Piece): Boolean {
-        val pieceIndex = piece.pieceIndex
+        val pieceIndex = piece.piece
         val offset = piece.offset
 
         return isCanceled(key(pieceIndex, offset))

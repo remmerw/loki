@@ -1,6 +1,7 @@
 package io.github.remmerw.loki.data
 
 import kotlinx.io.Buffer
+import kotlinx.io.writeUShort
 
 internal class PortHandler : UniqueMessageHandler(Type.Port) {
     override fun doDecode(peer: Peer, buffer: Buffer): Message {
@@ -9,26 +10,13 @@ internal class PortHandler : UniqueMessageHandler(Type.Port) {
 
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
         val port = message as Port
-        writePort(port.port, buffer)
+        val payloadLength = 2
+        val size = (payloadLength + MESSAGE_TYPE_SIZE)
+        buffer.writeInt(size)
+        buffer.writeByte(message.messageId)
+        buffer.writeUShort(port.port.toUShort())
     }
 
-
-    // port: <len=0003><id=9><listen-port>
-    private fun writePort(port: Int, buffer: Buffer) {
-        if (port < 0 || port > Short.MAX_VALUE * 2 + 1) {
-            throw RuntimeException("Invalid port: $port")
-        }
-
-        /**
-         * 2-bytes binary representation of a [Short].
-         */
-        buffer.write(
-            byteArrayOf(
-                (port shr 8).toByte(),
-                port.toByte()
-            )
-        )
-    }
 
     private fun decodePort(buffer: Buffer): Message {
         val port = checkNotNull(buffer.readShort()).toInt() and 0x0000FFFF

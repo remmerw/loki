@@ -9,25 +9,14 @@ internal class RequestHandler : UniqueMessageHandler(Type.Request) {
 
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
         val request = message as Request
-        writeRequest(request.piece, request.offset, request.length, buffer)
-    }
+        val payloadLength = 3 * Int.SIZE_BYTES
+        val size = (payloadLength + MESSAGE_TYPE_SIZE)
+        buffer.writeInt(size)
+        buffer.writeByte(message.messageId)
 
-    // request: <len=0013><id=6><index><begin><length>
-    private fun writeRequest(
-        pieceIndex: Int,
-        offset: Int,
-        length: Int,
-        buffer: Buffer
-    ) {
-        require(!(pieceIndex < 0 || offset < 0 || length <= 0)) {
-            ("Invalid arguments: pieceIndex (" + pieceIndex
-                    + "), offset (" + offset + "), length (" + length + ")")
-        }
-
-        buffer.writeInt(pieceIndex)
-        buffer.writeInt(offset)
-        buffer.writeInt(length)
-
+        buffer.writeInt(request.piece)
+        buffer.writeInt(request.offset)
+        buffer.writeInt(request.length)
     }
 
     private fun decodeRequest(buffer: Buffer): Message {

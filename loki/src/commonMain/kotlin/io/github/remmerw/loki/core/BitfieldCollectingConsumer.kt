@@ -82,7 +82,7 @@ internal class BitfieldCollectingConsumer(private val dataStorage: DataStorage) 
     private fun consume(have: Have, connection: Connection) {
         lock.withLock {
             val peerHaves = haves.getOrPut(connection) { mutableSetOf() }
-            peerHaves.add(have.pieceIndex)
+            peerHaves.add(have.piece)
         }
     }
 }

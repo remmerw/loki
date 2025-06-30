@@ -1,10 +1,17 @@
 package io.github.remmerw.loki.data
 
 internal data class Cancel(
-    val pieceIndex: Int,
+    val piece: Int,
     val offset: Int,
     val length: Int
 ) : Message {
+    init {
+        require(!(piece < 0 || offset < 0 || length <= 0)) {
+            ("Invalid arguments: pieceIndex (" + piece
+                    + "), offset (" + offset + "), length (" + length + ")")
+        }
+    }
+
     override val messageId: Byte
         get() = CANCEL_ID
 
@@ -12,9 +19,9 @@ internal data class Cancel(
         get() = Type.Cancel
 
     init {
-        require(!(pieceIndex < 0 || offset < 0 || length <= 0)) {
+        require(!(piece < 0 || offset < 0 || length <= 0)) {
             "Illegal arguments: piece index (" +
-                    pieceIndex + "), offset (" + offset + "), length (" + length + ")"
+                    piece + "), offset (" + offset + "), length (" + length + ")"
         }
     }
 }

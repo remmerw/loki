@@ -66,7 +66,7 @@ internal open class ConnectionState : ConnectionAgent() {
     fun onCancel(cancel: Cancel) {
         cancelledPeerRequests.add(
             key(
-                cancel.pieceIndex, cancel.offset
+                cancel.piece, cancel.offset
             )
         )
     }

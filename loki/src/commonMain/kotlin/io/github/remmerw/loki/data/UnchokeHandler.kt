@@ -8,5 +8,9 @@ internal class UnchokeHandler : UniqueMessageHandler(Type.Unchoke) {
     }
 
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
+
+        val size = MESSAGE_TYPE_SIZE
+        buffer.writeInt(size)
+        buffer.writeByte(message.messageId)
     }
 }

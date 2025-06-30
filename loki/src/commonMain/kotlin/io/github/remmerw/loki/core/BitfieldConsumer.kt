@@ -57,6 +57,6 @@ internal class BitfieldConsumer(
     }
 
     private fun consumeHave(have: Have, connection: Connection) {
-        dataStorage.pieceStatistics()!!.addPiece(connection, have.pieceIndex)
+        dataStorage.pieceStatistics()!!.addPiece(connection, have.piece)
     }
 }
