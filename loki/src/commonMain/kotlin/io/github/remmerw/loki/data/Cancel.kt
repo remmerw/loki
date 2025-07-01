@@ -21,13 +21,8 @@ internal data class Cancel(
         get() = Type.Cancel
 
 
-    override fun encode(buffer: Buffer) {
-        val payloadLength = 3 * Int.SIZE_BYTES
-        val size = (payloadLength + MESSAGE_TYPE_SIZE)
-        buffer.writeInt(size)
+    fun encode(buffer: Buffer) {
         buffer.writeByte(messageId)
-
-        // cancel: <len=0013><id=8><index><begin><length>
         buffer.writeInt(piece)
         buffer.writeInt(offset)
         buffer.writeInt(length)

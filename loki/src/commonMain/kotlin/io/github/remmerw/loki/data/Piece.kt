@@ -18,13 +18,8 @@ internal data class Piece(
     override val messageId: Byte
         get() = PIECE_ID
 
-    override fun encode(buffer: Buffer) {
-        val payloadLength = data.size + (2 * Int.SIZE_BYTES)
-        val size = (payloadLength + MESSAGE_TYPE_SIZE)
-        buffer.writeInt(size)
+    fun encode(buffer: Buffer) {
         buffer.writeByte(messageId)
-
-        // piece: <len=0009+X><id=7><index><begin><block>
         buffer.writeInt(piece)
         buffer.writeInt(offset)
         buffer.write(data)

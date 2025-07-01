@@ -11,7 +11,7 @@ internal class KeepAlive : Message {
         get() = Type.KeepAlive
 
     // keep-alive: <len=0000>
-    override fun encode(buffer: Buffer) {
+    fun encode(buffer: Buffer) {
         buffer.write(KEEPALIVE)
     }
 }

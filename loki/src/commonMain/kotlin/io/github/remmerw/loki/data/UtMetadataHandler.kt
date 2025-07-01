@@ -3,7 +3,6 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.loki.buri.BEInteger
 import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.decode
-import io.github.remmerw.loki.buri.encode
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 
@@ -15,7 +14,7 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
         val utMetadata = message as UtMetadata
 
-        return encodeMetadata(utMetadata, buffer)
+        return utMetadata.encode(buffer)
     }
 
     override fun doDecode(peer: Peer, buffer: Buffer): Message {
@@ -53,37 +52,6 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
 
     }
 
-    private fun encodeMetadata(utMetadata: UtMetadata, buffer: Buffer) {
-        writeMessage(utMetadata, buffer)
-    }
-
-    private fun writeMessage(message: UtMetadata, buffer: Buffer) {
-        val map = mutableMapOf<String, BEObject>()
-
-        map.put(
-            "msg_type", BEInteger(
-                message.metaType.id.toLong()
-            )
-        )
-        map.put(
-            "piece", BEInteger(
-                message.pieceIndex.toLong()
-            )
-        )
-        if (message.totalSize > 0) {
-            map.put(
-                "total_size", BEInteger(
-                    message.totalSize.toLong()
-                )
-            )
-        }
-
-        encode(map, buffer)
-
-        if (message.data.isNotEmpty()) {
-            buffer.write(message.data)
-        }
-    }
 
     private fun getMessageType(map: Map<String, BEObject>): MetaType {
         val type = map["msg_type"] as BEInteger?

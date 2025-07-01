@@ -4,7 +4,6 @@ import io.github.remmerw.loki.buri.BEInteger
 import io.github.remmerw.loki.buri.BEMap
 import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.decode
-import io.github.remmerw.loki.buri.encode
 import kotlinx.io.Buffer
 
 internal class ExtendedHandshakeHandler : MessageHandler {
@@ -47,7 +46,8 @@ internal class ExtendedHandshakeHandler : MessageHandler {
 
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
         val extendedHandshake = message as ExtendedHandshake
-        encode(extendedHandshake.data, buffer)
+        extendedHandshake.encode(buffer)
+
     }
 
     private fun mergeMappings(

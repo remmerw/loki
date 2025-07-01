@@ -15,10 +15,7 @@ internal data class Have(val piece: Int) : Message {
         require(piece >= 0) { "Illegal argument: piece index ($piece)" }
     }
 
-    override fun encode(buffer: Buffer) {
-        val payloadLength = Int.SIZE_BYTES
-        val size = (payloadLength + MESSAGE_TYPE_SIZE)
-        buffer.writeInt(size)
+    fun encode(buffer: Buffer) {
         buffer.writeByte(messageId)
         buffer.writeInt(piece)
     }

@@ -2,6 +2,7 @@ package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
+import io.github.remmerw.loki.data.KeepAlive
 import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.Messages
 import io.github.remmerw.loki.data.Peer
@@ -17,6 +18,7 @@ import io.ktor.utils.io.readByte
 import io.ktor.utils.io.readByteArray
 import io.ktor.utils.io.readInt
 import io.ktor.utils.io.writeBuffer
+import io.ktor.utils.io.writeInt
 import kotlinx.io.Buffer
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -36,7 +38,7 @@ internal class Connection internal constructor(
     @OptIn(ExperimentalAtomicApi::class)
     private val closed = AtomicBoolean(false)
     private val receiveChannel = socket.openReadChannel()
-    private val sendChannel = socket.openWriteChannel(autoFlush = true)
+    private val sendChannel = socket.openWriteChannel(autoFlush = false)
 
     fun peer(): Peer {
         return peer
@@ -92,8 +94,23 @@ internal class Connection internal constructor(
         lastActive = TimeSource.Monotonic.markNow()
         val buffer = Buffer()
         try {
-            messages.encode(peer, message, buffer)
+            when (message) {
+                is Handshake -> {
+                    message.encode(buffer)
+                }
+
+                is KeepAlive -> {
+                    message.encode(buffer)
+                }
+
+                else -> {
+                    messages.encode(peer, message, buffer)
+                    val size = buffer.size
+                    sendChannel.writeInt(size.toInt())
+                }
+            }
             sendChannel.writeBuffer(buffer)
+            sendChannel.flush()
         } catch (_: Throwable) {
             close()
         }

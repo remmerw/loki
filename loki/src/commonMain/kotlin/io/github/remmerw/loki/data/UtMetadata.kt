@@ -1,5 +1,9 @@
 package io.github.remmerw.loki.data
 
+import io.github.remmerw.loki.buri.BEInteger
+import io.github.remmerw.loki.buri.BEObject
+import kotlinx.io.Buffer
+
 
 internal data class UtMetadata(
     val metaType: MetaType,
@@ -43,4 +47,34 @@ internal data class UtMetadata(
         return result
     }
 
+
+
+    fun encode(buffer: Buffer) {
+
+        val map = mutableMapOf<String, BEObject>()
+
+        map.put(
+            "msg_type", BEInteger(
+                metaType.id.toLong()
+            )
+        )
+        map.put(
+            "piece", BEInteger(
+                pieceIndex.toLong()
+            )
+        )
+        if (totalSize > 0) {
+            map.put(
+                "total_size", BEInteger(
+                    totalSize.toLong()
+                )
+            )
+        }
+
+        io.github.remmerw.loki.buri.encode(map, buffer)
+
+        if (data.isNotEmpty()) {
+            buffer.write(data)
+        }
+    }
 }

@@ -19,10 +19,7 @@ internal data class Port(val port: Int) : Message {
         require(!(port < 0 || port > 65535)) { "Invalid argument: port ($port)" }
     }
 
-    override fun encode(buffer: Buffer) {
-        val payloadLength = 2
-        val size = (payloadLength + MESSAGE_TYPE_SIZE)
-        buffer.writeInt(size)
+    fun encode(buffer: Buffer) {
         buffer.writeByte(messageId)
         buffer.writeUShort(port.toUShort())
     }

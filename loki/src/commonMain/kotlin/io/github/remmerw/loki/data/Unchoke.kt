@@ -8,9 +8,7 @@ internal class Unchoke : Message {
     override val type: Type
         get() = Type.Unchoke
 
-    override fun encode(buffer: Buffer) {
-        val size = MESSAGE_TYPE_SIZE
-        buffer.writeInt(size)
+    fun encode(buffer: Buffer) {
         buffer.writeByte(messageId)
     }
 }

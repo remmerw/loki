@@ -54,24 +54,12 @@ class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
 
     fun encode(peer: Peer, message: Message, buffer: Buffer) {
 
-        if (message is Handshake) {
-            message.encode(buffer)
-            return
-        }
-        if (message is KeepAlive) {
-            message.encode(buffer)
-            return
-        }
-
         val messageId = idMap[message.type]
         requireNotNull(messageId) { "Unknown message type: $messageId" }
 
-        if (messageId == EXTENDED_MESSAGE_ID) {
-            val extended = handlers[EXTENDED_MESSAGE_ID]!!
-            extended.doEncode(peer, message, buffer)
-        } else {
-            message.encode(buffer)
-        }
+        val extended = handlers[messageId]!!
+        extended.doEncode(peer, message, buffer)
+
     }
 }
 
@@ -135,8 +123,6 @@ internal const val CANCEL_ID: Byte = 0x8
 internal const val PORT_ID: Byte = 9
 
 internal const val EXTENDED_MESSAGE_ID: Byte = 20
-
-internal const val MESSAGE_TYPE_SIZE: Int = 1
 
 internal const val EXTENDED_HANDSHAKE_TYPE_ID: Byte = 0
 

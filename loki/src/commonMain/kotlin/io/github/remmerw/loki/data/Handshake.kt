@@ -63,7 +63,7 @@ internal data class Handshake(
     override val type: Type
         get() = Type.Handshake
 
-    override fun encode(buffer: Buffer) {
+    fun encode(buffer: Buffer) {
         // handshake: <pstrlen><pstr><reserved><info_hash><peer_id>
         val data = name.encodeToByteArray()
         buffer.writeByte(data.size.toByte())

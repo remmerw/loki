@@ -21,12 +21,8 @@ internal data class Request(
     override val messageId: Byte
         get() = REQUEST_ID
 
-    override fun encode(buffer: Buffer) {
-        val payloadLength = 3 * Int.SIZE_BYTES
-        val size = (payloadLength + MESSAGE_TYPE_SIZE)
-        buffer.writeInt(size)
+    fun encode(buffer: Buffer) {
         buffer.writeByte(messageId)
-
         buffer.writeInt(piece)
         buffer.writeInt(offset)
         buffer.writeInt(length)

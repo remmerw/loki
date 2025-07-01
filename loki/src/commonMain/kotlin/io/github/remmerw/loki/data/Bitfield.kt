@@ -27,10 +27,7 @@ internal data class Bitfield(val bitfield: ByteArray) : Message {
         return result
     }
 
-    override fun encode(buffer: Buffer) {
-        val payloadLength = bitfield.size
-        val size = (payloadLength + MESSAGE_TYPE_SIZE)
-        buffer.writeInt(size)
+    fun encode(buffer: Buffer) {
         buffer.writeByte(messageId)
         buffer.write(bitfield)
     }

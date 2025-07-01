@@ -12,7 +12,7 @@ internal class PeerExchange(val added: Collection<Peer>, val dropped: Collection
     override val type: Type
         get() = Type.PeerExchange
 
-    fun encodeTo(buffer: Buffer) {
+    fun encode(buffer: Buffer) {
         val map = mutableMapOf<String, BEObject>()
         val inet4Peers = filterByAddressLength(added, 4) // ipv4
         val inet6Peers = filterByAddressLength(added, 16) // ipv6

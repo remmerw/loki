@@ -64,9 +64,10 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
         message as ExtendedMessage
 
-        val temp = Buffer()
+        println(message.toString())
+        buffer.writeByte(message.messageId)
         if (message is ExtendedHandshake) {
-            temp.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
+            buffer.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
         } else {
             val typeName = getTypeNameFor(message.type)
             var typeId: Int? = null
@@ -76,16 +77,9 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
                 }
             }
             checkNotNull(typeId) { "Peer does not support extension message: $typeName" }
-            temp.writeByte(typeId.toByte())
+            buffer.writeByte(typeId.toByte())
         }
-        checkNotNull(handlers[message.type]).doEncode(peer, message, temp)
-
-        val payloadLength = temp.size
-        val size = (payloadLength + MESSAGE_TYPE_SIZE).toInt()
-        buffer.writeInt(size)
-        buffer.writeByte(message.messageId)
-        buffer.transferFrom(temp)
-
+        checkNotNull(handlers[message.type]).doEncode(peer, message, buffer)
     }
 
 }
