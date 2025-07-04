@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.mdht
 
+import io.github.remmerw.loki.createInetSocketAddress
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,7 +20,7 @@ fun CoroutineScope.lookupKey(
     peerId: ByteArray, port: Int,
     bootstrap: List<InetSocketAddress>,
     key: ByteArray
-): ReceiveChannel<Address> = produce {
+): ReceiveChannel<InetSocketAddress> = produce {
 
 
     val mdht = Mdht(peerId, port)
@@ -89,7 +90,11 @@ fun CoroutineScope.lookupKey(
 
                                     for (item in rsp.items) {
                                         if (peers.add(item)) {
-                                            send(item)
+                                            send(
+                                                createInetSocketAddress(
+                                                    item.address, item.port.toInt()
+                                                )
+                                            )
                                         }
                                     }
 

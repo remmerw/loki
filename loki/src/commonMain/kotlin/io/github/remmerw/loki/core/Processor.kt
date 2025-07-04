@@ -1,15 +1,13 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.createInetSocketAddress
 import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
 import io.github.remmerw.loki.data.Messages
 import io.github.remmerw.loki.data.PROTOCOL_NAME
 import io.github.remmerw.loki.data.Peer
 import io.github.remmerw.loki.data.TorrentId
-import io.github.remmerw.loki.mdht.Address
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.Socket
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -90,15 +88,6 @@ internal suspend fun performHandshake(
     return false
 }
 
-
-internal suspend fun connectAddress(selectorManager: SelectorManager, address: Address): Socket {
-    val remoteAddress = createInetSocketAddress(address.address, address.port.toInt())
-
-    return aSocket(selectorManager).tcp().connect(remoteAddress) {
-        socketTimeout = 30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
-    }
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.processMessages(
     worker: Worker,
@@ -155,15 +144,18 @@ internal fun CoroutineScope.performConnection(
     messages: Messages,
     worker: Worker,
     selectorManager: SelectorManager,
-    channel: ReceiveChannel<Address>
+    channel: ReceiveChannel<InetSocketAddress>
 ): ReceiveChannel<Connection> = produce {
 
     channel.consumeEach { address ->
         launch {
             withTimeoutOrNull(3000) {
                 try {
-                    val socket = connectAddress(selectorManager, address)
-                    val peer = Peer(address.address, address.port)
+                    val socket = aSocket(selectorManager)
+                        .tcp().connect(address) {
+                            socketTimeout = 30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
+                        }
+                    val peer = Peer(address.resolveAddress()!!, address.port.toUShort())
                     val connection = Connection(peer, worker, socket, messages)
                     send(connection)
                 } catch (_: Throwable) {

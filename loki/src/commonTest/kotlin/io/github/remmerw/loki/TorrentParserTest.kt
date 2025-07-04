@@ -87,8 +87,10 @@ class TorrentParserTest {
     @Test
     fun testMetadata() {
         val data = Buffer()
-        val utMetadata =  UtMetadata(MetaType.DATA,0, 100,
-            ByteArray(500))
+        val utMetadata = UtMetadata(
+            MetaType.DATA, 0, 100,
+            ByteArray(500)
+        )
         val handler = UtMetadataHandler()
 
         val peer = Peer(

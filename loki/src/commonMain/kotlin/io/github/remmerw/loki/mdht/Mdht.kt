@@ -10,9 +10,10 @@ import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.util.collections.ConcurrentMap
 import io.ktor.utils.io.core.remaining
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.io.Buffer
@@ -35,9 +36,10 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     private val requestCalls: ConcurrentMap<Int, Call> = ConcurrentMap()
 
     private val database: Database = Database()
-    private val channel = Channel<EnqueuedSend>()
+    private val scope = CoroutineScope(Dispatchers.IO)
     private val selectorManager = SelectorManager(Dispatchers.IO)
     private var socket: BoundDatagramSocket? = null
+
 
     @Volatile
     var routingTable = RoutingTable()
@@ -47,16 +49,10 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
             InetSocketAddress("::", port)
         )
 
-        selectorManager.launch {
+        scope.launch {
             while (isActive) {
                 val datagram = socket!!.receive()
                 handleDatagram(datagram)
-            }
-        }
-
-        selectorManager.launch {
-            for (es in channel) {
-                send(es)
             }
         }
 
@@ -95,13 +91,13 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     fun shutdown() {
 
         try {
-            channel.close()
+            socket?.close()
         } catch (throwable: Throwable) {
             debug("Mdht", throwable)
         }
 
         try {
-            socket?.close()
+            scope.cancel()
         } catch (throwable: Throwable) {
             debug("Mdht", throwable)
         }
@@ -442,7 +438,9 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
 
 
         val es = EnqueuedSend(call.request, call)
-        channel.send(es)
+
+
+        send(es)
 
     }
 
@@ -617,7 +615,9 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     suspend fun sendMessage(msg: Message) {
         requireNotNull(msg.address) { "message destination must not be null" }
 
-        channel.send(EnqueuedSend(msg, null))
+
+        send(EnqueuedSend(msg, null))
+
     }
 
 
