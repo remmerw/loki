@@ -1,11 +1,11 @@
 [versions]
 agp = "8.11.0"
-atomicfu = "0.28.0"
+atomicfu = "0.29.0"
 kotlin = "2.2.0"
 kotlinxIoCore = "0.8.0"
-ktor = "3.2.0"
-uriKmp = "0.0.19"
-cryptographyCore = "0.4.0"
+ktor = "3.2.1"
+uriKmp = "0.0.20"
+cryptographyCore = "0.5.0"
 
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
