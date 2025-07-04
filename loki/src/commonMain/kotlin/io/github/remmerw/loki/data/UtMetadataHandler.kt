@@ -3,6 +3,7 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.loki.buri.BEInteger
 import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.decode
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 
@@ -11,13 +12,13 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
         Type.UtMetadata
     )
 
-    override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
+    override fun doEncode(address: InetSocketAddress, message: Message, buffer: Buffer) {
         val utMetadata = message as UtMetadata
 
         return utMetadata.encode(buffer)
     }
 
-    override fun doDecode(peer: Peer, buffer: Buffer): Message {
+    override fun doDecode(address: InetSocketAddress, buffer: Buffer): Message {
         return decodeMetadata(buffer)
     }
 

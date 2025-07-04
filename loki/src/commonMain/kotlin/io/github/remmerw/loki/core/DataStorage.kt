@@ -238,7 +238,7 @@ internal data class DataStorage(val data: Data) : Storage {
         }
     }
 
-    // todo has to read slice from file (randomfileaccess)
+    // todo has to read slice from file
     internal fun readBlock(piece: Int, offset: Int, length: Int): ByteArray {
         lock.withLock {
             val memory = reads.getOrPut(piece) {

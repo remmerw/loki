@@ -1,10 +1,11 @@
 package io.github.remmerw.loki.data
 
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.utils.io.core.readBytes
 import kotlinx.io.Buffer
 
 internal class PieceHandler : UniqueMessageHandler(Type.Piece) {
-    override fun doDecode(peer: Peer, buffer: Buffer): Message {
+    override fun doDecode(address: InetSocketAddress, buffer: Buffer): Message {
         val pieceIndex = checkNotNull(buffer.readInt())
         val blockOffset = checkNotNull(buffer.readInt())
         val data = buffer.readBytes()
@@ -12,7 +13,7 @@ internal class PieceHandler : UniqueMessageHandler(Type.Piece) {
         return Piece(pieceIndex, blockOffset, data)
     }
 
-    override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
+    override fun doEncode(address: InetSocketAddress, message: Message, buffer: Buffer) {
         val piece = message as Piece
         piece.encode(buffer)
     }

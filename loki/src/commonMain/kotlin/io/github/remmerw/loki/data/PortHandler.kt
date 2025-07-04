@@ -1,13 +1,14 @@
 package io.github.remmerw.loki.data
 
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 
 internal class PortHandler : UniqueMessageHandler(Type.Port) {
-    override fun doDecode(peer: Peer, buffer: Buffer): Message {
+    override fun doDecode(address: InetSocketAddress, buffer: Buffer): Message {
         return decodePort(buffer)
     }
 
-    override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
+    override fun doEncode(address: InetSocketAddress, message: Message, buffer: Buffer) {
         val port = message as Port
         port.encode(buffer)
     }

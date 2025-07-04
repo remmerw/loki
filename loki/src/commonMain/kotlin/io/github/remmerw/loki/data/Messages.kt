@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.data
 
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.utils.io.core.remaining
 import kotlinx.io.Buffer
 
@@ -41,7 +42,7 @@ class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
     }
 
 
-    fun decode(peer: Peer, buffer: Buffer): Message {
+    fun decode(peer: InetSocketAddress, buffer: Buffer): Message {
         if (buffer.remaining.toInt() == 0) {
             return keepAlive() // keep has length 0
         }
@@ -52,7 +53,7 @@ class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
     }
 
 
-    fun encode(peer: Peer, message: Message, buffer: Buffer) {
+    fun encode(peer: InetSocketAddress, message: Message, buffer: Buffer) {
 
         val messageId = idMap[message.type]
         requireNotNull(messageId) { "Unknown message type: $messageId" }

@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.data
 
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 
 internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) : MessageHandler {
@@ -48,7 +49,7 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
     override fun supportedTypes(): Collection<Type> = handlers.keys
 
 
-    override fun doDecode(peer: Peer, buffer: Buffer): Message {
+    override fun doDecode(address: InetSocketAddress, buffer: Buffer): Message {
         val typeId = buffer.readByte()
         val handler: MessageHandler?
         if (typeId == EXTENDED_HANDSHAKE_TYPE_ID) {
@@ -58,10 +59,10 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
             handler = handlersByTypeName[extendedType]
         }
 
-        return checkNotNull(handler).doDecode(peer, buffer)
+        return checkNotNull(handler).doDecode(address, buffer)
     }
 
-    override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
+    override fun doEncode(address: InetSocketAddress, message: Message, buffer: Buffer) {
         message as ExtendedMessage
 
         buffer.writeByte(message.messageId)
@@ -70,7 +71,7 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
         } else {
             val typeName = getTypeNameFor(message.type)
             var typeId: Int? = null
-            for (entry in extendedHandshakeHandler.getPeerTypeMapping(peer)) {
+            for (entry in extendedHandshakeHandler.getPeerTypeMapping(address)) {
                 if (entry.value == typeName) {
                     typeId = entry.key
                 }
@@ -78,7 +79,7 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
             checkNotNull(typeId) { "Peer does not support extension message: $typeName" }
             buffer.writeByte(typeId.toByte())
         }
-        checkNotNull(handlers[message.type]).doEncode(peer, message, buffer)
+        checkNotNull(handlers[message.type]).doEncode(address, message, buffer)
     }
 
 }

@@ -4,15 +4,17 @@ import io.github.remmerw.loki.buri.BEInteger
 import io.github.remmerw.loki.buri.BEMap
 import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.decode
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 
 internal class ExtendedHandshakeHandler : MessageHandler {
     override fun supportedTypes(): Collection<Type> = setOf(Type.ExtendedHandshake)
 
-    private val peerTypeMappings: MutableMap<Peer, MutableMap<Int, String>> = mutableMapOf()
+    private val peerTypeMappings: MutableMap<InetSocketAddress, MutableMap<Int, String>> =
+        mutableMapOf()
 
 
-    private fun processTypeMapping(peer: Peer, mappingObj: BEObject?) {
+    private fun processTypeMapping(peer: InetSocketAddress, mappingObj: BEObject?) {
         if (mappingObj == null) {
             return
         }
@@ -32,19 +34,19 @@ internal class ExtendedHandshakeHandler : MessageHandler {
         }
     }
 
-    fun getPeerTypeMapping(peer: Peer): Map<Int, String> {
+    fun getPeerTypeMapping(peer: InetSocketAddress): Map<Int, String> {
         val mapping: Map<Int, String>? = peerTypeMappings[peer]
         return mapping?.toMap() ?: emptyMap()
     }
 
-    override fun doDecode(peer: Peer, buffer: Buffer): Message {
+    override fun doDecode(address: InetSocketAddress, buffer: Buffer): Message {
         val map = decode(buffer)
-        processTypeMapping(peer, map["m"])
+        processTypeMapping(address, map["m"])
 
         return ExtendedHandshake(map)
     }
 
-    override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
+    override fun doEncode(address: InetSocketAddress, message: Message, buffer: Buffer) {
         val extendedHandshake = message as ExtendedHandshake
         extendedHandshake.encode(buffer)
 

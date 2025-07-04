@@ -5,11 +5,11 @@ import io.github.remmerw.loki.data.Handshake
 import io.github.remmerw.loki.data.KeepAlive
 import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.Messages
-import io.github.remmerw.loki.data.Peer
 import io.github.remmerw.loki.data.SHA1_HASH_LENGTH
 import io.github.remmerw.loki.data.TORRENT_ID_LENGTH
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -27,7 +27,7 @@ import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 internal class Connection internal constructor(
-    private val peer: Peer,
+    private val address: InetSocketAddress,
     private val worker: Worker,
     private val socket: Socket,
     private val messages: Messages
@@ -40,8 +40,8 @@ internal class Connection internal constructor(
     private val receiveChannel = socket.openReadChannel()
     private val sendChannel = socket.openWriteChannel(autoFlush = false)
 
-    fun peer(): Peer {
-        return peer
+    fun address(): InetSocketAddress {
+        return address
     }
 
     suspend fun reading(): Message? {
@@ -52,7 +52,7 @@ internal class Connection internal constructor(
             val buffer = receiveChannel.readBuffer(read)
             require(read == buffer.size.toInt()) { "Invalid number of data received" }
 
-            return messages.decode(peer, buffer)
+            return messages.decode(address, buffer)
         } catch (_: Throwable) {
             close()
         }
@@ -104,7 +104,7 @@ internal class Connection internal constructor(
                 }
 
                 else -> {
-                    messages.encode(peer, message, buffer)
+                    messages.encode(address, message, buffer)
                     val size = buffer.size
                     sendChannel.writeInt(size.toInt())
                 }

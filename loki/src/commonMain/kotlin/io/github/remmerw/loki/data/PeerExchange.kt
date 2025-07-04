@@ -3,11 +3,15 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.loki.buri.BEObject
 import io.github.remmerw.loki.buri.BEString
 import io.github.remmerw.loki.buri.encode
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.writeUShort
 
-internal class PeerExchange(val added: Collection<Peer>, val dropped: Collection<Peer>) :
+internal class PeerExchange(
+    val added: Collection<InetSocketAddress>,
+    val dropped: Collection<InetSocketAddress>
+) :
     ExtendedMessage {
     override val type: Type
         get() = Type.PeerExchange
@@ -36,21 +40,21 @@ internal class PeerExchange(val added: Collection<Peer>, val dropped: Collection
 
 
     private fun filterByAddressLength(
-        peers: Collection<Peer>, addressLength: Int
-    ): Collection<Peer> {
-        return peers.filter { peer: Peer -> peer.address.size == addressLength }
+        peers: Collection<InetSocketAddress>, addressLength: Int
+    ): Collection<InetSocketAddress> {
+        return peers.filter { peer -> peer.resolveAddress()!!.size == addressLength }
     }
 
-    private fun encodePeers(peers: Collection<Peer>): BEString {
+    private fun encodePeers(peers: Collection<InetSocketAddress>): BEString {
         val bos = Buffer()
         for (peer in peers) {
-            bos.write(peer.address)
-            bos.writeUShort(peer.port)
+            bos.write(peer.resolveAddress()!!)
+            bos.writeUShort(peer.port.toUShort())
         }
         return BEString(bos.readByteArray())
     }
 
-    private fun encodePeerOptions(peers: Collection<Peer>): BEString {
+    private fun encodePeerOptions(peers: Collection<InetSocketAddress>): BEString {
         val bos = Buffer()
         repeat(peers.size) { bos.writeInt(0) }
         return BEString(bos.readByteArray())

@@ -4,7 +4,6 @@ import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
 import io.github.remmerw.loki.data.Messages
 import io.github.remmerw.loki.data.PROTOCOL_NAME
-import io.github.remmerw.loki.data.Peer
 import io.github.remmerw.loki.data.TorrentId
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
@@ -68,14 +67,14 @@ internal suspend fun performHandshake(
         return false
     }
 
-    val existing = worker.getConnection(connection.peer())
+    val existing = worker.getConnection(connection.address())
     if (existing != null) {
         return false
     }
 
     val success = performHandshake(connection, peerId, torrentId, handshakeHandlers)
     if (success) {
-        val existing = worker.getConnection(connection.peer())
+        val existing = worker.getConnection(connection.address())
         if (existing != null) {
             connection.close()
             return false
@@ -155,8 +154,7 @@ internal fun CoroutineScope.performConnection(
                         .tcp().connect(address) {
                             socketTimeout = 30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
                         }
-                    val peer = Peer(address.resolveAddress()!!, address.port.toUShort())
-                    val connection = Connection(peer, worker, socket, messages)
+                    val connection = Connection(address, worker, socket, messages)
                     send(connection)
                 } catch (_: Throwable) {
                     // this is the normal case when address is unreachable or timeouted

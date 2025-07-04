@@ -5,7 +5,6 @@ import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.core.newData
 import io.github.remmerw.loki.data.MetaType
-import io.github.remmerw.loki.data.Peer
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
 import kotlinx.coroutines.Dispatchers
@@ -93,8 +92,8 @@ class TorrentParserTest {
         )
         val handler = UtMetadataHandler()
 
-        val peer = Peer(
-            Random.nextBytes(4), 999.toUShort()
+        val peer = createInetSocketAddress(
+            Random.nextBytes(4), 999
         )
 
         handler.doEncode(peer, utMetadata, data)

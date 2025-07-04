@@ -6,10 +6,10 @@ import io.github.remmerw.loki.PEER_INACTIVITY_THRESHOLD
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_MANDATORY_INTERVAL
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
 import io.github.remmerw.loki.data.Message
-import io.github.remmerw.loki.data.Peer
 import io.github.remmerw.loki.data.Type
 import io.github.remmerw.loki.data.interested
 import io.github.remmerw.loki.data.notInterested
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.util.collections.ConcurrentMap
 import kotlin.concurrent.Volatile
 import kotlin.time.TimeSource
@@ -20,7 +20,7 @@ internal class Worker(
     private val dataStorage: DataStorage,
     agents: List<Agent>
 ) {
-    private val connections: MutableMap<Peer, Connection> = ConcurrentMap()
+    private val connections: MutableMap<InetSocketAddress, Connection> = ConcurrentMap()
 
     @Volatile
     private var lastUpdatedAssignments: ValueTimeMark = TimeSource.Monotonic.markNow()
@@ -96,7 +96,7 @@ internal class Worker(
     }
 
 
-    fun getConnection(peer: Peer): Connection? {
+    fun getConnection(peer: InetSocketAddress): Connection? {
 
         return connections[peer]
 
@@ -110,14 +110,14 @@ internal class Worker(
 
     fun addConnection(connection: Connection) {
 
-        check(connections.put(connection.peer(), connection) == null)
+        check(connections.put(connection.address(), connection) == null)
 
     }
 
 
     fun purgeConnection(connection: Connection) {
 
-        connections.remove(connection.peer())
+        connections.remove(connection.address())
 
         assignments.remove(connection)
         dataStorage.pieceStatistics()?.removeBitfield(connection)

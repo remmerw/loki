@@ -3,7 +3,6 @@ package io.github.remmerw.loki
 import io.github.remmerw.loki.core.Bitmask
 import io.github.remmerw.loki.core.ExchangedMetadata
 import io.github.remmerw.loki.data.MetaType
-import io.github.remmerw.loki.data.Peer
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.loki.mdht.peerId
@@ -58,8 +57,8 @@ class ExchangedMetadataTest {
                 totalSize = 100,
                 data = data
             )
-            val peer = Peer(
-                Random.nextBytes(4), 999.toUShort()
+            val peer = createInetSocketAddress(
+                Random.nextBytes(4), 999
             )
             val buffer = Buffer()
             handler.doEncode(peer, metadata, buffer)
