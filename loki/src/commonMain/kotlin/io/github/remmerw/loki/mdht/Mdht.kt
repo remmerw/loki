@@ -63,8 +63,6 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     }
 
     private suspend fun send(es: EnqueuedSend) {
-        // simply assume nobody else is writing and attempt to do it
-        // if it fails it's the current writer's job to double-check after releasing the write lock
 
         try {
             val buffer = Buffer()
