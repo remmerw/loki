@@ -64,7 +64,6 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
     override fun doEncode(peer: Peer, message: Message, buffer: Buffer) {
         message as ExtendedMessage
 
-        println(message.toString())
         buffer.writeByte(message.messageId)
         if (message is ExtendedHandshake) {
             buffer.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
