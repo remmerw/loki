@@ -4,6 +4,7 @@ import io.github.remmerw.loki.data.Have
 import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.Piece
 import io.github.remmerw.loki.data.Type
+import io.github.remmerw.loki.debug
 import io.ktor.util.collections.ConcurrentSet
 
 internal class PieceAgent(
@@ -73,6 +74,10 @@ internal class PieceAgent(
         if (chunk.isComplete) {
             if (dataStorage.storeChunk(piece.piece, chunk)) {
                 completedPieces.add(piece.piece)
+            } else {
+                // chunk was shit (for testing now - close connection)
+                debug("Received shit chunk, close connection -> " + connection.peer() )
+                connection.close()
             }
         }
 
