@@ -405,8 +405,12 @@ fun bootstrap(): List<InetSocketAddress> {
 private val isError: Boolean
     get() = true
 
+@Suppress("SameReturnValue")
+private val isDebug: Boolean
+    get() = false
+
 internal fun debug(text: String) {
-    if (isError) {
+    if (isDebug) {
         println(text)
     }
 }
