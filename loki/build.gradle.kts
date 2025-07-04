@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.remmerw"
-version = "0.2.5"
+version = "0.2.6"
 
 kotlin {
 
@@ -45,7 +45,7 @@ kotlin {
                 implementation(libs.atomicfu)
                 implementation(libs.ktor.network)
                 implementation(libs.cryptography.core)
-                implementation("io.github.remmerw:grid:0.0.2")
+                implementation("io.github.remmerw:grid:0.0.3")
             }
         }
 

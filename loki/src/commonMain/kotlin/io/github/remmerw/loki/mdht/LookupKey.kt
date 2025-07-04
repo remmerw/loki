@@ -178,10 +178,6 @@ data class Address(val address: ByteArray, val port: UShort) {
         return buffer.readByteArray()
     }
 
-    fun hostname(): String {
-        return hostname(address)
-    }
-
     override fun hashCode(): Int {
         var result = address.contentHashCode()
         result = 31 * result + port.hashCode()

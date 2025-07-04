@@ -1,15 +1,13 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.grid.ReadOnlyMemory
+import io.github.remmerw.grid.Memory
 import io.github.remmerw.grid.allocateMemory
-import io.github.remmerw.grid.allocateReadOnlyMemory
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 import kotlinx.io.Buffer
-import kotlinx.io.RawSource
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -21,7 +19,7 @@ internal data class DataStorage(val data: Data) : Storage {
 
     private val validPieces: MutableSet<Int> = mutableSetOf()
     private val chunks: MutableMap<Int, Chunk> = mutableMapOf()
-    private val reads: MutableMap<Int, ReadOnlyMemory> = mutableMapOf()
+    private val reads: MutableMap<Int, Memory> = mutableMapOf()
     private val skeletons: MutableList<Skeleton> = mutableListOf()
     private var pieceFiles: MutableMap<Int, List<TorrentFile>> = mutableMapOf()
     private val bitmaskDatabase = Path(data.directory(), "bitmask.db")
@@ -42,7 +40,7 @@ internal data class DataStorage(val data: Data) : Storage {
     }
 
     @Volatile
-    private var metadata: ReadOnlyMemory? = null
+    private var metadata: Memory? = null
 
     @Volatile
     private var dataBitfield: DataBitfield? = null
@@ -85,7 +83,7 @@ internal data class DataStorage(val data: Data) : Storage {
         return dataBitfield?.isVerified(piece) == true
     }
 
-    fun metadata(metadata: ReadOnlyMemory) {
+    fun metadata(metadata: Memory) {
         this.metadata = metadata
         if (!SystemFileSystem.exists(torrentDatabase)) {
             SystemFileSystem.sink(torrentDatabase, false).use { sink ->
@@ -244,18 +242,10 @@ internal data class DataStorage(val data: Data) : Storage {
     internal fun readBlock(piece: Int, offset: Int, length: Int): ByteArray {
         lock.withLock {
             val memory = reads.getOrPut(piece) {
-                val memory: ReadOnlyMemory
-                rawSource(piece).buffered().use { source ->
-                    memory = allocateReadOnlyMemory(source.readByteArray())
-                }
-                memory
+                allocateMemory(data.path(piece))
             }
             return memory.readBytes(offset, length)
         }
-    }
-
-    internal fun rawSource(piece: Int): RawSource {
-        return data.rawSource(piece)
     }
 
 
@@ -277,7 +267,7 @@ internal data class DataStorage(val data: Data) : Storage {
 
     override fun storageUnits(): List<StorageUnit> {
         return torrentFiles().filter { torrentFile -> torrentFile.size > 0 }
-            .map { torrentFile -> StorageUnit(this, torrent!!.chunkSize, torrentFile) }
+            .map { torrentFile -> StorageUnit(data, torrent!!.chunkSize, torrentFile) }
     }
 
     internal fun torrentFiles(): List<TorrentFile> {

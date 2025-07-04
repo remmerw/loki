@@ -37,6 +37,8 @@ import kotlinx.coroutines.delay
 import kotlinx.io.files.Path
 
 
+expect fun createInetSocketAddress(address: ByteArray, port: Int): InetSocketAddress
+
 data class State(val piecesTotal: Int, val piecesComplete: Int)
 
 interface Storage {

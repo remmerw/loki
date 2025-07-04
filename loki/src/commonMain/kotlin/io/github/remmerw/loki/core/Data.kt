@@ -29,15 +29,9 @@ class Data(private val directory: Path) {
         }
     }
 
-    fun deleteBlock(cid: Int) {
-        val file = path(cid)
-        require(SystemFileSystem.exists(file)) { "Block does not exists" }
-        SystemFileSystem.delete(file, true)
-    }
-
 
     @OptIn(ExperimentalStdlibApi::class)
-    private fun path(cid: Int): Path {
+    fun path(cid: Int): Path {
         return Path(directory, cid.toHexString())
     }
 }

@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.loki.createInetSocketAddress
 import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
 import io.github.remmerw.loki.data.Messages
@@ -8,7 +9,6 @@ import io.github.remmerw.loki.data.Peer
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.mdht.Address
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import kotlinx.coroutines.CoroutineScope
@@ -92,7 +92,7 @@ internal suspend fun performHandshake(
 
 
 internal suspend fun connectAddress(selectorManager: SelectorManager, address: Address): Socket {
-    val remoteAddress = InetSocketAddress(address.hostname(), address.port.toInt())
+    val remoteAddress = createInetSocketAddress(address.address, address.port.toInt())
 
     return aSocket(selectorManager).tcp().connect(remoteAddress) {
         socketTimeout = 30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds

@@ -8,7 +8,7 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
 
 class StorageUnit internal constructor(
-    private val dataStorage: DataStorage,
+    private val data: Data,
     private val chunkSize: Int,
     private val torrentFile: TorrentFile
 ) {
@@ -22,6 +22,7 @@ class StorageUnit internal constructor(
         return relPaths.last()
     }
 
+    @Suppress("unused")
     fun relPaths(): List<String> {
         return relPaths
     }
@@ -38,25 +39,25 @@ class StorageUnit internal constructor(
                     val offset = startPos.rem(chunkSize)
                     if (lastIndex == 0) {
                         val remaining = endPos.rem(chunkSize) - offset
-                        dataStorage.rawSource(piece).buffered().use { source ->
+                        data.rawSource(piece).buffered().use { source ->
                             source.skip(offset)
                             val bytes = source.readByteArray(remaining.toInt())
                             sink.writeFully(bytes)
                         }
                     } else {
-                        dataStorage.rawSource(piece).buffered().use { source ->
+                        data.rawSource(piece).buffered().use { source ->
                             source.skip(offset)
                             source.transferTo(sink)
                         }
                     }
                 } else if (index == lastIndex) {
                     val remaining = endPos.rem(chunkSize)
-                    dataStorage.rawSource(piece).buffered().use { source ->
+                    data.rawSource(piece).buffered().use { source ->
                         val bytes = source.readByteArray(remaining.toInt())
                         sink.writeFully(bytes)
                     }
                 } else {
-                    dataStorage.rawSource(piece).buffered().use { source ->
+                    data.rawSource(piece).buffered().use { source ->
                         source.transferTo(sink)
                     }
                 }
