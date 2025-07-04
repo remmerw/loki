@@ -101,13 +101,13 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         }
 
         try {
-            selectorManager.close()
+            socket?.close()
         } catch (throwable: Throwable) {
             debug("Mdht", throwable)
         }
 
         try {
-            socket?.close()
+            selectorManager.close()
         } catch (throwable: Throwable) {
             debug("Mdht", throwable)
         }
