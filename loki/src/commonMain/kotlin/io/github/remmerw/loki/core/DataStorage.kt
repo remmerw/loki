@@ -194,7 +194,6 @@ internal data class DataStorage(val data: Data) : Storage {
             dataBitfield!!.markVerified(piece)
             return true
         } else {
-            data.deleteBlock(piece)
             chunk.reset()
             return false
         }
