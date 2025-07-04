@@ -76,7 +76,7 @@ internal class PieceAgent(
                 completedPieces.add(piece.piece)
             } else {
                 // chunk was shit (for testing now - close connection)
-                debug("Received shit chunk, close connection -> " + connection.peer() )
+                debug("Received shit chunk, close connection -> " + connection.peer())
                 connection.close()
             }
         }

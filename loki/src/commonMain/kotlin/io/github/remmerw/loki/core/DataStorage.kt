@@ -194,7 +194,6 @@ internal data class DataStorage(val data: Data) : Storage {
         if (result) {
             data.storeBlock(piece, chunk.memory)
             chunks.remove(piece)
-            reads.put(piece, chunk.memory)
             dataBitfield!!.markVerified(piece)
             return true
         } else {
@@ -239,6 +238,7 @@ internal data class DataStorage(val data: Data) : Storage {
         }
     }
 
+    // todo has to read slice from file (randomfileaccess)
     internal fun readBlock(piece: Int, offset: Int, length: Int): ByteArray {
         lock.withLock {
             val memory = reads.getOrPut(piece) {

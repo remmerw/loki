@@ -7,7 +7,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.isActive
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.writeUShort
@@ -30,7 +29,7 @@ fun CoroutineScope.lookupKey(
 
 
     try {
-        while (isActive) {
+        while (true) {
 
             val closest = ClosestSet(key)
             val candidates = Candidates(key)
@@ -43,8 +42,6 @@ fun CoroutineScope.lookupKey(
             candidates.addCandidates(null, kns.entries())
 
             do {
-                ensureActive()
-
                 do {
                     ensureActive()
 
@@ -52,21 +49,19 @@ fun CoroutineScope.lookupKey(
                         goodForRequest(peer, closest, candidates, inFlight)
                     }
 
-                    if (peer == null) {
-                        break
+                    if (peer != null) {
+                        val tid = createRandomKey(TID_LENGTH)
+                        val request = GetPeersRequest(peer.address, peerId, tid, key)
+                        val call = Call(request, peer.id)
+                        call.builtFromEntry(peer)
+                        candidates.addCall(call, peer)
+                        inFlight.add(call)
+                        mdht.doRequestCall(call)
                     }
+                } while (peer != null)
 
-                    val tid = createRandomKey(TID_LENGTH)
 
-                    val request = GetPeersRequest(peer.address, peerId, tid, key)
-
-                    val call = Call(request, peer.id)
-                    call.builtFromEntry(peer)
-                    candidates.addCall(call, peer)
-                    inFlight.add(call)
-                    mdht.doRequestCall(call)
-                } while (isActive)
-
+                ensureActive()
 
                 val removed: MutableList<Call> = mutableListOf()
                 inFlight.forEach { call ->
@@ -123,13 +118,12 @@ fun CoroutineScope.lookupKey(
                                     mdht.timeout(call)
                                 }
                             }
-
                         }
                     }
                 }
 
                 inFlight.removeAll(removed)
-
+                ensureActive()
             } while (!inFlight.isEmpty())
 
             delay(LOOKUP_DELAY)
