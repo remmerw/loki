@@ -213,10 +213,8 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         }
 
         // everything OK, so store the value
-        database.store(
-            request.infoHash,
-            transform(request.address)
-        )
+        database.store(request.infoHash, request.address)
+
 
         // send a proper response to indicate everything is OK
         val rsp = AnnounceResponse(request.address, peerId, request.tid)
@@ -820,11 +818,6 @@ internal fun goodForRequest(
     ) result = true
 
     return result
-}
-
-internal fun transform(socketAddress: InetSocketAddress): Address {
-    val address = socketAddress.resolveAddress()!!
-    return Address(address, socketAddress.port.toUShort())
 }
 
 internal fun encode(socketAddress: InetSocketAddress): ByteArray {

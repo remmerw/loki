@@ -8,6 +8,8 @@ import io.github.remmerw.loki.buri.BEString
 import io.github.remmerw.loki.buri.encode
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
+import kotlinx.io.writeUShort
 
 
 internal interface Message {
@@ -207,7 +209,7 @@ internal data class GetPeersResponse(
     val token: ByteArray?,
     val nodes: List<Peer>,
     val nodes6: List<Peer>,
-    val items: List<Address>
+    val items: List<InetSocketAddress>
 ) : Response {
 
 
@@ -232,6 +234,13 @@ internal data class GetPeersResponse(
 
         encode(base, buffer)
     }
+}
+
+private fun InetSocketAddress.encoded(): ByteArray {
+    val buffer = Buffer()
+    buffer.write(resolveAddress()!!)
+    buffer.writeUShort(port.toUShort())
+    return buffer.readByteArray()
 }
 
 @Suppress("ArrayInDataClass")

@@ -8,6 +8,7 @@ import io.github.remmerw.loki.buri.BEString
 import io.github.remmerw.loki.buri.arrayGet
 import io.github.remmerw.loki.buri.longGet
 import io.github.remmerw.loki.buri.stringGet
+import io.github.remmerw.loki.createInetSocketAddress
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
@@ -274,7 +275,7 @@ private fun parseResponse(
             val token = arrayGet(args[Names.TOKEN])
             val nodes6 = extractNodes6(args)
             val nodes = extractNodes(args)
-            val addresses: MutableList<Address> = mutableListOf()
+            val addresses: MutableList<InetSocketAddress> = mutableListOf()
 
             var vals: List<ByteArray> = listOf()
             val values = args[Names.VALUES]
@@ -298,7 +299,9 @@ private fun parseResponse(
                                 .toInt() and 0xFF) shl 8 or (buffer[5].toInt() and 0xFF)).toUShort()
 
                             if (port > 0.toUShort() && port <= 65535.toUShort()) {
-                                addresses.add(Address(address, port))
+                                addresses.add(
+                                    createInetSocketAddress(address, port.toInt())
+                                )
                             }
                         }
 
@@ -310,7 +313,9 @@ private fun parseResponse(
                                 .toInt() and 0xFF) shl 8 or (buffer[17].toInt() and 0xFF)).toUShort()
 
                             if (port > 0.toUShort() && port <= 65535.toUShort()) {
-                                addresses.add(Address(address, port))
+                                addresses.add(
+                                    createInetSocketAddress(address, port.toInt())
+                                )
                             }
                         }
 
@@ -341,7 +346,7 @@ private fun parseResponse(
     if (ip != null) {
         val addr = unpackAddress(ip)
         if (addr != null) {
-            debug("External IP: $addr")
+            debug("My IP: $addr")
         }
     }
 
@@ -349,13 +354,13 @@ private fun parseResponse(
 }
 
 
-private fun unpackAddress(raw: ByteArray): Address? {
+private fun unpackAddress(raw: ByteArray): InetSocketAddress? {
     if (raw.size != 6 && raw.size != 18) return null
     val buffer = Buffer()
     buffer.write(raw)
     val rawIP = buffer.readByteArray(raw.size - 2)
     val port = buffer.readUShort()
-    return Address(rawIP, port)
+    return createInetSocketAddress(rawIP, port.toInt())
 }
 
 

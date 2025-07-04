@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.mdht
 
-import io.github.remmerw.loki.createInetSocketAddress
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -8,9 +7,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
-import kotlinx.io.Buffer
-import kotlinx.io.readByteArray
-import kotlinx.io.writeUShort
 import kotlin.random.Random
 
 const val LOOKUP_DELAY: Long = 5000
@@ -26,7 +22,7 @@ fun CoroutineScope.lookupKey(
     val mdht = Mdht(peerId, port)
     mdht.startup(bootstrap)
 
-    val peers: MutableSet<Address> = mutableSetOf()
+    val peers: MutableSet<String> = mutableSetOf()
 
 
     try {
@@ -89,12 +85,8 @@ fun CoroutineScope.lookupKey(
                                     candidates.addCandidates(match, returnedNodes)
 
                                     for (item in rsp.items) {
-                                        if (peers.add(item)) {
-                                            send(
-                                                createInetSocketAddress(
-                                                    item.address, item.port.toInt()
-                                                )
-                                            )
+                                        if (peers.add(item.hostname)) {
+                                            send(item)
                                         }
                                     }
 
@@ -152,37 +144,6 @@ fun peerId(): ByteArray {
     return Random.nextBytes(peerId, 8)
 }
 
-
-data class Address(val address: ByteArray, val port: UShort) {
-    init {
-        require(port > 0.toUShort() && port <= 65535.toUShort()) {
-            "Invalid port: $port"
-        }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Address) return false
-
-        if (!address.contentEquals(other.address)) return false
-        if (port != other.port) return false
-
-        return true
-    }
-
-    fun encoded(): ByteArray {
-        val buffer = Buffer()
-        buffer.write(address)
-        buffer.writeUShort(port)
-        return buffer.readByteArray()
-    }
-
-    override fun hashCode(): Int {
-        var result = address.contentHashCode()
-        result = 31 * result + port.hashCode()
-        return result
-    }
-}
 
 
 
