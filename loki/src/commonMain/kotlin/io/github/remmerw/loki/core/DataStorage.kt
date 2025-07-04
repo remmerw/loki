@@ -2,9 +2,12 @@ package io.github.remmerw.loki.core
 
 import io.github.remmerw.grid.ReadOnlyMemory
 import io.github.remmerw.grid.allocateMemory
+import io.github.remmerw.grid.allocateReadOnlyMemory
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
+import kotlinx.atomicfu.locks.reentrantLock
+import kotlinx.atomicfu.locks.withLock
 import kotlinx.io.Buffer
 import kotlinx.io.RawSource
 import kotlinx.io.buffered
@@ -18,10 +21,12 @@ internal data class DataStorage(val data: Data) : Storage {
 
     private val validPieces: MutableSet<Int> = mutableSetOf()
     private val chunks: MutableMap<Int, Chunk> = mutableMapOf()
+    private val reads: MutableMap<Int, ReadOnlyMemory> = mutableMapOf()
     private val skeletons: MutableList<Skeleton> = mutableListOf()
     private var pieceFiles: MutableMap<Int, List<TorrentFile>> = mutableMapOf()
     private val bitmaskDatabase = Path(data.directory(), "bitmask.db")
     private val torrentDatabase = Path(data.directory(), "torrent.db")
+    private val lock = reentrantLock()
 
     init {
         if (SystemFileSystem.exists(torrentDatabase)) {
@@ -191,6 +196,7 @@ internal data class DataStorage(val data: Data) : Storage {
         if (result) {
             data.storeBlock(piece, chunk.memory)
             chunks.remove(piece)
+            reads.put(piece, chunk.memory)
             dataBitfield!!.markVerified(piece)
             return true
         } else {
@@ -236,10 +242,15 @@ internal data class DataStorage(val data: Data) : Storage {
     }
 
     internal fun readBlock(piece: Int, offset: Int, length: Int): ByteArray {
-        // TODO [Low Priority] maybe buffer a piece into memory (and then read it out)
-        rawSource(piece).buffered().use { source ->
-            source.skip(offset.toLong())
-            return source.readByteArray(length)
+        lock.withLock {
+            val memory = reads.getOrPut(piece) {
+                val memory: ReadOnlyMemory
+                rawSource(piece).buffered().use { source ->
+                    memory = allocateReadOnlyMemory(source.readByteArray())
+                }
+                memory
+            }
+            return memory.readBytes(offset, length)
         }
     }
 
