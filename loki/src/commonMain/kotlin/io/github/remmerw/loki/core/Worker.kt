@@ -125,8 +125,7 @@ internal class Worker(
     }
 
     fun shutdown() {
-        val connections =
-            connections.values.toList()
+        val connections = connections.values.toList()
 
         connections.forEach { connection: Connection -> connection.close() }
     }

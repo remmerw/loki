@@ -137,9 +137,17 @@ suspend fun CoroutineScope.download(
 
         debug("Loki finalize begin ...")
 
-        dataStorage.shutdown()
+        try {
+            dataStorage.shutdown()
+        } catch (throwable: Throwable) {
+            debug("Loki", throwable)
+        }
 
-        worker.shutdown()
+        try {
+            worker.shutdown()
+        } catch (throwable: Throwable) {
+            debug("Loki", throwable)
+        }
 
         try {
             selectorManager.close()
