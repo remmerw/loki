@@ -409,7 +409,7 @@ private val isError: Boolean
 
 @Suppress("SameReturnValue")
 private val isDebug: Boolean
-    get() = false
+    get() = true
 
 internal fun debug(text: String) {
     if (isDebug) {

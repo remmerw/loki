@@ -1,15 +1,18 @@
 package io.github.remmerw.loki.data
 
-import kotlinx.io.Buffer
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.writeByte
+import io.ktor.utils.io.writeInt
 
 internal class Unchoke : Message {
-    override val messageId: Byte
-        get() = UNCHOKE_ID
     override val type: Type
         get() = Type.Unchoke
 
-    fun encode(buffer: Buffer) {
-        buffer.writeByte(messageId)
+
+    suspend fun encode(channel: ByteWriteChannel) {
+        val size = Byte.SIZE_BYTES
+        channel.writeInt(size)
+        channel.writeByte(UNCHOKE_ID)
     }
 }
 

@@ -1,66 +1,96 @@
 package io.github.remmerw.loki.data
 
 import io.ktor.network.sockets.InetSocketAddress
-import io.ktor.utils.io.core.remaining
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.readBuffer
+import io.ktor.utils.io.readByte
+import io.ktor.utils.io.readFully
+import io.ktor.utils.io.readInt
+import io.ktor.utils.io.readShort
 import kotlinx.io.Buffer
 
 class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
-    private val handlers: Map<Byte, MessageHandler>
-    private val idMap: Map<Type, Byte>
 
-    init {
-        val handlers: MutableMap<Byte, MessageHandler> = mutableMapOf()
-        handlers[CHOKE_ID] = ChokeHandler()
-        handlers[UNCHOKE_ID] = UnchokeHandler()
-        handlers[INTERESTED_ID] = InterestedHandler()
-        handlers[NOT_INTERESTED_ID] = NotInterestedHandler()
-        handlers[HAVE_ID] = HaveHandler()
-        handlers[BITFIELD_ID] = BitfieldHandler()
-        handlers[REQUEST_ID] = RequestHandler()
-        handlers[PIECE_ID] = PieceHandler()
-        handlers[CANCEL_ID] = CancelHandler()
-        handlers[PORT_ID] = PortHandler()
-        handlers[EXTENDED_MESSAGE_ID] =
-            ExtendedProtocol(extendedMessagesHandler)
+    private val extended = ExtendedProtocol(extendedMessagesHandler)
 
-        val idMap: MutableMap<Type, Byte> = mutableMapOf()
+    suspend fun decode(peer: InetSocketAddress, channel: ByteReadChannel, length: Int): Message {
 
-        handlers.forEach { (messageId: Byte, handler: MessageHandler) ->
-            if (handler.supportedTypes().isEmpty()) {
-                throw RuntimeException("No supported types declared in handler: $handler")
+        val messageType = channel.readByte()
+        var size = length - Byte.SIZE_BYTES
+
+        return when (messageType) {
+            PIECE_ID -> {
+                val pieceIndex = channel.readInt()
+                size = size - Int.SIZE_BYTES
+                val blockOffset = channel.readInt()
+                size = size - Int.SIZE_BYTES
+                val data = ByteArray(size) // todo this can be optimized
+                channel.readFully(data)
+                return Piece(pieceIndex, blockOffset, data)
             }
-            handler.supportedTypes().forEach { messageType ->
-                if (idMap.containsKey(messageType)) {
-                    throw RuntimeException("Duplicate handler for message type: $messageType")
-                }
-                idMap[messageType] = messageId
+
+            HAVE_ID -> {
+                val pieceIndex = channel.readInt()
+                return Have(pieceIndex)
+            }
+
+            REQUEST_ID -> {
+                val pieceIndex = channel.readInt()
+                val blockOffset = channel.readInt()
+                val blockLength = channel.readInt()
+
+                return Request(pieceIndex, blockOffset, blockLength)
+            }
+
+            BITFIELD_ID -> {
+                val data = ByteArray(size)
+                channel.readFully(data)
+                return Bitfield(data)
+            }
+
+            CANCEL_ID -> {
+                val pieceIndex = channel.readInt()
+                val blockOffset = channel.readInt()
+                val blockLength = channel.readInt()
+                return Cancel(pieceIndex, blockOffset, blockLength)
+            }
+
+            CHOKE_ID -> {
+                return choke()
+            }
+
+            UNCHOKE_ID -> {
+                return unchoke()
+            }
+
+            INTERESTED_ID -> {
+                return interested()
+            }
+
+            NOT_INTERESTED_ID -> {
+                return notInterested()
+            }
+
+            PORT_ID -> {
+                val port = channel.readShort().toInt() and 0x0000FFFF
+                return Port(port)
+            }
+
+            EXTENDED_MESSAGE_ID -> {
+                val buffer = channel.readBuffer(size)
+                require(size == buffer.size.toInt()) { "Invalid number of data received" }
+                extended.doDecode(peer, buffer)
+            }
+
+            else -> {
+                throw Exception("not supported message type $messageType")
             }
         }
-
-        this.handlers = handlers
-        this.idMap = idMap
     }
 
 
-    fun decode(peer: InetSocketAddress, buffer: Buffer): Message {
-        if (buffer.remaining.toInt() == 0) {
-            return keepAlive() // keep has length 0
-        }
-        val messageType = buffer.readByte()
-
-        val handler = checkNotNull(handlers[messageType])
-        return handler.doDecode(peer, buffer)
-    }
-
-
-    fun encode(peer: InetSocketAddress, message: Message, buffer: Buffer) {
-
-        val messageId = idMap[message.type]
-        requireNotNull(messageId) { "Unknown message type: $messageId" }
-
-        val extended = handlers[messageId]!!
+    fun encode(peer: InetSocketAddress, message: ExtendedMessage, buffer: Buffer) {
         extended.doEncode(peer, message, buffer)
-
     }
 }
 

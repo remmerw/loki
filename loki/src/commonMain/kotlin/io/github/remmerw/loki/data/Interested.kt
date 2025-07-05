@@ -1,15 +1,17 @@
 package io.github.remmerw.loki.data
 
-import kotlinx.io.Buffer
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.writeByte
+import io.ktor.utils.io.writeInt
 
 internal class Interested : Message {
-    override val messageId: Byte
-        get() = INTERESTED_ID
+
     override val type: Type
         get() = Type.Interested
 
-    fun encode(buffer: Buffer) {
-        buffer.writeByte(messageId)
+    suspend fun encode(channel: ByteWriteChannel) {
+        val size = Byte.SIZE_BYTES
+        channel.writeInt(size)
+        channel.writeByte(INTERESTED_ID)
     }
-
 }

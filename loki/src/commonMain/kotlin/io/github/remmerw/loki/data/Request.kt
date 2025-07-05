@@ -1,6 +1,8 @@
 package io.github.remmerw.loki.data
 
-import kotlinx.io.Buffer
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.writeByte
+import io.ktor.utils.io.writeInt
 
 internal data class Request(
     val piece: Int,
@@ -18,13 +20,13 @@ internal data class Request(
     override val type: Type
         get() = Type.Request
 
-    override val messageId: Byte
-        get() = REQUEST_ID
 
-    fun encode(buffer: Buffer) {
-        buffer.writeByte(messageId)
-        buffer.writeInt(piece)
-        buffer.writeInt(offset)
-        buffer.writeInt(length)
+    suspend fun encode(channel: ByteWriteChannel) {
+        val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
+        channel.writeInt(size)
+        channel.writeByte(REQUEST_ID)
+        channel.writeInt(piece)
+        channel.writeInt(offset)
+        channel.writeInt(length)
     }
 }

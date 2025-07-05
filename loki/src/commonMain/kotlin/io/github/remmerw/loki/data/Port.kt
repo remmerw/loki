@@ -1,7 +1,9 @@
 package io.github.remmerw.loki.data
 
-import kotlinx.io.Buffer
-import kotlinx.io.writeUShort
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.writeByte
+import io.ktor.utils.io.writeInt
+import io.ktor.utils.io.writeShort
 
 
 internal data class Port(val port: Int) : Message {
@@ -12,15 +14,15 @@ internal data class Port(val port: Int) : Message {
     override val type: Type
         get() = Type.Port
 
-    override val messageId: Byte
-        get() = PORT_ID
 
     init {
         require(!(port < 0 || port > 65535)) { "Invalid argument: port ($port)" }
     }
 
-    fun encode(buffer: Buffer) {
-        buffer.writeByte(messageId)
-        buffer.writeUShort(port.toUShort())
+    suspend fun encode(channel: ByteWriteChannel) {
+        val size = Byte.SIZE_BYTES + Short.SIZE_BYTES
+        channel.writeInt(size)
+        channel.writeByte(PORT_ID)
+        channel.writeShort(port.toShort())
     }
 }

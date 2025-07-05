@@ -1,19 +1,30 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.loki.data.Bitfield
+import io.github.remmerw.loki.data.Cancel
+import io.github.remmerw.loki.data.Choke
+import io.github.remmerw.loki.data.ExtendedMessage
 import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
+import io.github.remmerw.loki.data.Have
+import io.github.remmerw.loki.data.Interested
 import io.github.remmerw.loki.data.KeepAlive
 import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.Messages
+import io.github.remmerw.loki.data.NotInterested
+import io.github.remmerw.loki.data.Piece
+import io.github.remmerw.loki.data.Port
+import io.github.remmerw.loki.data.Request
 import io.github.remmerw.loki.data.SHA1_HASH_LENGTH
 import io.github.remmerw.loki.data.TORRENT_ID_LENGTH
 import io.github.remmerw.loki.data.TorrentId
+import io.github.remmerw.loki.data.Unchoke
+import io.github.remmerw.loki.data.keepAlive
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.readBuffer
 import io.ktor.utils.io.readByte
 import io.ktor.utils.io.readByteArray
 import io.ktor.utils.io.readInt
@@ -46,13 +57,14 @@ internal class Connection internal constructor(
 
     suspend fun reading(): Message? {
         try {
-            val read = receiveChannel.readInt()
-            require(read >= 0) { "Invalid read token received" }
+            val length = receiveChannel.readInt()
+            require(length >= 0) { "Invalid read token received" }
 
-            val buffer = receiveChannel.readBuffer(read)
-            require(read == buffer.size.toInt()) { "Invalid number of data received" }
+            if (length == 0) {
+                return keepAlive() // keep has length 0
+            }
 
-            return messages.decode(address, buffer)
+            return messages.decode(address, receiveChannel, length)
         } catch (_: Throwable) {
             close()
         }
@@ -92,24 +104,71 @@ internal class Connection internal constructor(
     @OptIn(ExperimentalAtomicApi::class)
     suspend fun posting(message: Message) {
         lastActive = TimeSource.Monotonic.markNow()
-        val buffer = Buffer()
+
         try {
             when (message) {
                 is Handshake -> {
-                    message.encode(buffer)
+                    message.encode(sendChannel)
                 }
 
                 is KeepAlive -> {
-                    message.encode(buffer)
+                    message.encode(sendChannel)
                 }
 
-                else -> {
+                is Piece -> {
+                    message.encode(sendChannel)
+                }
+
+                is Have -> {
+                    message.encode(sendChannel)
+                }
+
+                is Request -> {
+                    message.encode(sendChannel)
+                }
+
+                is Bitfield -> {
+                    message.encode(sendChannel)
+                }
+
+                is Cancel -> {
+                    message.encode(sendChannel)
+                }
+
+                is Choke -> {
+                    message.encode(sendChannel)
+                }
+
+                is Unchoke -> {
+                    message.encode(sendChannel)
+                }
+
+                is Interested -> {
+                    message.encode(sendChannel)
+                }
+
+                is NotInterested -> {
+                    message.encode(sendChannel)
+                }
+
+                is Port -> {
+                    message.encode(sendChannel)
+                }
+
+                is ExtendedMessage -> {
+
+                    val buffer = Buffer()
                     messages.encode(address, message, buffer)
                     val size = buffer.size
                     sendChannel.writeInt(size.toInt())
+                    sendChannel.writeBuffer(buffer)
+                }
+
+                else -> {
+                    debug("not supported message " + message.type.name)
+                    throw Exception("not supported message " + message.type.name)
                 }
             }
-            sendChannel.writeBuffer(buffer)
             sendChannel.flush()
         } catch (_: Throwable) {
             close()

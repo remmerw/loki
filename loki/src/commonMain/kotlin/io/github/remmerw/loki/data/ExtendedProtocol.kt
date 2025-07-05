@@ -3,7 +3,7 @@ package io.github.remmerw.loki.data
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 
-internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) : MessageHandler {
+internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
 
     private val extendedHandshakeHandler = ExtendedHandshakeHandler()
     private val handlers: MutableMap<Type, MessageHandler> = mutableMapOf()
@@ -46,10 +46,10 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
         return typeMap[type]!!
     }
 
-    override fun supportedTypes(): Collection<Type> = handlers.keys
+    fun supportedTypes(): Collection<Type> = handlers.keys
 
 
-    override fun doDecode(address: InetSocketAddress, buffer: Buffer): Message {
+    fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
         val typeId = buffer.readByte()
         val handler: MessageHandler?
         if (typeId == EXTENDED_HANDSHAKE_TYPE_ID) {
@@ -62,10 +62,9 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) :
         return checkNotNull(handler).doDecode(address, buffer)
     }
 
-    override fun doEncode(address: InetSocketAddress, message: Message, buffer: Buffer) {
-        message as ExtendedMessage
+    fun doEncode(address: InetSocketAddress, message: ExtendedMessage, buffer: Buffer) {
 
-        buffer.writeByte(message.messageId)
+        buffer.writeByte(EXTENDED_MESSAGE_ID)
         if (message is ExtendedHandshake) {
             buffer.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
         } else {

@@ -39,14 +39,14 @@ internal class ExtendedHandshakeHandler : MessageHandler {
         return mapping?.toMap() ?: emptyMap()
     }
 
-    override fun doDecode(address: InetSocketAddress, buffer: Buffer): Message {
+    override fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
         val map = decode(buffer)
         processTypeMapping(address, map["m"])
 
         return ExtendedHandshake(map)
     }
 
-    override fun doEncode(address: InetSocketAddress, message: Message, buffer: Buffer) {
+    override fun doEncode(address: InetSocketAddress, message: ExtendedMessage, buffer: Buffer) {
         val extendedHandshake = message as ExtendedHandshake
         extendedHandshake.encode(buffer)
 

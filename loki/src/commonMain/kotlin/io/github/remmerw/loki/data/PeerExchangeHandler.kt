@@ -11,7 +11,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> =
         setOf(Type.PeerExchange)
 
-    override fun doDecode(address: InetSocketAddress, buffer: Buffer): Message {
+    override fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
         val map = decode(buffer)
         val added: MutableSet<InetSocketAddress> = mutableSetOf()
         extractPeers(map, "added", "added.f", 4, added) // ipv4
@@ -23,7 +23,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         return PeerExchange(added, dropped)
     }
 
-    override fun doEncode(address: InetSocketAddress, message: Message, buffer: Buffer) {
+    override fun doEncode(address: InetSocketAddress, message: ExtendedMessage, buffer: Buffer) {
         val exchange = message as PeerExchange
         exchange.encode(buffer)
     }

@@ -1,6 +1,9 @@
 package io.github.remmerw.loki.data
 
-import kotlinx.io.Buffer
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.writeByte
+import io.ktor.utils.io.writeByteArray
+import io.ktor.utils.io.writeInt
 
 @Suppress("ArrayInDataClass")
 internal data class Piece(
@@ -15,13 +18,15 @@ internal data class Piece(
 
     override val type: Type
         get() = Type.Piece
-    override val messageId: Byte
-        get() = PIECE_ID
 
-    fun encode(buffer: Buffer) {
-        buffer.writeByte(messageId)
-        buffer.writeInt(piece)
-        buffer.writeInt(offset)
-        buffer.write(data)
+
+    suspend fun encode(channel: ByteWriteChannel) {
+        val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + data.size
+        channel.writeInt(size)
+        channel.writeByte(PIECE_ID)
+        channel.writeInt(piece)
+        channel.writeInt(offset)
+        channel.writeByteArray(data)
+
     }
 }
