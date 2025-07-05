@@ -16,14 +16,14 @@ class Data(private val directory: Path) {
     }
 
 
-    fun rawSource(cid: Int): RawSource {
-        val file = path(cid)
+    fun rawSource(piece: Int): RawSource {
+        val file = path(piece)
         require(SystemFileSystem.exists(file)) { "Block does not exists" }
         return SystemFileSystem.source(file)
     }
 
-    fun storeBlock(cid: Int, memory: Memory) {
-        val file = path(cid)
+    fun storeBlock(piece: Int, memory: Memory) {
+        val file = path(piece)
         SystemFileSystem.sink(file, false).use { source ->
             memory.transferTo(source)
         }
@@ -31,8 +31,8 @@ class Data(private val directory: Path) {
 
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun path(cid: Int): Path {
-        return Path(directory, cid.toHexString())
+    fun path(piece: Int): Path {
+        return Path(directory, piece.toHexString())
     }
 }
 
