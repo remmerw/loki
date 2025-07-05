@@ -46,8 +46,6 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
         return typeMap[type]!!
     }
 
-    fun supportedTypes(): Collection<Type> = handlers.keys
-
 
     fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
         val typeId = buffer.readByte()

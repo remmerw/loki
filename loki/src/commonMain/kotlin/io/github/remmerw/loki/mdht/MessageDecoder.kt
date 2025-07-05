@@ -238,7 +238,7 @@ private fun parseResponse(
     // responses don't have explicit methods, need to match them to a request to figure that one out
     val request = tidMapper.invoke(tid)
     if (request == null) {
-        debug("unknown message type")
+        debug("response does not have a known request")
         return null
     }
     return parseResponse(address, map, request, tid)
