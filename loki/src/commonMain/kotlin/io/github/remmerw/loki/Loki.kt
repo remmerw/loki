@@ -15,7 +15,6 @@ import io.github.remmerw.loki.core.PieceAgent
 import io.github.remmerw.loki.core.RequestProducer
 import io.github.remmerw.loki.core.StorageUnit
 import io.github.remmerw.loki.core.Worker
-import io.github.remmerw.loki.core.newData
 import io.github.remmerw.loki.core.performConnection
 import io.github.remmerw.loki.core.performHandshake
 import io.github.remmerw.loki.core.processMessages
@@ -31,10 +30,10 @@ import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
 
 
 expect fun createInetSocketAddress(address: ByteArray, port: Int): InetSocketAddress
@@ -54,8 +53,9 @@ suspend fun CoroutineScope.download(
 ): Storage {
     val torrentId = magnetUri.torrentId
     val path = Path(directory, torrentId.bytes.toHexString())
-    val data = newData(path)
-    val dataStorage = DataStorage(data)
+    SystemFileSystem.createDirectories(path)
+
+    val dataStorage = DataStorage(path)
     val selectorManager = SelectorManager(Dispatchers.IO)
 
     val peerId = peerId()

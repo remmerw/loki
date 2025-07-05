@@ -2,6 +2,7 @@ package io.github.remmerw.loki.core
 
 import io.github.remmerw.grid.Memory
 import io.github.remmerw.grid.allocateMemory
+import io.github.remmerw.grid.randomAccessFile
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
@@ -15,18 +16,23 @@ import kotlinx.io.readByteArray
 import kotlin.concurrent.Volatile
 import kotlin.math.min
 
-internal data class DataStorage(val data: Data) : Storage {
+internal data class DataStorage(val directory: Path) : Storage {
 
     private val validPieces: MutableSet<Int> = mutableSetOf()
     private val chunks: MutableMap<Int, Chunk> = mutableMapOf()
-    private val reads: MutableMap<Int, Memory> = mutableMapOf()
     private val skeletons: MutableList<Skeleton> = mutableListOf()
     private var pieceFiles: MutableMap<Int, List<TorrentFile>> = mutableMapOf()
-    private val bitmaskDatabase = Path(data.directory(), "bitmask.db")
-    private val torrentDatabase = Path(data.directory(), "torrent.db")
+    private val bitmaskDatabase = Path(directory, "bitmask.db")
+    private val torrentDatabase = Path(directory, "torrent.db")
+    private val database = randomAccessFile(Path(directory, "database.db"))
     private val lock = reentrantLock()
 
     init {
+        require(
+            SystemFileSystem.metadataOrNull(directory)?.isDirectory == true
+        ) {
+            "Path is not a directory."
+        }
         if (SystemFileSystem.exists(torrentDatabase)) {
             SystemFileSystem.source(torrentDatabase).buffered().use { source ->
                 val bytes = source.readByteArray()
@@ -192,7 +198,9 @@ internal data class DataStorage(val data: Data) : Storage {
     internal fun storeChunk(piece: Int, chunk: Chunk): Boolean {
         val result = chunk.digest()
         if (result) {
-            data.storeBlock(piece, chunk.memory)
+            lock.withLock {
+                database.writeMemory(chunk.memory, offset(piece))
+            }
             chunks.remove(piece)
             dataBitfield!!.markVerified(piece)
             return true
@@ -200,6 +208,10 @@ internal data class DataStorage(val data: Data) : Storage {
             chunk.reset()
             return false
         }
+    }
+
+    internal fun offset(piece: Int): Long {
+        return (torrent!!.chunkSize * piece).toLong()
     }
 
     internal fun verifiedPieces(totalPieces: Int) {
@@ -225,6 +237,11 @@ internal data class DataStorage(val data: Data) : Storage {
 
     fun shutdown() {
         try {
+            database.close()
+        } catch (throwable: Throwable) {
+            debug("DataStorage", throwable)
+        }
+        try {
             if (dataBitfield != null) {
                 val buffer = Buffer()
                 buffer.write(dataBitfield!!.encode())
@@ -238,13 +255,10 @@ internal data class DataStorage(val data: Data) : Storage {
         }
     }
 
-    // todo has to read slice from file
+
     internal fun readBlock(piece: Int, offset: Int, length: Int): ByteArray {
-        lock.withLock {
-            val memory = reads.getOrPut(piece) {
-                allocateMemory(data.path(piece))
-            }
-            return memory.readBytes(offset, length)
+        return lock.withLock {
+            database.readBytes(offset(piece) + offset, length)
         }
     }
 
@@ -261,13 +275,21 @@ internal data class DataStorage(val data: Data) : Storage {
     }
 
     override fun finish() {
-        data.reset()
+        cleanupDirectory(directory)
     }
 
+    private fun cleanupDirectory(dir: Path) {
+        if (SystemFileSystem.exists(dir)) {
+            val files = SystemFileSystem.list(dir)
+            for (file in files) {
+                SystemFileSystem.delete(file)
+            }
+        }
+    }
 
     override fun storageUnits(): List<StorageUnit> {
         return torrentFiles().filter { torrentFile -> torrentFile.size > 0 }
-            .map { torrentFile -> StorageUnit(data, torrent!!.chunkSize, torrentFile) }
+            .map { torrentFile -> StorageUnit(database, torrentFile) }
     }
 
     internal fun torrentFiles(): List<TorrentFile> {

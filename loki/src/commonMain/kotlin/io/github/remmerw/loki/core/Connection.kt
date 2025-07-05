@@ -65,7 +65,8 @@ internal class Connection internal constructor(
             }
 
             return messages.decode(address, receiveChannel, length)
-        } catch (_: Throwable) {
+        } catch (throwable: Throwable) {
+            debug("Error Connection.reading " + throwable.message)
             close()
         }
         return null
@@ -170,7 +171,8 @@ internal class Connection internal constructor(
                 }
             }
             sendChannel.flush()
-        } catch (_: Throwable) {
+        } catch (throwable: Throwable) {
+            debug("Error Connection.posting " + throwable.message)
             close()
         }
     }

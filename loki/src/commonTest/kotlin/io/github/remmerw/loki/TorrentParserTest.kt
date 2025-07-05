@@ -3,12 +3,10 @@ package io.github.remmerw.loki
 import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.buildTorrent
-import io.github.remmerw.loki.core.newData
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.buffered
@@ -37,8 +35,8 @@ class TorrentParserTest {
 
         val path = Path(SystemTemporaryDirectory, Uuid.random().toHexString())
         SystemFileSystem.createDirectories(path)
-        val data = newData(path)
-        val dataStorage = DataStorage(data)
+
+        val dataStorage = DataStorage(path)
         SystemFileSystem.source(file).buffered().use { source ->
             val bytes = source.readByteArray()
             val torrent = buildTorrent(bytes)
@@ -57,7 +55,7 @@ class TorrentParserTest {
             assertEquals(files.size, torrent.files.size)
 
         }
-        data.reset()
+        dataStorage.finish()
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -66,8 +64,8 @@ class TorrentParserTest {
 
         val path = Path(SystemTemporaryDirectory, Uuid.random().toHexString())
         SystemFileSystem.createDirectories(path)
-        val data = newData(path)
-        val dataStorage = DataStorage(data)
+
+        val dataStorage = DataStorage(path)
 
         dataStorage.verifiedPieces(10)
 
@@ -80,7 +78,7 @@ class TorrentParserTest {
         assertFalse(dataStorage.isVerified(9))
 
         dataStorage.shutdown()
-        data.reset()
+        dataStorage.finish()
     }
 
     @Test

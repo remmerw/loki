@@ -1,7 +1,6 @@
 package io.github.remmerw.loki.buri
 
 import kotlinx.io.Buffer
-import kotlin.jvm.JvmInline
 
 @JvmInline
 value class BEString(val content: ByteArray) : BEObject {

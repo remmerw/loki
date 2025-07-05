@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.remmerw"
-version = "0.2.6"
+version = "0.2.7"
 
 kotlin {
 
@@ -26,9 +26,9 @@ kotlin {
 
 
     jvm()
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    // iosX64()
+    // iosArm64()
+    // iosSimulatorArm64()
     // linuxArm64()
     // linuxX64()
     // linuxArm64()
@@ -45,7 +45,7 @@ kotlin {
                 implementation(libs.atomicfu)
                 implementation(libs.ktor.network)
                 implementation(libs.cryptography.core)
-                implementation("io.github.remmerw:grid:0.0.3")
+                implementation("io.github.remmerw:grid:0.0.5")
             }
         }
 
@@ -62,13 +62,12 @@ kotlin {
             }
         }
 
+        /* not yet required
         iosMain {
             dependencies {
                 implementation(libs.cryptography.provider.apple)
-                // or openssl3 provider with better algorithms coverage and other native targets support
-                // implementation("dev.whyoleg.cryptography:cryptography-provider-openssl3-prebuilt:0.4.0")
             }
-        }
+        }*/
 
         commonTest {
             dependencies {
@@ -98,9 +97,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-    }
-    packaging {
-        resources.excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
     }
 }
 

@@ -5,7 +5,6 @@ import io.github.remmerw.loki.mdht.createRandomKey
 import io.github.remmerw.loki.mdht.lookupKey
 import io.github.remmerw.loki.mdht.peerId
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout

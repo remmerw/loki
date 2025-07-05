@@ -12,7 +12,6 @@ import io.ktor.util.collections.ConcurrentMap
 import io.ktor.utils.io.core.remaining
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch

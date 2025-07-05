@@ -7,7 +7,6 @@ import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.loki.mdht.peerId
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlin.random.Random
