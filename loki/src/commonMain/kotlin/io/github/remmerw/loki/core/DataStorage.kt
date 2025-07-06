@@ -196,17 +196,17 @@ internal data class DataStorage(val directory: Path) : Storage {
     }
 
     internal fun storeChunk(piece: Int, chunk: Chunk): Boolean {
-        val result = chunk.digest()
-        if (result) {
-            lock.withLock {
+        lock.withLock {
+            val result = chunk.digest()
+            if (result) {
                 database.writeMemory(chunk.memory, offset(piece))
+                chunks.remove(piece)
+                dataBitfield!!.markVerified(piece)
+                return true
+            } else {
+                chunk.reset()
+                return false
             }
-            chunks.remove(piece)
-            dataBitfield!!.markVerified(piece)
-            return true
-        } else {
-            chunk.reset()
-            return false
         }
     }
 
@@ -236,10 +236,12 @@ internal data class DataStorage(val directory: Path) : Storage {
     }
 
     fun shutdown() {
-        try {
-            database.close()
-        } catch (throwable: Throwable) {
-            debug("DataStorage", throwable)
+        lock.withLock {
+            try {
+                database.close()
+            } catch (throwable: Throwable) {
+                debug("DataStorage", throwable)
+            }
         }
         try {
             if (dataBitfield != null) {
