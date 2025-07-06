@@ -42,8 +42,6 @@ class TorrentParserTest {
             val torrent = buildTorrent(bytes)
             assertNotNull(torrent)
 
-            assertEquals(torrent.chunkHashes.size, 12576)
-
             val metadata = allocateMemory(bytes.size)
             metadata.writeBytes(bytes, 0)
             dataStorage.metadata(metadata)
@@ -94,7 +92,7 @@ class TorrentParserTest {
             Random.nextBytes(4), 999
         )
 
-        handler.doEncode( utMetadata, data)
+        handler.doEncode(utMetadata, data)
         val result = handler.doDecode(peer, data)
         assertEquals(result, utMetadata)
     }

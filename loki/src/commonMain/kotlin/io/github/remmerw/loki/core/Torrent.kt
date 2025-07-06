@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.buri.BEInteger
 import io.github.remmerw.loki.buri.BEList
 import io.github.remmerw.loki.buri.BEMap
@@ -64,51 +65,62 @@ private const val CHUNK_HASH_LENGTH = 20
 
 internal data class Torrent(
     val name: String,
+    val chunks: List<Chunk>,
     val files: List<TorrentFile>,
-    val chunkHashes: List<ByteArray>,
     val size: Long,
     val chunkSize: Int,
     val isPrivate: Boolean,
     val createdBy: String,
     val singleFile: Boolean
-) {
+)
 
-    fun build() {
-        var startRange = 0L
-        files.forEach { file ->
-            file.startPosition(startRange)
-            startRange += file.size
-        }
-
-        var chunk = 0
-        var off: Long
-        var lim: Long
-        var remaining = size
-        while (remaining > 0) {
-            off = (chunk * chunkSize).toLong()
-            lim = min(chunkSize.toLong(), remaining)
-
-            val maxPos = lim + off
-
-            files.forEach { file ->
-                val startPos = file.startPosition()
-                val endPos = file.endPosition()
-                if (startPos <= maxPos) {
-                    if (off <= endPos) {
-                        file.addPiece(chunk)
-                    }
-                }
-            }
-
-            chunk++
-
-            remaining -= chunkSize
-        }
+private fun buildChunks(
+    hashes: List<ByteArray>,
+    files: List<TorrentFile>,
+    size: Long, chunkSize: Int
+): List<Chunk> {
+    val chunks: MutableList<Chunk> = mutableListOf()
+    var startRange = 0L
+    files.forEach { file ->
+        file.startPosition(startRange)
+        startRange += file.size
     }
 
+    var blockSize = BLOCK_SIZE
+    if (blockSize > chunkSize) {
+        blockSize = chunkSize
+    }
+
+    var chunk = 0
+    var off: Long
+    var lim: Long
+    var remaining = size
+    while (remaining > 0) {
+        off = (chunk * chunkSize).toLong()
+        lim = min(chunkSize.toLong(), remaining)
+
+        val maxPos = lim + off
+
+        files.forEach { file ->
+            val startPos = file.startPosition()
+            val endPos = file.endPosition()
+            if (startPos <= maxPos) {
+                if (off <= endPos) {
+                    file.addPiece(chunk)
+                }
+            }
+        }
+
+        chunks.add(Chunk(chunkSize, blockSize, hashes[chunk]))
+        chunk++
+
+        remaining -= chunkSize
+    }
+    require(hashes.size == chunks.size) { "Hashes size is not equal chunks size" }
+    return chunks
 }
 
-fun buildHashes(hashes: ByteArray): List<ByteArray> {
+private fun buildHashes(hashes: ByteArray): List<ByteArray> {
     val result: MutableList<ByteArray> = mutableListOf()
     var read = 0
     while (read < hashes.size) {
@@ -240,13 +252,13 @@ internal fun createTorrent(
         singleFile = true
     }
 
-    val hashes: List<ByteArray> = buildHashes(chunkHashes)
+    val hashes = buildHashes(chunkHashes)
+    val chunks = buildChunks(hashes, torrentFiles, size, chunkSize)
 
     val torrent = Torrent(
-        name, torrentFiles, hashes,
-        size, chunkSize, isPrivate, createdBy, singleFile
+        name, chunks, torrentFiles, size, chunkSize, isPrivate, createdBy, singleFile
     )
-    torrent.build()
+
     return torrent
 }
 

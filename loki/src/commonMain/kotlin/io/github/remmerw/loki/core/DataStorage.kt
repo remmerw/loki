@@ -3,7 +3,6 @@ package io.github.remmerw.loki.core
 import io.github.remmerw.grid.Memory
 import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.grid.randomAccessFile
-import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
 import io.ktor.util.sha1
@@ -15,12 +14,10 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
 import kotlin.concurrent.Volatile
-import kotlin.math.min
 
 internal data class DataStorage(val directory: Path) : Storage {
 
     private val validPieces: MutableSet<Int> = mutableSetOf()
-    private val chunks: MutableMap<Int, Chunk> = mutableMapOf()
     private var pieceFiles: MutableMap<Int, List<TorrentFile>> = mutableMapOf()
     private val bitmaskDatabase = Path(directory, "bitmask.db")
     private val torrentDatabase = Path(directory, "torrent.db")
@@ -102,13 +99,9 @@ internal data class DataStorage(val directory: Path) : Storage {
         require(!initializeDone) { "Initialisation is already done" }
 
         this.torrent = torrent
-        var transferSize = BLOCK_SIZE
+
         val totalSize = torrent.size
         val chunkSize = torrent.chunkSize
-
-        if (transferSize > chunkSize) {
-            transferSize = chunkSize
-        }
 
         var index = 0
         var remaining = totalSize
@@ -126,15 +119,11 @@ internal data class DataStorage(val directory: Path) : Storage {
 
             pieceFiles[index] = chunkFiles
 
-
-            val lim = min(chunkSize.toLong(), remaining).toInt()
-            val hash = torrent.chunkHashes[index]
-            chunks.put(index, Chunk(lim, transferSize, hash))
             index++
             remaining -= chunkSize
         }
 
-        val totalPieces = chunks.size
+        val totalPieces = torrent.chunks.size
 
         verifiedPieces(totalPieces)
         pieceStatistics = PieceStatistics(totalPieces)
@@ -202,7 +191,6 @@ internal data class DataStorage(val directory: Path) : Storage {
             val digest = sha1(bytes)
             val result = digest.contentEquals(chunk.checksum)
             if (result) {
-                chunks.remove(piece)
                 dataBitfield!!.markVerified(piece)
                 return true
             } else {
@@ -279,8 +267,7 @@ internal data class DataStorage(val directory: Path) : Storage {
 
 
     internal fun chunk(piece: Int): Chunk {
-        require(piece <= chunks.size)
-        return chunks[piece]!!
+        return torrent!!.chunks[piece]
     }
 
     override fun storeTo(directory: Path) {
