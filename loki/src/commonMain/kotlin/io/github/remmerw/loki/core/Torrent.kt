@@ -111,7 +111,7 @@ private fun buildChunks(
             }
         }
 
-        chunks.add(Chunk(chunkSize, blockSize, hashes[chunk]))
+        chunks.add(Chunk(lim.toInt(), blockSize, hashes[chunk]))
         chunk++
 
         remaining -= chunkSize

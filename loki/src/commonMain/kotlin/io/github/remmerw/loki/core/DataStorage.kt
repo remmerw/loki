@@ -291,7 +291,10 @@ internal data class DataStorage(val directory: Path) : Storage {
 
     override fun storageUnits(): List<StorageUnit> {
         return torrentFiles().filter { torrentFile -> torrentFile.size > 0 }
-            .map { torrentFile -> StorageUnit(database, torrentFile) }
+            .map { torrentFile -> StorageUnit(
+                Path(directory, "database.db"),
+                torrentFile) }
+
     }
 
     internal fun torrentFiles(): List<TorrentFile> {

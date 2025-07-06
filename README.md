@@ -23,7 +23,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             ...
-            implementation("io.github.remmerw:loki:0.2.8")
+            implementation("io.github.remmerw:loki:0.2.9")
         }
         ...
     }
