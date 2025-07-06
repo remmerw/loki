@@ -60,9 +60,4 @@ internal class PeerExchange(
         return BEString(bos.readByteArray())
     }
 
-    init {
-        require(!(added.isEmpty() && dropped.isEmpty())) {
-            "Can't create PEX message: no peers added/dropped"
-        }
-    }
 }
