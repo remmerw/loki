@@ -44,30 +44,9 @@ kotlin {
                 implementation(libs.uri.kmp)
                 implementation(libs.atomicfu)
                 implementation(libs.ktor.network)
-                implementation(libs.cryptography.core)
                 implementation("io.github.remmerw:grid:0.0.5")
             }
         }
-
-
-        androidMain {
-            dependencies {
-                implementation(libs.cryptography.provider.jdk)
-            }
-        }
-
-        jvmMain {
-            dependencies {
-                implementation(libs.cryptography.provider.jdk)
-            }
-        }
-
-        /* not yet required
-        iosMain {
-            dependencies {
-                implementation(libs.cryptography.provider.apple)
-            }
-        }*/
 
         commonTest {
             dependencies {

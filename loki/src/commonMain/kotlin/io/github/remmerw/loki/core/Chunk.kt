@@ -1,32 +1,15 @@
 package io.github.remmerw.loki.core
 
-import dev.whyoleg.cryptography.CryptographyProvider
-import dev.whyoleg.cryptography.DelicateCryptographyApi
-import dev.whyoleg.cryptography.algorithms.SHA1
-import io.github.remmerw.grid.allocateMemory
-import kotlinx.io.bytestring.ByteString
-
-
+@Suppress("ArrayInDataClass")
 internal data class Chunk(
-    private val size: Int,
+    private val chunkSize: Int,
     private val blockSize: Int,
-    private val checksum: ByteString
+    val checksum: ByteArray
 ) {
-    internal val memory = allocateMemory(size)
-    private val blockSet = createBlockSet(size, blockSize)
+    private val blockSet = createBlockSet(chunkSize, blockSize)
 
-    @OptIn(DelicateCryptographyApi::class)
-    internal fun digest(): Boolean {
-        val digest = CryptographyProvider.Default
-            .get(SHA1)
-            .hasher()
-            .hashBlocking(memory.rawSource())
-        return digest == checksum
-    }
-
-    fun writeBlock(offset: Int, bytes: ByteArray) {
-        memory.writeBytes(bytes, offset)
-        blockSet.markAvailable(offset, bytes.size)
+    fun markAvailable(offset: Int, size: Int) {
+        blockSet.markAvailable(offset, size)
     }
 
     fun blockCount(): Int {
@@ -34,7 +17,7 @@ internal data class Chunk(
     }
 
     fun chunkSize(): Int {
-        return size
+        return chunkSize
     }
 
     fun blockSize(): Int {

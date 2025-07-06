@@ -154,7 +154,7 @@ internal fun CoroutineScope.performConnection(
                         .tcp().connect(address) {
                             socketTimeout = 30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
                         }
-                    send( Connection(address, worker, socket, messages))
+                    send(Connection(address, worker, socket, messages))
                 } catch (_: Throwable) {
                     // this is the normal case when address is unreachable or timeouted
                 }

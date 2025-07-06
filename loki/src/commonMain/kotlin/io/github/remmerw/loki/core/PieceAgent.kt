@@ -69,10 +69,11 @@ internal class PieceAgent(
             return
         }
 
-        chunk.writeBlock(piece.offset, piece.data)
+        dataStorage.writeBlock(piece.piece, piece.offset, piece.data)
+        chunk.markAvailable(piece.offset, piece.data.size)
 
         if (chunk.isComplete) {
-            if (dataStorage.storeChunk(piece.piece, chunk)) {
+            if (dataStorage.digestChunk(piece.piece, chunk)) {
                 completedPieces.add(piece.piece)
             } else {
                 // chunk was shit (for testing now - close connection)

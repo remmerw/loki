@@ -4,7 +4,7 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 internal data class BlockSet(
-    val length: Int,
+    val chunkSize: Int,
     val blockSize: Int,
     val blockCount: Int,
     private val lastBlockSize: Int,
@@ -45,7 +45,7 @@ internal data class BlockSet(
         // handle the case when the last block is smaller than the others
         // mark it as complete only when all of the block's data is present
 
-        if (offset <= lastBlockOffset && offset + length >= this.length) {
+        if (offset <= lastBlockOffset && offset + length >= chunkSize) {
             bitmask.set(blockCount - 1)
         }
         if (length >= blockSize) {

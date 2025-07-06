@@ -6,6 +6,7 @@ import io.github.remmerw.grid.randomAccessFile
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
+import io.ktor.util.sha1
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 import kotlinx.io.Buffer
@@ -20,7 +21,6 @@ internal data class DataStorage(val directory: Path) : Storage {
 
     private val validPieces: MutableSet<Int> = mutableSetOf()
     private val chunks: MutableMap<Int, Chunk> = mutableMapOf()
-    private val skeletons: MutableList<Skeleton> = mutableListOf()
     private var pieceFiles: MutableMap<Int, List<TorrentFile>> = mutableMapOf()
     private val bitmaskDatabase = Path(directory, "bitmask.db")
     private val torrentDatabase = Path(directory, "torrent.db")
@@ -110,9 +110,10 @@ internal data class DataStorage(val directory: Path) : Storage {
             transferSize = chunkSize
         }
 
+        var index = 0
         var remaining = totalSize
         while (remaining > 0) {
-            val index = skeletons.size
+
 
             val chunkFiles: MutableList<TorrentFile> = mutableListOf()
             torrent.files.forEach { torrentFile ->
@@ -123,17 +124,17 @@ internal data class DataStorage(val directory: Path) : Storage {
                 }
             }
 
-            pieceFiles[skeletons.size] = chunkFiles
+            pieceFiles[index] = chunkFiles
 
 
             val lim = min(chunkSize.toLong(), remaining).toInt()
             val hash = torrent.chunkHashes[index]
-            skeletons.add(Skeleton(lim, transferSize, hash))
-
+            chunks.put(index, Chunk(lim, transferSize, hash))
+            index++
             remaining -= chunkSize
         }
 
-        val totalPieces = skeletons.size
+        val totalPieces = chunks.size
 
         verifiedPieces(totalPieces)
         pieceStatistics = PieceStatistics(totalPieces)
@@ -195,11 +196,12 @@ internal data class DataStorage(val directory: Path) : Storage {
         dataBitfield!!.markVerified(piece)
     }
 
-    internal fun storeChunk(piece: Int, chunk: Chunk): Boolean {
+    internal fun digestChunk(piece: Int, chunk: Chunk): Boolean {
         lock.withLock {
-            val result = chunk.digest()
+            val bytes = database.readBytes(offset(piece), chunk.chunkSize())
+            val digest = sha1(bytes)
+            val result = digest.contentEquals(chunk.checksum)
             if (result) {
-                database.writeMemory(chunk.memory, offset(piece))
                 chunks.remove(piece)
                 dataBitfield!!.markVerified(piece)
                 return true
@@ -210,8 +212,13 @@ internal data class DataStorage(val directory: Path) : Storage {
         }
     }
 
-    internal fun offset(piece: Int): Long {
-        return (torrent!!.chunkSize * piece).toLong()
+
+    private fun chunkSize(): Int {
+        return torrent!!.chunkSize
+    }
+
+    private fun offset(piece: Int): Long {
+        return (chunkSize() * piece).toLong()
     }
 
     internal fun verifiedPieces(totalPieces: Int) {
@@ -264,10 +271,16 @@ internal data class DataStorage(val directory: Path) : Storage {
         }
     }
 
+    internal fun writeBlock(piece: Int, offset: Int, data: ByteArray) {
+        return lock.withLock {
+            database.writeBytes(data, offset(piece) + offset)
+        }
+    }
+
 
     internal fun chunk(piece: Int): Chunk {
-        require(piece <= skeletons.size)
-        return chunks.getOrPut(piece) { buildChunk(skeletons[piece]) }
+        require(piece <= chunks.size)
+        return chunks[piece]!!
     }
 
     override fun storeTo(directory: Path) {
@@ -299,7 +312,4 @@ internal data class DataStorage(val directory: Path) : Storage {
     }
 
 
-    private fun buildChunk(skeleton: Skeleton): Chunk {
-        return Chunk(skeleton.length, skeleton.blockSize, skeleton.checksum)
-    }
 }

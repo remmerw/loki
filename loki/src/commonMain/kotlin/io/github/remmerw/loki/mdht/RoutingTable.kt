@@ -14,7 +14,6 @@ internal class RoutingTable internal constructor() {
         if (entry != null) {
             refresh(peer)
         } else {
-            println("add peer $peer")
             entries.put(peer.hashCode(), peer)
         }
     }
@@ -32,7 +31,6 @@ internal class RoutingTable internal constructor() {
 
 
     fun entries(): List<Peer> {
-        println("entries size " + entries.size)
         return entries.values.toList()
     }
 

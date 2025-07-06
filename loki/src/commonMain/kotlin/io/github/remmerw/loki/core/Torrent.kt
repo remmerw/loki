@@ -8,7 +8,6 @@ import io.github.remmerw.loki.buri.BEString
 import io.github.remmerw.loki.buri.decode
 import io.github.remmerw.loki.data.Message
 import kotlinx.io.Buffer
-import kotlinx.io.bytestring.ByteString
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlin.math.ceil
@@ -66,7 +65,7 @@ private const val CHUNK_HASH_LENGTH = 20
 internal data class Torrent(
     val name: String,
     val files: List<TorrentFile>,
-    val chunkHashes: List<ByteString>,
+    val chunkHashes: List<ByteArray>,
     val size: Long,
     val chunkSize: Int,
     val isPrivate: Boolean,
@@ -109,14 +108,13 @@ internal data class Torrent(
 
 }
 
-fun buildHashes(hashes: ByteArray): List<ByteString> {
-    val result: MutableList<ByteString> = mutableListOf()
+fun buildHashes(hashes: ByteArray): List<ByteArray> {
+    val result: MutableList<ByteArray> = mutableListOf()
     var read = 0
     while (read < hashes.size) {
         val start = read
         read += CHUNK_HASH_LENGTH
-        val data = hashes.copyOfRange(start, read)
-        result.add(ByteString(data))
+        result.add(hashes.copyOfRange(start, read))
     }
     return result
 }
@@ -242,7 +240,7 @@ internal fun createTorrent(
         singleFile = true
     }
 
-    val hashes: List<ByteString> = buildHashes(chunkHashes)
+    val hashes: List<ByteArray> = buildHashes(chunkHashes)
 
     val torrent = Torrent(
         name, torrentFiles, hashes,
@@ -328,29 +326,29 @@ internal fun getFilePath(root: Path, torrentFile: TorrentFile): Path {
 }
 
 
-internal fun createBlockSet(length: Int, blockSize: Int): BlockSet {
+internal fun createBlockSet(chunkSize: Int, blockSize: Int): BlockSet {
     // intentionally allow length to be greater than block size
-    require(!(length < 0 || blockSize < 0)) {
-        "Illegal arguments: length ($length), block size ($blockSize)"
+    require(!(chunkSize < 0 || blockSize < 0)) {
+        "Illegal arguments: length ($chunkSize), block size ($blockSize)"
     }
 
-    val blockCount = ceil((length.toDouble()) / blockSize).toInt()
+    val blockCount = ceil((chunkSize.toDouble()) / blockSize).toInt()
     require(blockCount <= Int.MAX_VALUE) {
-        "Too many blocks: length (" + length +
+        "Too many blocks: length (" + chunkSize +
                 "), block size (" + blockSize + "), total blocks (" + blockCount + ")"
     }
 
     // handle the case when the last block is smaller than the others
-    var lastBlockSize: Int = (length % blockSize)
+    var lastBlockSize: Int = (chunkSize % blockSize)
     val lastBlockOffset: Int
     if (lastBlockSize > 0) {
-        lastBlockOffset = length - lastBlockSize
+        lastBlockOffset = chunkSize - lastBlockSize
     } else {
         lastBlockSize = blockSize
-        lastBlockOffset = length - blockSize
+        lastBlockOffset = chunkSize - blockSize
     }
     return BlockSet(
-        length, blockSize, blockCount, lastBlockSize, lastBlockOffset, Bitmask(blockCount)
+        chunkSize, blockSize, blockCount, lastBlockSize, lastBlockOffset, Bitmask(blockCount)
     )
 }
 
