@@ -76,7 +76,7 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
             checkNotNull(typeId) { "Peer does not support extension message: $typeName" }
             buffer.writeByte(typeId.toByte())
         }
-        checkNotNull(handlers[message.type]).doEncode(address, message, buffer)
+        checkNotNull(handlers[message.type]).doEncode(message, buffer)
     }
 
 }

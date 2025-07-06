@@ -23,7 +23,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         return PeerExchange(added, dropped)
     }
 
-    override fun doEncode(address: InetSocketAddress, message: ExtendedMessage, buffer: Buffer) {
+    override fun doEncode(message: ExtendedMessage, buffer: Buffer) {
         val exchange = message as PeerExchange
         exchange.encode(buffer)
     }

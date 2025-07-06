@@ -94,7 +94,7 @@ class TorrentParserTest {
             Random.nextBytes(4), 999
         )
 
-        handler.doEncode(peer, utMetadata, data)
+        handler.doEncode( utMetadata, data)
         val result = handler.doDecode(peer, data)
         assertEquals(result, utMetadata)
     }

@@ -32,11 +32,8 @@ fun CoroutineScope.lookupKey(
             val candidates = Candidates(key)
             val inFlight: MutableSet<Call> = mutableSetOf()
 
-            val kns = ClosestSearch(key, MAX_ENTRIES_PER_BUCKET * 4, mdht)
-            // unlike NodeLookups we do not use unverified nodes here. this avoids
-            // rewarding spoofers with useful lookup target IDs
-            kns.fill { peer: Peer -> peer.eligibleForNodesList() }
-            candidates.addCandidates(null, kns.entries())
+            val entries = mdht.routingTable.closestPeers(key, 32)
+            candidates.addCandidates(null, entries)
 
             do {
                 do {

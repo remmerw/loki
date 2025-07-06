@@ -19,12 +19,10 @@ import kotlinx.io.Buffer
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
 import kotlinx.io.writeUShort
-import kotlin.concurrent.Volatile
 import kotlin.math.min
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 internal class Mdht(val peerId: ByteArray, val port: Int) {
-    private var numEntriesInRoutingTable: Int = 0
 
     private val unsolicitedThrottle: MutableMap<InetSocketAddress, Long> =
         mutableMapOf() // runs in same thread
@@ -40,8 +38,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     private var socket: BoundDatagramSocket? = null
 
 
-    @Volatile
-    var routingTable = RoutingTable()
+    val routingTable = RoutingTable()
 
     suspend fun startup(addresses: List<InetSocketAddress>) {
         socket = aSocket(selectorManager).udp().bind(
@@ -112,7 +109,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
 
         // don't timeout anything if we don't have a connection
         if (call.expectedID != null) {
-            routingTable.entryForId(call.expectedID).bucket.onTimeout(
+            routingTable.onTimeout(
                 call.request.address
             )
         }
@@ -138,12 +135,16 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
             return
         }
 
-        val kns = ClosestSearch(request.target, MAX_ENTRIES_PER_BUCKET, this)
-        kns.fill { peer: Peer -> peer.eligibleForNodesList() }
+        val entries = routingTable.closestPeers(request.target, 8)
+
         val response = FindNodeResponse(
             request.address, peerId, request.tid,
-            kns.inet4List(),
-            kns.inet6List()
+            entries.filter { peer: Peer ->
+                peer.address.resolveAddress()?.size == 4
+            },
+            entries.filter { peer: Peer ->
+                peer.address.resolveAddress()?.size == 16
+            }
         )
 
         sendMessage(response)
@@ -170,14 +171,17 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
             )
 
 
-        val kns = ClosestSearch(request.infoHash, MAX_ENTRIES_PER_BUCKET, this)
-        kns.fill { peer: Peer -> peer.eligibleForNodesList() }
+        val entries = routingTable.closestPeers(request.infoHash, 8)
 
 
         val resp = GetPeersResponse(
             request.address, peerId, request.tid, token,
-            kns.inet4List(),
-            kns.inet6List(),
+            entries.filter { peer: Peer ->
+                peer.address.resolveAddress()?.size == 4
+            },
+            entries.filter { peer: Peer ->
+                peer.address.resolveAddress()?.size == 16
+            },
             addresses
         )
 
@@ -231,7 +235,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     }
 
 
-    suspend fun recieved(msg: Message, associatedCall: Call?) {
+    fun recieved(msg: Message, associatedCall: Call?) {
         val ip = msg.address
         val id = msg.id
 
@@ -245,8 +249,8 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
             return
         }
 
-        val bucket = routingTable.entryForId(id).bucket
-        val entryById = bucket.findByIPorID(null, id)
+
+        val entryById = routingTable.findPeerById(id)
 
         // entry is claiming the same ID as entry with different IP in our routing table -> ignore
         if (entryById != null && entryById.address != ip) return
@@ -259,9 +263,8 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         // throttle the insert-attempts for unsolicited requests, update-only once they exceed the threshold
         // does not apply to responses
         if (associatedCall == null && updateAndCheckThrottle(newEntry.address)) {
-            val bucket = routingTable.entryForId(newEntry.id).bucket
 
-            bucket.refresh(newEntry)
+            routingTable.refresh(newEntry)
             return
         }
 
@@ -271,24 +274,17 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         }
 
 
-        // force trusted entry into the routing table (by splitting if necessary) if
-        // it passed all preliminary tests and it's not yet in the table
-        // although we can only trust responses, anything else might be
-        // spoofed to clobber our routing table
+        if (!peerId.contentEquals(newEntry.id)) {
+            routingTable.insertOrRefresh(newEntry)
+        }
 
-
-        val opts: MutableSet<InsertOptions> = mutableSetOf()
-
-        if (msg is Response) opts.add(InsertOptions.RELAXED_SPLIT)
-
-        insertEntry(newEntry, opts)
 
         // we already should have the bucket. might be an old one by now due to splitting
         // but it doesn't matter, we just need to update the entry, which should stay the
         // same object across bucket splits
         if (msg is Response) {
             if (associatedCall != null) {
-                bucket.notifyOfResponse(msg, associatedCall)
+                routingTable.notifyOfResponse(msg, associatedCall)
             }
         }
     }
@@ -310,119 +306,16 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     }
 
 
-    private suspend fun insertEntry(toInsert: Peer, opts: Set<InsertOptions>) {
-        if (peerId.contentEquals(toInsert.id)) return
-
-        var currentTable = routingTable
-        var tableEntry = currentTable.entryForId(toInsert.id)
-
-        while (!opts.contains(InsertOptions.NEVER_SPLIT) && tableEntry.bucket.isFull && (opts.contains(
-                InsertOptions.FORCE_INTO_MAIN_BUCKET
-            ) || toInsert.verifiedReachable()) && tableEntry.prefix.depth < KEY_BITS - 1
-        ) {
-            if (!opts.contains(InsertOptions.ALWAYS_SPLIT_IF_FULL) && !canSplit(
-                    tableEntry,
-                    toInsert,
-                    opts.contains(InsertOptions.RELAXED_SPLIT)
-                )
-            ) break
-
-            splitEntry(currentTable, tableEntry)
-            currentTable = routingTable
-            tableEntry = currentTable.entryForId(toInsert.id)
-        }
-
-        val oldSize = tableEntry.bucket.numEntries
-
-        var toRemove: Peer? = null
-
-        if (opts.contains(InsertOptions.REMOVE_IF_FULL)) {
-
-            /**
-             * ascending order for timeCreated, i.e. the first value will be the oldest
-             */
-            toRemove = tableEntry.bucket.getEntries().maxByOrNull { peer: Peer ->
-                peer.creationTime.elapsedNow().inWholeMilliseconds
-            }
-        }
-
-        if (opts.contains(InsertOptions.FORCE_INTO_MAIN_BUCKET)) tableEntry.bucket.modifyMainBucket(
-            toRemove,
-            toInsert
-        )
-        else tableEntry.bucket.insertOrRefresh(toInsert)
-
-        // add delta to the global counter. inaccurate, but will be rebuilt by the bucket checks
-        numEntriesInRoutingTable += tableEntry.bucket.numEntries - oldSize
-    }
-
-    private fun canSplit(
-        entry: RoutingTableEntry,
-        toInsert: Peer,
-        relaxedSplitting: Boolean
-    ): Boolean {
-        if (isLocalBucket(entry.prefix)) return true
-
-        if (!relaxedSplitting) return false
-
-        val search = ClosestSearch(
-            peerId, MAX_ENTRIES_PER_BUCKET,
-            this
-        )
-
-
-        search.fill { true }
-        val found = search.entries()
-
-        if (found.size < MAX_ENTRIES_PER_BUCKET) return true
-
-        val max = found[found.size - 1]
-
-        return threeWayDistance(peerId, max.id, toInsert.id) > 0
-    }
-
-    private suspend fun splitEntry(expect: RoutingTable, entry: RoutingTableEntry) {
-
-        val current = routingTable
-        if (current != expect) return
-
-        val a = RoutingTableEntry(
-            splitPrefixBranch(entry.prefix, false), Bucket()
-        )
-        val b = RoutingTableEntry(
-            splitPrefixBranch(entry.prefix, true), Bucket()
-        )
-
-        routingTable = current.modify(listOf(entry), listOf(a, b))
-
-        // suppress recursive splitting to relinquish the lock faster.
-        // this method is generally called in a loop anyway
-        for (e in entry.bucket.getEntries()) insertEntry(
-            e,
-            setOf(InsertOptions.NEVER_SPLIT, InsertOptions.FORCE_INTO_MAIN_BUCKET)
-        )
-
-
-        // replacements are less important, transfer outside lock
-        for (e in entry.bucket.replacementEntries) insertEntry(
-            e, setOf()
-        )
-    }
-
-
     fun isLocalId(id: ByteArray): Boolean {
         return peerId.contentEquals(id)
-    }
-
-    private fun isLocalBucket(prefix: Prefix): Boolean {
-        return isPrefixOf(prefix, peerId)
     }
 
 
     private fun onOutgoingRequest(call: Call) {
         val expectedId = call.expectedID ?: return
-        val bucket = routingTable.entryForId(expectedId).bucket
-        val peer = bucket.findByIPorID(call.request.address, expectedId)
+        val peer = routingTable.findPeerById(expectedId)
+            ?: routingTable.findPeerByAddress(call.request.address)
+
         peer?.signalScheduledRequest()
     }
 
@@ -614,15 +507,6 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         send(EnqueuedSend(msg, null))
 
     }
-
-
-    internal enum class InsertOptions {
-        ALWAYS_SPLIT_IF_FULL,
-        NEVER_SPLIT,
-        RELAXED_SPLIT,
-        REMOVE_IF_FULL,
-        FORCE_INTO_MAIN_BUCKET
-    }
 }
 
 internal data class EnqueuedSend(val message: Message, val associatedCall: Call?)
@@ -648,7 +532,6 @@ internal const val MAX_PEERS_PER_ANNOUNCE: Int = 10
 
 // enter survival mode if we don't see new packets after this time
 internal const val SHA1_HASH_LENGTH: Int = 20
-internal const val KEY_BITS: Int = SHA1_HASH_LENGTH * 8
 
 
 internal const val ADDRESS_LENGTH_IPV6 = 16 + 2
@@ -710,44 +593,6 @@ internal fun olderTimeMark(mark: ValueTimeMark, cmp: ValueTimeMark): ValueTimeMa
     return if (markElapsed > cmpElapsed) mark else cmp
 }
 
-
-internal fun compareUnsigned(a: ByteArray, b: ByteArray): Int {
-    val minLength = min(a.size.toDouble(), b.size.toDouble()).toInt()
-    run {
-        var i = 0
-        while (i + 7 < minLength) {
-            val la = a[i].toULong() shl 56 or (
-                    a[i + 1].toULong() shl 48) or (
-                    a[i + 2].toULong() shl 40) or (
-                    a[i + 3].toULong() shl 32) or (
-                    a[i + 4].toULong() shl 24) or (
-                    a[i + 5].toULong() shl 16) or (
-                    a[i + 6].toULong() shl 8) or
-                    a[i + 7].toULong()
-            val lb = b[i].toULong() shl 56 or (
-                    b[i + 1].toULong() shl 48) or (
-                    b[i + 2].toULong() shl 40) or (
-                    b[i + 3].toULong() shl 32) or (
-                    b[i + 4].toULong() shl 24) or (
-                    b[i + 5].toULong() shl 16) or (
-                    b[i + 6].toULong() shl 8) or
-                    b[i + 7].toULong()
-
-            if (la != lb) return la.compareTo(lb)
-
-            i += 8
-        }
-    }
-
-
-    for (i in 0 until minLength) {
-        val ia = a[i].toULong()
-        val ib = b[i].toULong()
-        if (ia != ib) return ia.compareTo(ib)
-    }
-
-    return a.size - b.size
-}
 
 internal fun mismatch(a: ByteArray, b: ByteArray): Int {
     val min = min(a.size, b.size)

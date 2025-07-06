@@ -12,7 +12,7 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
         Type.UtMetadata
     )
 
-    override fun doEncode(address: InetSocketAddress, message: ExtendedMessage, buffer: Buffer) {
+    override fun doEncode(message: ExtendedMessage, buffer: Buffer) {
         val utMetadata = message as UtMetadata
 
         return utMetadata.encode(buffer)

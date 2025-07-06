@@ -60,7 +60,7 @@ class ExchangedMetadataTest {
                 Random.nextBytes(4), 999
             )
             val buffer = Buffer()
-            handler.doEncode(peer, metadata, buffer)
+            handler.doEncode(metadata, buffer)
 
             val cmp = handler.doDecode(peer, buffer)
             assertEquals(cmp, metadata)

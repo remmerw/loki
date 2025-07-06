@@ -7,7 +7,7 @@ interface MessageHandler {
     /**
      * Tries to encode the provided message and place the result into the byte buffer.
      */
-    fun doEncode(address: InetSocketAddress, message: ExtendedMessage, buffer: Buffer)
+    fun doEncode(message: ExtendedMessage, buffer: Buffer)
 
     /**
      * Tries to decode message from the byte buffer. If decoding is successful, then the

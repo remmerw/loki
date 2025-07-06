@@ -30,6 +30,8 @@ import io.ktor.utils.io.readByteArray
 import io.ktor.utils.io.readInt
 import io.ktor.utils.io.writeBuffer
 import io.ktor.utils.io.writeInt
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.io.Buffer
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -50,6 +52,7 @@ internal class Connection internal constructor(
     private val closed = AtomicBoolean(false)
     private val receiveChannel = socket.openReadChannel()
     private val sendChannel = socket.openWriteChannel(autoFlush = false)
+    private val mutex = Mutex()
 
     fun address(): InetSocketAddress {
         return address
@@ -67,6 +70,7 @@ internal class Connection internal constructor(
             return messages.decode(address, receiveChannel, length)
         } catch (throwable: Throwable) {
             debug("Error Connection.reading " + throwable.message)
+            debug("Connection", throwable)
             close()
         }
         return null
@@ -105,75 +109,77 @@ internal class Connection internal constructor(
     @OptIn(ExperimentalAtomicApi::class)
     suspend fun posting(message: Message) {
         lastActive = TimeSource.Monotonic.markNow()
+        mutex.withLock {
+            try {
+                when (message) {
+                    is Handshake -> {
+                        message.encode(sendChannel)
+                    }
 
-        try {
-            when (message) {
-                is Handshake -> {
-                    message.encode(sendChannel)
+                    is KeepAlive -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is Piece -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is Have -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is Request -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is Bitfield -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is Cancel -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is Choke -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is Unchoke -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is Interested -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is NotInterested -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is Port -> {
+                        message.encode(sendChannel)
+                    }
+
+                    is ExtendedMessage -> {
+
+                        val buffer = Buffer()
+                        messages.encode(address, message, buffer)
+                        val size = buffer.size
+                        sendChannel.writeInt(size.toInt())
+                        sendChannel.writeBuffer(buffer)
+                    }
+
+                    else -> {
+                        debug("not supported message " + message.type.name)
+                        throw Exception("not supported message " + message.type.name)
+                    }
                 }
-
-                is KeepAlive -> {
-                    message.encode(sendChannel)
-                }
-
-                is Piece -> {
-                    message.encode(sendChannel)
-                }
-
-                is Have -> {
-                    message.encode(sendChannel)
-                }
-
-                is Request -> {
-                    message.encode(sendChannel)
-                }
-
-                is Bitfield -> {
-                    message.encode(sendChannel)
-                }
-
-                is Cancel -> {
-                    message.encode(sendChannel)
-                }
-
-                is Choke -> {
-                    message.encode(sendChannel)
-                }
-
-                is Unchoke -> {
-                    message.encode(sendChannel)
-                }
-
-                is Interested -> {
-                    message.encode(sendChannel)
-                }
-
-                is NotInterested -> {
-                    message.encode(sendChannel)
-                }
-
-                is Port -> {
-                    message.encode(sendChannel)
-                }
-
-                is ExtendedMessage -> {
-
-                    val buffer = Buffer()
-                    messages.encode(address, message, buffer)
-                    val size = buffer.size
-                    sendChannel.writeInt(size.toInt())
-                    sendChannel.writeBuffer(buffer)
-                }
-
-                else -> {
-                    debug("not supported message " + message.type.name)
-                    throw Exception("not supported message " + message.type.name)
-                }
+                sendChannel.flush()
+            } catch (throwable: Throwable) {
+                debug("Error Connection.posting " + throwable.message)
+                debug("Connection", throwable)
+                close()
             }
-            sendChannel.flush()
-        } catch (throwable: Throwable) {
-            debug("Error Connection.posting " + throwable.message)
-            close()
         }
     }
 

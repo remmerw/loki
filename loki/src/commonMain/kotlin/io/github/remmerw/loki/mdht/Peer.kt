@@ -37,11 +37,6 @@ internal class Peer(val address: InetSocketAddress, val id: ByteArray) {
         return id.contentEquals(other.id) && address == other.address
     }
 
-    fun matchIPorID(other: Peer?): Boolean {
-        if (other == null) return false
-        return id.contentEquals(other.id) || address == other.address
-    }
-
     override fun hashCode(): Int {
         return id.hashCode() // note bucket entry
     }
@@ -76,6 +71,8 @@ internal class Peer(val address: InetSocketAddress, val id: ByteArray) {
         if (!other.avgRTT.average.isNaN()) avgRTT.updateAverage(other.avgRTT.average)
     }
 
+
+    @Suppress("unused")
     val rTT: Int
         get() = avgRTT.getAverage(RPC_CALL_TIMEOUT_MAX.toDouble())
             .toInt()

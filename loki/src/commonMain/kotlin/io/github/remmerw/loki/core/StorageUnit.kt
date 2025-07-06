@@ -13,6 +13,7 @@ class StorageUnit internal constructor(
     private val relPaths: List<String> = relPaths(torrentFile)
     private val startPos = torrentFile.startPosition()
 
+    @Suppress("unused")
     fun name(): String {
         return relPaths.last()
     }

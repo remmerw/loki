@@ -46,7 +46,7 @@ internal class ExtendedHandshakeHandler : MessageHandler {
         return ExtendedHandshake(map)
     }
 
-    override fun doEncode(address: InetSocketAddress, message: ExtendedMessage, buffer: Buffer) {
+    override fun doEncode(message: ExtendedMessage, buffer: Buffer) {
         val extendedHandshake = message as ExtendedHandshake
         extendedHandshake.encode(buffer)
 
