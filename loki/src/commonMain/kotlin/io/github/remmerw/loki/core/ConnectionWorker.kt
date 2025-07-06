@@ -33,7 +33,7 @@ internal open class ConnectionWorker(
         message = getMessage()
         if (message != null && Type.Have == message.type) {
             val have = message as Have
-            worker.purgedConnections().forEach { connection: Connection ->
+            worker.connections().forEach { connection: Connection ->
                 connection.appendHave(have)
             }
         }

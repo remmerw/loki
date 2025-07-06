@@ -19,7 +19,9 @@ class MdhtTest {
             withTimeout(60 * 1000) {
                 val key = createRandomKey(SHA1_HASH_LENGTH)
 
-                val channel = lookupKey(peerId(), 4657, bootstrap(), key)
+                val channel = lookupKey(peerId(), 4657, bootstrap(), key) {
+                    5000
+                }
 
                 for (peer in channel) {
                     println(peer.toString())

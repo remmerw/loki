@@ -326,13 +326,7 @@ private fun parseResponse(
                     }
                 }
             }
-
-            if (addresses.isNotEmpty() || nodes6.isNotEmpty() || nodes.isNotEmpty()) {
-                msg = GetPeersResponse(address, id, tid, token, nodes, nodes6, addresses)
-            } else {
-                debug("Neither nodes nor values in get_peers response")
-                return null
-            }
+            return GetPeersResponse(address, id, tid, token, nodes, nodes6, addresses)
         }
 
         else -> {
@@ -342,25 +336,18 @@ private fun parseResponse(
     }
 
 
+    /* not active
     val ip = arrayGet(map[Names.IP])
     if (ip != null) {
-        val addr = unpackAddress(ip)
-        if (addr != null) {
-            debug("My IP: $addr")
-        }
-    }
+        val buffer = Buffer()
+        buffer.write(ip)
+        val rawIP = buffer.readByteArray(ip.size - 2)
+        val port = buffer.readUShort()
+        val addr = createInetSocketAddress(rawIP, port.toInt())
+        debug("My IP: $addr")
+    }*/
 
     return msg
-}
-
-
-private fun unpackAddress(raw: ByteArray): InetSocketAddress? {
-    if (raw.size != 6 && raw.size != 18) return null
-    val buffer = Buffer()
-    buffer.write(raw)
-    val rawIP = buffer.readByteArray(raw.size - 2)
-    val port = buffer.readUShort()
-    return createInetSocketAddress(rawIP, port.toInt())
 }
 
 

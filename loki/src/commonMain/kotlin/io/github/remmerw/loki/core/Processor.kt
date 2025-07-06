@@ -95,12 +95,13 @@ internal fun CoroutineScope.processMessages(
 
 
     channel.consumeEach { connection ->
+
         launch {
             while (!connection.isClosed) {
                 ensureActive()
                 val message = connection.reading()
                 if (message == null) {
-                    break
+                    break // done
                 }
                 worker.consume(connection, message)
             }

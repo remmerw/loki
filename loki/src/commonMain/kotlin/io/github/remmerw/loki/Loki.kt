@@ -95,7 +95,16 @@ suspend fun CoroutineScope.download(
 
 
     try {
-        val addresses = lookupKey(peerId, port, bootstrap(), torrentId.bytes)
+        val addresses = lookupKey(peerId, port, bootstrap(), torrentId.bytes) {
+            val size = worker.purgedConnections()
+            if (size > 10) {
+                30000 // 30 sec
+            } else if (size > 5) {
+                15000 // 15 sec
+            } else {
+                5000 // 5 sec
+            }
+        }
         val connections = performConnection(messages, worker, selectorManager, addresses)
         val handshakes = performHandshake(
             peerId, torrentId, handshakeHandlers, worker, connections

@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.mdht
 
+import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -9,13 +10,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlin.random.Random
 
-const val LOOKUP_DELAY: Long = 5000
 
 @OptIn(ExperimentalCoroutinesApi::class)
 fun CoroutineScope.lookupKey(
     peerId: ByteArray, port: Int,
     bootstrap: List<InetSocketAddress>,
-    key: ByteArray
+    key: ByteArray,
+    timeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
 
 
@@ -120,7 +121,9 @@ fun CoroutineScope.lookupKey(
                 ensureActive()
             } while (!inFlight.isEmpty())
 
-            delay(LOOKUP_DELAY)
+            val timeout = timeout.invoke()
+            debug("Timeout lookup for $timeout [ms]")
+            delay(timeout)
         }
     } finally {
         mdht.shutdown()

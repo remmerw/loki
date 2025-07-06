@@ -12,6 +12,9 @@ import io.github.remmerw.loki.data.notInterested
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.util.collections.ConcurrentMap
 import kotlin.concurrent.Volatile
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
@@ -74,24 +77,26 @@ internal class Worker(
         }
     }
 
-    fun purgedConnections(): List<Connection> {
+    fun connections(): List<Connection> {
+        return connections.values.toList()
+    }
 
-        val purged: MutableList<Connection> = mutableListOf()
+    @OptIn(ExperimentalAtomicApi::class)
+    fun purgedConnections(): Int {
+
+        val purgedConnections = AtomicInt(0)
         val removing: MutableList<Connection> = mutableListOf()
         connections.values.forEach { connection: Connection ->
-            if (connection.isClosed) {
-                removing.add(connection)
-            } else if (
-                connection.lastActive.elapsedNow().inWholeMilliseconds
+            if (connection.lastActive.elapsedNow().inWholeMilliseconds
                 >= PEER_INACTIVITY_THRESHOLD
             ) {
                 removing.add(connection)
             } else {
-                purged.add(connection)
+                purgedConnections.incrementAndFetch()
             }
         }
-        removing.forEach { connection -> purgeConnection(connection) }
-        return purged.toList()
+        removing.forEach { connection -> connection.close() }
+        return purgedConnections.load()
 
     }
 
@@ -121,7 +126,6 @@ internal class Worker(
 
         assignments.remove(connection)
         dataStorage.pieceStatistics()?.removeBitfield(connection)
-        connection.close()
     }
 
     fun shutdown() {
@@ -198,7 +202,7 @@ internal class Worker(
 
         val ready: MutableSet<Connection> = mutableSetOf()
         val choking: MutableSet<Connection> = mutableSetOf()
-        purgedConnections().forEach { connection ->
+        connections().forEach { connection ->
             if (connection.isPeerChoking) {
                 choking.add(connection)
             } else {
