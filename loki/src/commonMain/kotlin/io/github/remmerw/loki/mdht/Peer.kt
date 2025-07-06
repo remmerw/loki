@@ -5,26 +5,9 @@ import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 internal class Peer(val address: InetSocketAddress, val id: ByteArray) {
-
-    private val avgRTT = ExponentialWeightendMovingAverage().setWeight(RTT_EMA_WEIGHT)
-
-    var creationTime: ValueTimeMark
-    var lastSeen: ValueTimeMark
+    private var lastSeen: ValueTimeMark = TimeSource.Monotonic.markNow()
     private var verified = false
-
-    /**
-     * -1 = never queried / learned about it from incoming requests
-     * 0 = last query was a success
-     * > 0 = query failed
-     */
     private var failedQueries = 0
-    private var lastSendTime: ValueTimeMark? = null
-
-
-    init {
-        lastSeen = TimeSource.Monotonic.markNow()
-        creationTime = lastSeen
-    }
 
 
     override fun equals(other: Any?): Boolean {
@@ -65,35 +48,14 @@ internal class Peer(val address: InetSocketAddress, val id: ByteArray) {
     fun mergeInTimestamps(other: Peer) {
         if (!this.equals(other) || this === other) return
         lastSeen = newerTimeMark(lastSeen, other.lastSeen)!!
-        lastSendTime = newerTimeMark(lastSendTime, other.lastSendTime)
-        creationTime = olderTimeMark(creationTime, other.creationTime)
         if (other.verifiedReachable()) setVerified()
-        if (!other.avgRTT.average.isNaN()) avgRTT.updateAverage(other.avgRTT.average)
     }
 
 
-    @Suppress("unused")
-    val rTT: Int
-        get() = avgRTT.getAverage(RPC_CALL_TIMEOUT_MAX.toDouble())
-            .toInt()
-
-    /**
-     * @param rtt > 0 in ms. -1 if unknown
-     */
-    fun signalResponse(rtt: Long) {
+    fun signalResponse() {
         lastSeen = TimeSource.Monotonic.markNow()
         failedQueries = 0
         verified = true
-        if (rtt > 0) avgRTT.updateAverage(rtt.toDouble())
-    }
-
-    fun mergeRequestTime(requestSent: ValueTimeMark?) {
-        lastSendTime = newerTimeMark(lastSendTime, requestSent)
-    }
-
-
-    fun signalScheduledRequest() {
-        lastSendTime = TimeSource.Monotonic.markNow()
     }
 
     /**

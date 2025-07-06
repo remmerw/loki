@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.mdht
 
-import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.util.collections.ConcurrentMap
 
 internal class RoutingTable internal constructor() {
@@ -34,8 +33,8 @@ internal class RoutingTable internal constructor() {
         return entries.values.toList()
     }
 
-    fun onTimeout(address: InetSocketAddress) {
-        val peer = findPeerByAddress(address)
+    fun onTimeout(id: ByteArray) {
+        val peer = findPeerById(id)
         if (peer != null) {
             peer.signalRequestTimeout()
             //only removes the entry if it is bad
@@ -50,13 +49,8 @@ internal class RoutingTable internal constructor() {
         return entries[id.hashCode()]
     }
 
-    fun findPeerByAddress(address: InetSocketAddress): Peer? {
-        return entries().firstOrNull { peer -> peer.address == address }
-    }
-
-    fun notifyOfResponse(msg: Message, associatedCall: Call) {
-        entries[msg.id.hashCode()]
-            ?.signalResponse(associatedCall.rTT)
+    fun notifyOfResponse(msg: Message) {
+        entries[msg.id.hashCode()]?.signalResponse()
     }
 
 }

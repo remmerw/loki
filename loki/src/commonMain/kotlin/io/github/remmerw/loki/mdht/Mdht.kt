@@ -10,9 +10,7 @@ import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.util.collections.ConcurrentMap
 import io.ktor.utils.io.core.remaining
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.io.Buffer
@@ -33,29 +31,23 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     private val requestCalls: ConcurrentMap<Int, Call> = ConcurrentMap()
 
     private val database: Database = Database()
-    private val scope = CoroutineScope(Dispatchers.IO)
     private val selectorManager = SelectorManager(Dispatchers.IO)
     private var socket: BoundDatagramSocket? = null
 
 
     val routingTable = RoutingTable()
 
-    suspend fun startup(addresses: List<InetSocketAddress>) {
+    suspend fun startup() {
         socket = aSocket(selectorManager).udp().bind(
             InetSocketAddress("::", port)
         )
 
-        scope.launch {
+        selectorManager.launch {
             while (isActive) {
                 val datagram = socket!!.receive()
                 handleDatagram(datagram)
             }
         }
-
-        addresses.forEach { address: InetSocketAddress ->
-            ping(address, null)
-        }
-
     }
 
     private suspend fun send(es: EnqueuedSend) {
@@ -91,12 +83,6 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         }
 
         try {
-            scope.cancel()
-        } catch (throwable: Throwable) {
-            debug("Mdht", throwable)
-        }
-
-        try {
             selectorManager.close()
         } catch (throwable: Throwable) {
             debug("Mdht", throwable)
@@ -110,7 +96,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         // don't timeout anything if we don't have a connection
         if (call.expectedID != null) {
             routingTable.onTimeout(
-                call.request.address
+                call.expectedID
             )
         }
     }
@@ -269,8 +255,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         }
 
         if (associatedCall != null) {
-            newEntry.signalResponse(associatedCall.rTT)
-            newEntry.mergeRequestTime(associatedCall.sentTime)
+            newEntry.signalResponse()
         }
 
 
@@ -284,7 +269,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         // same object across bucket splits
         if (msg is Response) {
             if (associatedCall != null) {
-                routingTable.notifyOfResponse(msg, associatedCall)
+                routingTable.notifyOfResponse(msg)
             }
         }
     }
@@ -311,19 +296,9 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     }
 
 
-    private fun onOutgoingRequest(call: Call) {
-        val expectedId = call.expectedID ?: return
-        val peer = routingTable.findPeerById(expectedId)
-            ?: routingTable.findPeerByAddress(call.request.address)
-
-        peer?.signalScheduledRequest()
-    }
-
     suspend fun doRequestCall(call: Call) {
 
-        onOutgoingRequest(call)
         requestCalls.put(call.request.tid.contentHashCode(), call)
-
 
         val es = EnqueuedSend(call.request, call)
 
@@ -521,7 +496,6 @@ internal const val MAX_TIMEOUTS = 5
 // based threshold. e.g. for old entries that we haven't touched for a long time
 internal const val OLD_AND_STALE_TIME = 15 * 60 * 1000
 internal const val OLD_AND_STALE_TIMEOUTS = 2
-internal const val RTT_EMA_WEIGHT = 0.3
 
 // DHT
 internal const val MAX_ENTRIES_PER_BUCKET: Int = 8
@@ -529,11 +503,7 @@ internal const val RPC_CALL_TIMEOUT_MAX: Long = 10 * 1000
 internal const val TOKEN_TIMEOUT: Int = 5 * 60 * 1000
 internal const val MAX_DB_ENTRIES_PER_KEY: Int = 6000
 internal const val MAX_PEERS_PER_ANNOUNCE: Int = 10
-
-// enter survival mode if we don't see new packets after this time
 internal const val SHA1_HASH_LENGTH: Int = 20
-
-
 internal const val ADDRESS_LENGTH_IPV6 = 16 + 2
 internal const val ADDRESS_LENGTH_IPV4 = 4 + 2
 internal const val NODE_ENTRY_LENGTH_IPV6 = ADDRESS_LENGTH_IPV6 + SHA1_HASH_LENGTH
@@ -584,13 +554,6 @@ internal fun newerTimeMark(mark: ValueTimeMark?, cmp: ValueTimeMark?): ValueTime
     val markElapsed = mark.elapsedNow().inWholeMilliseconds
     val cmpElapsed = cmp.elapsedNow().inWholeMilliseconds
     return if (markElapsed < cmpElapsed) mark else cmp
-}
-
-// returns the older timestamp
-internal fun olderTimeMark(mark: ValueTimeMark, cmp: ValueTimeMark): ValueTimeMark {
-    val markElapsed = mark.elapsedNow().inWholeMilliseconds
-    val cmpElapsed = cmp.elapsedNow().inWholeMilliseconds
-    return if (markElapsed > cmpElapsed) mark else cmp
 }
 
 

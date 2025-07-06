@@ -21,8 +21,11 @@ fun CoroutineScope.lookupKey(
 
 
     val mdht = Mdht(peerId, port)
-    mdht.startup(bootstrap)
+    mdht.startup()
 
+    bootstrap.forEach { address: InetSocketAddress ->
+        mdht.ping(address, null)
+    }
     val peers: MutableSet<String> = mutableSetOf()
 
 
@@ -105,9 +108,10 @@ fun CoroutineScope.lookupKey(
 
                         else -> {
                             val sendTime = call.sentTime
+
                             if (sendTime != null) {
                                 val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                                if (elapsed > RPC_CALL_TIMEOUT_MAX) {
+                                if (elapsed > 3000) { // 3 sec
                                     removed.add(call)
                                     candidates.increaseFailures(call)
                                     mdht.timeout(call)
