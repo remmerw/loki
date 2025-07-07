@@ -19,7 +19,10 @@ internal interface Message {
     fun encode(buffer: Buffer)
 }
 
-internal interface Response : Message
+internal interface Response : Message {
+    val ip: ByteArray?
+}
+
 internal interface Request : Message
 
 
@@ -62,7 +65,8 @@ internal data class AnnounceRequest(
 internal data class AnnounceResponse(
     override val address: InetSocketAddress,
     override val id: ByteArray,
-    override val tid: ByteArray
+    override val tid: ByteArray,
+    override val ip: ByteArray?
 ) : Response {
 
     override fun encode(buffer: Buffer) {
@@ -143,6 +147,7 @@ internal data class FindNodeResponse(
     override val address: InetSocketAddress,
     override val id: ByteArray,
     override val tid: ByteArray,
+    override val ip: ByteArray?,
     val nodes: List<Peer>,
     val nodes6: List<Peer>
 ) : Response {
@@ -206,6 +211,7 @@ internal data class GetPeersResponse(
     override val address: InetSocketAddress,
     override val id: ByteArray,
     override val tid: ByteArray,
+    override val ip: ByteArray?,
     val token: ByteArray?,
     val nodes: List<Peer>,
     val nodes6: List<Peer>,
@@ -272,7 +278,8 @@ internal data class PingRequest(
 internal data class PingResponse(
     override val address: InetSocketAddress,
     override val id: ByteArray,
-    override val tid: ByteArray
+    override val tid: ByteArray,
+    override val ip: ByteArray?
 ) : Response {
 
     override fun encode(buffer: Buffer) {
@@ -340,7 +347,8 @@ internal data class PutRequest(
 internal data class PutResponse(
     override val address: InetSocketAddress,
     override val id: ByteArray,
-    override val tid: ByteArray
+    override val tid: ByteArray,
+    override val ip: ByteArray?
 ) : Response {
 
     override fun encode(buffer: Buffer) {
@@ -398,6 +406,7 @@ internal data class GetResponse(
     override val address: InetSocketAddress,
     override val id: ByteArray,
     override val tid: ByteArray,
+    override val ip: ByteArray?,
     val token: ByteArray?,
     val nodes: List<Peer>,
     val nodes6: List<Peer>,

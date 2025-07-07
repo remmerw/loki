@@ -24,7 +24,7 @@ class Messages(extendedMessagesHandler: List<ExtendedMessageHandler>) {
                 size = size - Int.SIZE_BYTES
                 val blockOffset = channel.readInt()
                 size = size - Int.SIZE_BYTES
-                val data = ByteArray(size) // todo this can be optimized
+                val data = ByteArray(size) // todo this can be optimized maybe
                 channel.readFully(data)
                 return Piece(pieceIndex, blockOffset, data)
             }

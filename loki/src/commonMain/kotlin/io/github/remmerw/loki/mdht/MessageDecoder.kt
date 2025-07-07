@@ -280,11 +280,13 @@ private fun parseResponse(
     require(id != null) { "mandatory parameter 'id' missing" }
     require(id.size == SHA1_HASH_LENGTH) { "invalid or missing origin ID" }
 
+    val ip = arrayGet(map[Names.IP])
+
     val msg: Message
 
     when (request) {
-        is PingRequest -> msg = PingResponse(address, id, tid)
-        is PutRequest -> msg = PutResponse(address, id, tid)
+        is PingRequest -> msg = PingResponse(address, id, tid, ip)
+        is PutRequest -> msg = PutResponse(address, id, tid, ip)
         is GetRequest -> {
             val token = arrayGet(args[Names.TOKEN])
             val nodes6 = extractNodes6(args)
@@ -293,10 +295,13 @@ private fun parseResponse(
             val k = arrayGet(args[Names.K])
             val sec = longGet(args[Names.SEQ])
             val sig = arrayGet(args[Names.SIG])
-            return GetResponse(address, id, tid, token, nodes, nodes6, data, k, sec, sig)
+            return GetResponse(
+                address, id, tid, token, ip,
+                nodes, nodes6, data, k, sec, sig
+            )
         }
 
-        is AnnounceRequest -> msg = AnnounceResponse(address, id, tid)
+        is AnnounceRequest -> msg = AnnounceResponse(address, id, tid, ip)
         is FindNodeRequest -> {
             require(args.containsKey(Names.NODES) || args.containsKey(Names.NODES6)) {
                 "received response to find_node request with " +
@@ -304,7 +309,7 @@ private fun parseResponse(
             }
             val nodes6 = extractNodes6(args)
             val nodes = extractNodes(args)
-            msg = FindNodeResponse(address, id, tid, nodes, nodes6)
+            msg = FindNodeResponse(address, id, tid, ip, nodes, nodes6)
         }
 
         is GetPeersRequest -> {
@@ -362,7 +367,10 @@ private fun parseResponse(
                     }
                 }
             }
-            return GetPeersResponse(address, id, tid, token, nodes, nodes6, addresses)
+            return GetPeersResponse(
+                address, id, tid, ip,
+                token, nodes, nodes6, addresses
+            )
         }
 
         else -> {
@@ -370,18 +378,6 @@ private fun parseResponse(
             return null
         }
     }
-
-
-    /* not active
-    val ip = arrayGet(map[Names.IP])
-    if (ip != null) {
-        val buffer = Buffer()
-        buffer.write(ip)
-        val rawIP = buffer.readByteArray(ip.size - 2)
-        val port = buffer.readUShort()
-        val addr = createInetSocketAddress(rawIP, port.toInt())
-        debug("My IP: $addr")
-    } */
 
     return msg
 }

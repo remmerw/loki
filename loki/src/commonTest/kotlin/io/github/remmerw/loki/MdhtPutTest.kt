@@ -5,9 +5,10 @@ import io.github.andreypfau.curve25519.ed25519.Ed25519PrivateKey
 import io.github.andreypfau.curve25519.ed25519.Ed25519PublicKey
 import io.github.remmerw.loki.benc.BEString
 import io.github.remmerw.loki.benc.stringGet
-import io.github.remmerw.loki.mdht.requestGet
 import io.github.remmerw.loki.mdht.hostname
+import io.github.remmerw.loki.mdht.mdht
 import io.github.remmerw.loki.mdht.peerId
+import io.github.remmerw.loki.mdht.requestGet
 import io.github.remmerw.loki.mdht.requestPut
 import io.ktor.util.encodeBase64
 import io.ktor.util.sha1
@@ -30,7 +31,7 @@ class MdhtPutTest {
 
         // https://www.bittorrent.org/beps/bep_0044.html
 
-        val data ="moin".encodeToByteArray()
+        val data = "moin".encodeToByteArray()
 
         val privateKey: Ed25519PrivateKey = Ed25519.generateKey(Random)
         val publicKey: Ed25519PublicKey = privateKey.publicKey()
@@ -53,27 +54,36 @@ class MdhtPutTest {
 
 
         withTimeoutOrNull(60 * 1000) {
-            val channel = requestPut(peerId(), 7777, bootstrap(),
-                target, v, cas, k , salt, seq, sig) {
-                5000
-            }
+            val mdht = mdht(peerId(), 7777, bootstrap())
+            try {
+                val channel = requestPut(
+                    mdht, target, v, cas, k, salt, seq, sig
+                ) {
+                    5000
+                }
 
-            for (peer in channel) {
-                println("put to " + hostname(peer.resolveAddress()!!))
+                for (peer in channel) {
+                    println("put to " + hostname(peer.resolveAddress()!!))
+                }
+            } finally {
+                mdht.shutdown()
             }
         }
 
 
         withTimeoutOrNull(30 * 1000) {
+            val mdht = mdht(peerId(), 8888, bootstrap())
+            try {
+                val channel = requestGet(mdht, target) {
+                    5000
+                }
 
-            val channel = requestGet(peerId(), 8888, bootstrap(), target) {
-                5000
+                for (data in channel) {
+                    println("data received " + stringGet(data.data) + " " + data.k?.encodeBase64())
+                }
+            } finally {
+                mdht.shutdown()
             }
-
-            for (data in channel) {
-                println("data received " + stringGet(data.data) + " " + data.k?.encodeBase64())
-            }
-
         }
 
     }

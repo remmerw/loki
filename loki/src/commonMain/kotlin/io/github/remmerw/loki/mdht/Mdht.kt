@@ -22,7 +22,7 @@ import kotlin.math.min
 import kotlin.random.Random
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
-internal class Mdht(val peerId: ByteArray, val port: Int) {
+class Mdht(val peerId: ByteArray, val port: Int) {
 
     private val unsolicitedThrottle: MutableMap<InetSocketAddress, Long> =
         mutableMapOf() // runs in same thread
@@ -34,7 +34,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     private var socket: BoundDatagramSocket? = null
 
 
-    val routingTable = RoutingTable()
+    internal val routingTable = RoutingTable()
 
     suspend fun startup() {
         socket = aSocket(selectorManager).udp().bind(
@@ -100,21 +100,21 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         }
     }
 
-    suspend fun ping(request: PingRequest) {
+    internal suspend fun ping(request: PingRequest) {
 
         // ignore requests we get from ourself
         if (isLocalId(request.id)) {
             return
         }
 
-        val rsp = PingResponse(request.address, peerId, request.tid)
+        val rsp = PingResponse(request.address, peerId, request.tid, null) // // todo
 
         sendMessage(rsp)
 
         recieved(request, null)
     }
 
-    suspend fun findNode(request: FindNodeRequest) {
+    internal suspend fun findNode(request: FindNodeRequest) {
         // ignore requests we get from ourself
         if (isLocalId(request.id)) {
             return
@@ -123,7 +123,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         val entries = routingTable.closestPeers(request.target, 8)
 
         val response = FindNodeResponse(
-            request.address, peerId, request.tid,
+            request.address, peerId, request.tid, null, // todo
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 4
             },
@@ -138,7 +138,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     }
 
 
-    suspend fun getPeers(request: GetPeersRequest) {
+    internal suspend fun getPeers(request: GetPeersRequest) {
         // ignore requests we get from ourself
         if (isLocalId(request.id)) {
             return
@@ -160,7 +160,8 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
 
 
         val resp = GetPeersResponse(
-            request.address, peerId, request.tid, token,
+            request.address, peerId, request.tid, null, // todo
+            token,
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 4
             },
@@ -175,7 +176,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         recieved(request, null)
     }
 
-    suspend fun get(request: GetRequest) {
+    internal suspend fun get(request: GetRequest) {
         // ignore requests we get from ourself
         if (isLocalId(request.id)) {
             return
@@ -196,14 +197,15 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
 
 
         val resp = GetResponse(
-            request.address, peerId, request.tid, token,
+            request.address, peerId, request.tid, null, // todo
+            token,
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 4
             },
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 16
             },
-            null
+            null // todo
         )
 
         sendMessage(resp)
@@ -211,7 +213,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         recieved(request, null)
     }
 
-    suspend fun put(request: PutRequest) {
+    internal suspend fun put(request: PutRequest) {
         // ignore requests we get from ourself
         if (isLocalId(request.id)) {
             return
@@ -242,13 +244,13 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
 
 
         // send a proper response to indicate everything is OK
-        val rsp = PutResponse(request.address, peerId, request.tid)
+        val rsp = PutResponse(request.address, peerId, request.tid, null) // todo
         sendMessage(rsp)
 
         recieved(request, null)
     }
 
-    suspend fun announce(request: AnnounceRequest) {
+    internal suspend fun announce(request: AnnounceRequest) {
         // ignore requests we get from ourself
         if (isLocalId(request.id)) {
             return
@@ -276,14 +278,14 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
 
 
         // send a proper response to indicate everything is OK
-        val rsp = AnnounceResponse(request.address, peerId, request.tid)
+        val rsp = AnnounceResponse(request.address, peerId, request.tid, null) // todo
         sendMessage(rsp)
 
         recieved(request, null)
     }
 
 
-    suspend fun sendError(origMsg: Message, code: Int, msg: String) {
+    internal suspend fun sendError(origMsg: Message, code: Int, msg: String) {
         sendMessage(
             Error(
                 origMsg.address, peerId, origMsg.tid, code,
@@ -293,9 +295,23 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     }
 
 
-    fun recieved(msg: Message, associatedCall: Call?) {
+    internal fun recieved(msg: Message, associatedCall: Call?) {
         val ip = msg.address
         val id = msg.id
+
+        if (msg is Response) {
+            val ip = msg.ip
+            if (ip != null) {
+                /* TODO not yet used
+                val buffer = Buffer()
+                buffer.write(ip)
+                val rawIP = buffer.readByteArray(ip.size - 2)
+                val port = buffer.readUShort()
+                val addr = createInetSocketAddress(rawIP, port.toInt())
+                */
+                debug("TODO IP " + ip.toHexString())
+            }
+        }
 
         val expectedId = associatedCall?.expectedID
 
@@ -363,12 +379,12 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     }
 
 
-    fun isLocalId(id: ByteArray): Boolean {
+    internal fun isLocalId(id: ByteArray): Boolean {
         return peerId.contentEquals(id)
     }
 
 
-    suspend fun doRequestCall(call: Call) {
+    internal suspend fun doRequestCall(call: Call) {
 
         requestCalls.put(call.request.tid.contentHashCode(), call)
 
@@ -541,12 +557,10 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     }
 
 
-    suspend fun sendMessage(msg: Message) {
+    internal suspend fun sendMessage(msg: Message) {
         requireNotNull(msg.address) { "message destination must not be null" }
 
-
         send(EnqueuedSend(msg, null))
-
     }
 }
 
@@ -698,6 +712,16 @@ internal fun encode(socketAddress: InetSocketAddress): ByteArray {
     return buffer.readByteArray()
 }
 
+
+suspend fun mdht(peerId: ByteArray, port: Int, bootstrap: List<InetSocketAddress>): Mdht {
+    val mdht = Mdht(peerId, port)
+    mdht.startup()
+
+    bootstrap.forEach { address: InetSocketAddress ->
+        mdht.ping(address, null)
+    }
+    return mdht
+}
 
 fun peerId(): ByteArray {
     val peerId = ByteArray(SHA1_HASH_LENGTH)

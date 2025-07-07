@@ -23,8 +23,9 @@ import io.github.remmerw.loki.data.Messages
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.loki.mdht.requestGetPeers
+import io.github.remmerw.loki.mdht.mdht
 import io.github.remmerw.loki.mdht.peerId
+import io.github.remmerw.loki.mdht.requestGetPeers
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
@@ -93,9 +94,9 @@ suspend fun CoroutineScope.download(
         )
     )
 
-
+    val mdht = mdht(peerId, port, bootstrap())
     try {
-        val addresses = requestGetPeers(peerId, port, bootstrap(), torrentId.bytes) {
+        val addresses = requestGetPeers(mdht, torrentId.bytes) {
             val size = worker.purgedConnections()
             if (size > 10) {
                 30000 // 30 sec
@@ -147,6 +148,12 @@ suspend fun CoroutineScope.download(
     } finally {
 
         debug("Loki finalize begin ...")
+
+        try {
+            mdht.shutdown()
+        } catch (throwable: Throwable) {
+            debug("Loki", throwable)
+        }
 
         try {
             dataStorage.shutdown()
