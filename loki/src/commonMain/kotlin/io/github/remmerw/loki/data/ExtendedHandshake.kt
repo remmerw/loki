@@ -1,8 +1,8 @@
 package io.github.remmerw.loki.data
 
-import io.github.remmerw.loki.buri.BEInteger
-import io.github.remmerw.loki.buri.BEMap
-import io.github.remmerw.loki.buri.BEObject
+import io.github.remmerw.loki.benc.BEInteger
+import io.github.remmerw.loki.benc.BEMap
+import io.github.remmerw.loki.benc.BEObject
 import kotlinx.io.Buffer
 
 /**
@@ -42,6 +42,6 @@ internal data class ExtendedHandshake(val data: Map<String, BEObject>) : Extende
         get() = data["p"] as BEInteger?
 
     fun encode(buffer: Buffer) {
-        io.github.remmerw.loki.buri.encode(data, buffer)
+        io.github.remmerw.loki.benc.encode(data, buffer)
     }
 }

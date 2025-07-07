@@ -1,8 +1,8 @@
 package io.github.remmerw.loki.data
 
-import io.github.remmerw.loki.buri.BEInteger
-import io.github.remmerw.loki.buri.BEObject
-import io.github.remmerw.loki.buri.decode
+import io.github.remmerw.loki.benc.BEInteger
+import io.github.remmerw.loki.benc.BEObject
+import io.github.remmerw.loki.benc.decode
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray

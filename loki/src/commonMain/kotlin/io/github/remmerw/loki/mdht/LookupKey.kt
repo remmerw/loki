@@ -8,7 +8,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
-import kotlin.random.Random
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -133,19 +132,6 @@ fun CoroutineScope.lookupKey(
     }
 }
 
-
-fun peerId(): ByteArray {
-    val peerId = ByteArray(SHA1_HASH_LENGTH)
-    peerId[0] = '-'.code.toByte()
-    peerId[1] = 'T'.code.toByte()
-    peerId[2] = 'H'.code.toByte()
-    peerId[3] = '0'.code.toByte()
-    peerId[4] = '8'.code.toByte()
-    peerId[5] = '1'.code.toByte()
-    peerId[6] = '5'.code.toByte()
-    peerId[7] = '-'.code.toByte()
-    return Random.nextBytes(peerId, 8)
-}
 
 
 

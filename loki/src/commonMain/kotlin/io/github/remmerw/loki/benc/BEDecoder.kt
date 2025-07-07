@@ -1,6 +1,5 @@
-package io.github.remmerw.loki.buri
+package io.github.remmerw.loki.benc
 
-import kotlinx.io.Buffer
 import kotlinx.io.Source
 
 private fun decodeToMap(source: Source): BEMap {
@@ -18,12 +17,6 @@ fun decode(source: Source): Map<String, BEObject> {
     val map = decodeToMap(source)
     return map.map
 }
-
-fun encode(map: Map<String, BEObject>, buffer: Buffer) {
-    val message = BEMap(map)
-    message.writeTo(buffer)
-}
-
 
 fun stringGet(beObject: BEObject?): String? {
     if (beObject == null) {

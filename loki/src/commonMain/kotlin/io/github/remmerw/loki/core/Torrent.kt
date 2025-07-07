@@ -1,12 +1,12 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.BLOCK_SIZE
-import io.github.remmerw.loki.buri.BEInteger
-import io.github.remmerw.loki.buri.BEList
-import io.github.remmerw.loki.buri.BEMap
-import io.github.remmerw.loki.buri.BEObject
-import io.github.remmerw.loki.buri.BEString
-import io.github.remmerw.loki.buri.decode
+import io.github.remmerw.loki.benc.BEInteger
+import io.github.remmerw.loki.benc.BEList
+import io.github.remmerw.loki.benc.BEMap
+import io.github.remmerw.loki.benc.BEObject
+import io.github.remmerw.loki.benc.BEString
+import io.github.remmerw.loki.benc.decode
 import io.github.remmerw.loki.data.Message
 import kotlinx.io.Buffer
 import kotlinx.io.files.Path

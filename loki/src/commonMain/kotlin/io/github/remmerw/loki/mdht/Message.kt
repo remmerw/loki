@@ -1,11 +1,11 @@
 package io.github.remmerw.loki.mdht
 
-import io.github.remmerw.loki.buri.BEInteger
-import io.github.remmerw.loki.buri.BEList
-import io.github.remmerw.loki.buri.BEMap
-import io.github.remmerw.loki.buri.BEObject
-import io.github.remmerw.loki.buri.BEString
-import io.github.remmerw.loki.buri.encode
+import io.github.remmerw.loki.benc.BEInteger
+import io.github.remmerw.loki.benc.BEList
+import io.github.remmerw.loki.benc.BEMap
+import io.github.remmerw.loki.benc.BEObject
+import io.github.remmerw.loki.benc.BEString
+import io.github.remmerw.loki.benc.encode
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
@@ -298,7 +298,7 @@ internal data class PutRequest(
     override val id: ByteArray,
     override val tid: ByteArray,
     val token: ByteArray,
-    val data: ByteArray
+    val data: BEObject
 ) :
     Request {
 
@@ -307,7 +307,7 @@ internal data class PutRequest(
         val inner: MutableMap<String, BEObject> = mutableMapOf()
 
         inner[Names.ID] = BEString(id)
-        inner[Names.V] = BEString(data)
+        inner[Names.V] = data
         inner[Names.TOKEN] = BEString(token)
 
         base[Names.A] = BEMap(inner)
@@ -346,4 +346,69 @@ internal data class PutResponse(
         encode(base, buffer)
     }
 
+}
+
+
+@Suppress("ArrayInDataClass")
+internal data class GetRequest(
+    override val address: InetSocketAddress,
+    override val id: ByteArray,
+    override val tid: ByteArray,
+    val target: ByteArray
+) :
+    Request {
+
+    override fun encode(buffer: Buffer) {
+        val base: MutableMap<String, BEObject> = mutableMapOf()
+        base[Names.A] = BEMap(
+            mapOf<String, BEObject>(
+                Names.ID to BEString(id),
+                Names.TARGET to BEString(target)
+            )
+        )
+
+        // transaction ID
+        base[Names.T] = BEString(tid)
+
+        // message type
+        base[Names.Y] = BEString(Names.Q.encodeToByteArray())
+
+        // message method
+        base[Names.Q] = BEString(Names.GET.encodeToByteArray())
+
+        encode(base, buffer)
+    }
+}
+
+@Suppress("ArrayInDataClass")
+internal data class GetResponse(
+    override val address: InetSocketAddress,
+    override val id: ByteArray,
+    override val tid: ByteArray,
+    val token: ByteArray?,
+    val nodes: List<Peer>,
+    val nodes6: List<Peer>,
+    val data: BEObject?
+) : Response {
+
+
+    override fun encode(buffer: Buffer) {
+        val base: MutableMap<String, BEObject> = mutableMapOf()
+        val inner: MutableMap<String, BEObject> = mutableMapOf()
+        inner[Names.ID] = BEString(id)
+        if (token != null) inner[Names.TOKEN] = BEString(token)
+        if (nodes.isNotEmpty()) inner[Names.NODES] = writeBuckets(nodes)
+        if (nodes6.isNotEmpty()) inner[Names.NODES6] = writeBuckets(nodes6)
+        if (data != null) inner[Names.V] = data
+
+        base[Names.R] = BEMap(inner)
+
+        // transaction ID
+        base[Names.T] = BEString(tid)
+
+        // message type
+        base[Names.Y] = BEString(Names.R.encodeToByteArray())
+
+        encode(base, buffer)
+    }
 }

@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.buri
+package io.github.remmerw.loki.benc
 
 enum class BEType {
     STRING,

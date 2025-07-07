@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.buri
+package io.github.remmerw.loki.benc
 
 internal abstract class BEPrefixedTypeBuilder : BEObjectBuilder {
 

@@ -1,16 +1,23 @@
-package io.github.remmerw.loki.buri
+package io.github.remmerw.loki.benc
 
 import kotlinx.io.Buffer
 
-internal fun encode(string: BEString, out: Buffer) {
-    val bytes = string.content
-    encodeString(bytes, out)
+
+fun encode(map: Map<String, BEObject>, buffer: Buffer) {
+    BEMap(map).writeTo(buffer)
 }
 
-private fun encodeString(bytes: ByteArray, out: Buffer) {
+internal fun encodeString(bytes: ByteArray, out: Buffer) {
     out.write(bytes.size.toString().encodeToByteArray())
     out.writeByte(DELIMITER.code.toByte())
     out.write(bytes)
+}
+
+internal fun encode(beString: BEString, out: Buffer) {
+    val data = beString.content
+    out.write(data.size.toString().encodeToByteArray())
+    out.writeByte(DELIMITER.code.toByte())
+    out.write(data)
 }
 
 internal fun encode(integer: BEInteger, out: Buffer) {

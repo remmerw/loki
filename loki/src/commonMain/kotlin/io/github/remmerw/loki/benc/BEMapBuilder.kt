@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.buri
+package io.github.remmerw.loki.benc
 
 internal class BEMapBuilder internal constructor() : BEPrefixedTypeBuilder() {
     private val map: MutableMap<String, BEObject> = mutableMapOf()

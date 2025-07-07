@@ -12,13 +12,12 @@ import kotlinx.coroutines.ensureActive
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.putData(
+fun CoroutineScope.getData(
     peerId: ByteArray, port: Int,
     bootstrap: List<InetSocketAddress>,
     key: ByteArray,
-    data: BEObject,
     timeout: () -> Long
-): ReceiveChannel<InetSocketAddress> = produce {
+): ReceiveChannel<BEObject> = produce {
 
 
     val mdht = Mdht(peerId, port)
@@ -40,7 +39,6 @@ fun CoroutineScope.putData(
             val entries = mdht.routingTable.closestPeers(key, 32)
             candidates.addCandidates(null, entries)
 
-            val puts: MutableMap<Peer, PutRequest> = mutableMapOf()
             do {
                 do {
                     ensureActive()
@@ -51,7 +49,7 @@ fun CoroutineScope.putData(
 
                     if (peer != null) {
                         val tid = createRandomKey(TID_LENGTH)
-                        val request = GetPeersRequest(peer.address, peerId, tid, key)
+                        val request = GetRequest(peer.address, peerId, tid, key)
                         val call = Call(request, peer.id)
                         candidates.addCall(call, peer)
                         inFlight.add(call)
@@ -59,13 +57,6 @@ fun CoroutineScope.putData(
                     }
                 } while (peer != null)
 
-
-                puts.forEach { entry ->
-                    val call = Call(entry.value, entry.key.id)
-                    inFlight.add(call)
-                    mdht.doRequestCall(call)
-                }
-                puts.clear()
 
                 ensureActive()
 
@@ -77,10 +68,8 @@ fun CoroutineScope.putData(
                             candidates.decreaseFailures(call)
 
                             val rsp = call.response
-                            if (rsp is PutResponse) {
-                                send(rsp.address)
-                            }
-                            if (rsp is GetPeersResponse) {
+
+                            if (rsp is GetResponse) {
                                 val match = candidates.acceptResponse(call)
 
                                 if (match != null) {
@@ -97,19 +86,15 @@ fun CoroutineScope.putData(
                                     candidates.addCandidates(match, returnedNodes)
 
 
+                                    if (rsp.data != null) {
+                                        send(rsp.data)
+                                    }
+
                                     // if we scrape we don't care about tokens.
                                     // otherwise we're only done if we have found the closest
                                     // nodes that also returned tokens
                                     if (rsp.token != null) {
                                         closest.insert(match)
-
-                                        val tid = createRandomKey(TID_LENGTH)
-                                        val request = PutRequest(
-                                            match.address,
-                                            peerId, tid, rsp.token, data
-                                        )
-                                        puts.put(match, request)
-
                                     }
                                 }
                             }
@@ -147,6 +132,8 @@ fun CoroutineScope.putData(
         mdht.shutdown()
     }
 }
+
+
 
 
 

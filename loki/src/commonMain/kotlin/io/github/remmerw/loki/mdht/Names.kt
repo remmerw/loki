@@ -24,5 +24,6 @@ internal object Names {
     const val PUT: String = "put"
     const val FIND_NODE: String = "find_node"
     const val GET_PEERS: String = "get_peers"
+    const val GET: String = "get"
 
 }

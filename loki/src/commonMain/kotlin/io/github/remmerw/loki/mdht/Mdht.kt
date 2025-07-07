@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.mdht
 
-import io.github.remmerw.loki.buri.BEObject
-import io.github.remmerw.loki.buri.decode
+import io.github.remmerw.loki.benc.BEObject
+import io.github.remmerw.loki.benc.decode
 import io.github.remmerw.loki.debug
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.BoundDatagramSocket
@@ -9,6 +9,7 @@ import io.ktor.network.sockets.Datagram
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.util.collections.ConcurrentMap
+import io.ktor.util.sha1
 import io.ktor.utils.io.core.remaining
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -18,6 +19,7 @@ import kotlinx.io.Source
 import kotlinx.io.readByteArray
 import kotlinx.io.writeUShort
 import kotlin.math.min
+import kotlin.random.Random
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 internal class Mdht(val peerId: ByteArray, val port: Int) {
@@ -173,18 +175,58 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         recieved(request, null)
     }
 
+    suspend fun get(request: GetRequest) {
+        // ignore requests we get from ourself
+        if (isLocalId(request.id)) {
+            return
+        }
+
+
+        // generate a token
+        var token: ByteArray? = null
+        if (database.insertForKeyAllowed(request.target)) token =
+            database.generateToken(
+                request.id,
+                encode(request.address),
+                request.target
+            )
+
+
+        val entries = routingTable.closestPeers(request.target, 8)
+
+
+        val resp = GetResponse(
+            request.address, peerId, request.tid, token,
+            entries.filter { peer: Peer ->
+                peer.address.resolveAddress()?.size == 4
+            },
+            entries.filter { peer: Peer ->
+                peer.address.resolveAddress()?.size == 16
+            },
+            null
+        )
+
+        sendMessage(resp)
+
+        recieved(request, null)
+    }
+
     suspend fun put(request: PutRequest) {
         // ignore requests we get from ourself
         if (isLocalId(request.id)) {
             return
         }
 
+        val buffer = Buffer()
+        request.data.writeTo(buffer)
+        val data = buffer.readByteArray()
+
         // first check if the token is OK
         if (!database.checkToken(
                 request.token,
                 request.id,
                 encode(request.address),
-                byteArrayOf() // todo maybe
+                sha1(data)
             )
         ) {
             sendError(
@@ -196,8 +238,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
             return
         }
 
-        // everything OK, so store the value
-        // todo store the data somewhere
+        // Note: right now no data is stored (someday in the future, when server is supported)
 
 
         // send a proper response to indicate everything is OK
@@ -381,6 +422,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         if (msg is Request) {
             when (msg) {
                 is PutRequest -> put(msg)
+                is GetRequest -> get(msg)
                 is AnnounceRequest -> announce(msg)
                 is FindNodeRequest -> findNode(msg)
                 is GetPeersRequest -> getPeers(msg)
@@ -654,4 +696,18 @@ internal fun encode(socketAddress: InetSocketAddress): ByteArray {
     buffer.write(address)
     buffer.writeUShort(socketAddress.port.toUShort())
     return buffer.readByteArray()
+}
+
+
+fun peerId(): ByteArray {
+    val peerId = ByteArray(SHA1_HASH_LENGTH)
+    peerId[0] = '-'.code.toByte()
+    peerId[1] = 'T'.code.toByte()
+    peerId[2] = 'H'.code.toByte()
+    peerId[3] = '0'.code.toByte()
+    peerId[4] = '8'.code.toByte()
+    peerId[5] = '1'.code.toByte()
+    peerId[6] = '5'.code.toByte()
+    peerId[7] = '-'.code.toByte()
+    return Random.nextBytes(peerId, 8)
 }

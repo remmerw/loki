@@ -1,13 +1,13 @@
 package io.github.remmerw.loki.mdht
 
-import io.github.remmerw.loki.buri.BEInteger
-import io.github.remmerw.loki.buri.BEList
-import io.github.remmerw.loki.buri.BEMap
-import io.github.remmerw.loki.buri.BEObject
-import io.github.remmerw.loki.buri.BEString
-import io.github.remmerw.loki.buri.arrayGet
-import io.github.remmerw.loki.buri.longGet
-import io.github.remmerw.loki.buri.stringGet
+import io.github.remmerw.loki.benc.BEInteger
+import io.github.remmerw.loki.benc.BEList
+import io.github.remmerw.loki.benc.BEMap
+import io.github.remmerw.loki.benc.BEObject
+import io.github.remmerw.loki.benc.BEString
+import io.github.remmerw.loki.benc.arrayGet
+import io.github.remmerw.loki.benc.longGet
+import io.github.remmerw.loki.benc.stringGet
 import io.github.remmerw.loki.createInetSocketAddress
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
@@ -159,7 +159,7 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
 
     return when (requestMethod) {
         Names.PING -> PingRequest(address, id, tid)
-        Names.FIND_NODE, Names.GET_PEERS -> {
+        Names.FIND_NODE, Names.GET_PEERS, Names.GET -> {
             var hash = arrayGet(args[Names.TARGET])
             if (hash == null) {
                 hash = arrayGet(args[Names.INFO_HASH])
@@ -181,11 +181,35 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
 
                 Names.GET_PEERS -> GetPeersRequest(address, id, tid, hash)
 
+                Names.GET -> GetRequest(address, id, tid, hash)
+
                 else -> {
                     debug("not handled branch $requestMethod")
                     return null
                 }
             }
+        }
+
+        Names.PUT -> {
+            val token = arrayGet(args[Names.TOKEN])
+
+            require(token != null) {
+                "missing or invalid mandatory arguments (token) for announce"
+            }
+
+            require(!token.isEmpty()) {
+                "zero-length token in announce_peer request. see BEP33 for reasons why " +
+                        "tokens might not have been issued by get_peers response"
+            }
+
+            val data = args[Names.V]
+
+            require(data != null) {
+                "missing or invalid mandatory arguments (v) for put"
+            }
+
+
+            PutRequest(address, id, tid, token, data)
         }
 
         Names.ANNOUNCE_PEER -> {
@@ -261,6 +285,14 @@ private fun parseResponse(
     when (request) {
         is PingRequest -> msg = PingResponse(address, id, tid)
         is PutRequest -> msg = PutResponse(address, id, tid)
+        is GetRequest -> {
+            val token = arrayGet(args[Names.TOKEN])
+            val nodes6 = extractNodes6(args)
+            val nodes = extractNodes(args)
+            val data = args[Names.V]
+            return GetResponse(address, id, tid, token, nodes, nodes6, data)
+        }
+
         is AnnounceRequest -> msg = AnnounceResponse(address, id, tid)
         is FindNodeRequest -> {
             require(args.containsKey(Names.NODES) || args.containsKey(Names.NODES6)) {

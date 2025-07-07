@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.data
 
-import io.github.remmerw.loki.buri.BEInteger
-import io.github.remmerw.loki.buri.BEObject
+import io.github.remmerw.loki.benc.BEInteger
+import io.github.remmerw.loki.benc.BEObject
 import kotlinx.io.Buffer
 
 
@@ -70,7 +70,7 @@ internal data class UtMetadata(
             )
         }
 
-        io.github.remmerw.loki.buri.encode(map, buffer)
+        io.github.remmerw.loki.benc.encode(map, buffer)
 
         if (data.isNotEmpty()) {
             buffer.write(data)
