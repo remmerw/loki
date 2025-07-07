@@ -1,10 +1,10 @@
 package io.github.remmerw.loki
 
 import io.github.remmerw.loki.mdht.SHA1_HASH_LENGTH
-import io.github.remmerw.loki.mdht.announceKey
+import io.github.remmerw.loki.mdht.requestAnnounce
 import io.github.remmerw.loki.mdht.createRandomKey
 import io.github.remmerw.loki.mdht.hostname
-import io.github.remmerw.loki.mdht.lookupKey
+import io.github.remmerw.loki.mdht.requestGetPeers
 import io.github.remmerw.loki.mdht.peerId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -19,7 +19,7 @@ class MdhtAnnounceTest {
         val key = createRandomKey(SHA1_HASH_LENGTH)
 
         withTimeoutOrNull(60 * 1000) {
-            val channel = announceKey(peerId(), 7777, bootstrap(), key) {
+            val channel = requestAnnounce(peerId(), 7777, bootstrap(), key) {
                 5000
             }
 
@@ -30,7 +30,7 @@ class MdhtAnnounceTest {
 
         withTimeoutOrNull(30 * 1000) {
 
-            val channel = lookupKey(peerId(), 8888, bootstrap(), key) {
+            val channel = requestGetPeers(peerId(), 8888, bootstrap(), key) {
                 5000
             }
 

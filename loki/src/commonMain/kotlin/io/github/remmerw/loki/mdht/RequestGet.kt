@@ -15,7 +15,7 @@ import kotlinx.coroutines.ensureActive
 data class Data(val data: BEObject, val seq: Long?, val k: ByteArray?, val sig: ByteArray?)
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.getData(
+fun CoroutineScope.requestGet(
     peerId: ByteArray, port: Int,
     bootstrap: List<InetSocketAddress>,
     key: ByteArray,

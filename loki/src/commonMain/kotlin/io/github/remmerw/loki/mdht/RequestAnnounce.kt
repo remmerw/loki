@@ -11,7 +11,7 @@ import kotlinx.coroutines.ensureActive
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.announceKey(
+fun CoroutineScope.requestAnnounce(
     peerId: ByteArray, port: Int,
     bootstrap: List<InetSocketAddress>,
     key: ByteArray,

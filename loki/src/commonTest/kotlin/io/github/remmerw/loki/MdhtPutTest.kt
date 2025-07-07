@@ -5,10 +5,10 @@ import io.github.andreypfau.curve25519.ed25519.Ed25519PrivateKey
 import io.github.andreypfau.curve25519.ed25519.Ed25519PublicKey
 import io.github.remmerw.loki.benc.BEString
 import io.github.remmerw.loki.benc.stringGet
-import io.github.remmerw.loki.mdht.getData
+import io.github.remmerw.loki.mdht.requestGet
 import io.github.remmerw.loki.mdht.hostname
 import io.github.remmerw.loki.mdht.peerId
-import io.github.remmerw.loki.mdht.putData
+import io.github.remmerw.loki.mdht.requestPut
 import io.ktor.util.encodeBase64
 import io.ktor.util.sha1
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +53,7 @@ class MdhtPutTest {
 
 
         withTimeoutOrNull(60 * 1000) {
-            val channel = putData(peerId(), 7777, bootstrap(),
+            val channel = requestPut(peerId(), 7777, bootstrap(),
                 target, v, cas, k , salt, seq, sig) {
                 5000
             }
@@ -66,7 +66,7 @@ class MdhtPutTest {
 
         withTimeoutOrNull(30 * 1000) {
 
-            val channel = getData(peerId(), 8888, bootstrap(), target) {
+            val channel = requestGet(peerId(), 8888, bootstrap(), target) {
                 5000
             }
 

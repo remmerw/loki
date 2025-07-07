@@ -12,7 +12,7 @@ import kotlinx.coroutines.ensureActive
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.putData(
+fun CoroutineScope.requestPut(
     peerId: ByteArray, port: Int,
     bootstrap: List<InetSocketAddress>,
     key: ByteArray,
