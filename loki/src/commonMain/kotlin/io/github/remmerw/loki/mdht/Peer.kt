@@ -4,7 +4,7 @@ import io.ktor.network.sockets.InetSocketAddress
 import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
-internal class Peer(val address: InetSocketAddress, val id: ByteArray) {
+class Peer(val address: InetSocketAddress, val id: ByteArray) {
     private var lastSeen: ValueTimeMark = TimeSource.Monotonic.markNow()
     private var verified = false
     private var failedQueries = 0

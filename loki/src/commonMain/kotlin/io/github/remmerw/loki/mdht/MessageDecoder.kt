@@ -238,7 +238,7 @@ private fun parseResponse(
     // responses don't have explicit methods, need to match them to a request to figure that one out
     val request = tidMapper.invoke(tid)
     if (request == null) {
-        debug("response does not have a known request")
+        debug("response does not have a known request (tid)")
         return null
     }
     return parseResponse(address, map, request, tid)
@@ -345,7 +345,7 @@ private fun parseResponse(
         val port = buffer.readUShort()
         val addr = createInetSocketAddress(rawIP, port.toInt())
         debug("My IP: $addr")
-    }*/
+    } */
 
     return msg
 }

@@ -25,9 +25,6 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
     private val unsolicitedThrottle: MutableMap<InetSocketAddress, Long> =
         mutableMapOf() // runs in same thread
 
-
-    // keeps track of RTT histogram for nodes not in our routing table
-    val timeoutFilter: ResponseTimeoutFilter = ResponseTimeoutFilter()
     private val requestCalls: ConcurrentMap<Int, Call> = ConcurrentMap()
 
     private val database: Database = Database()
@@ -395,14 +392,6 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
                 // apply after checking for a proper response
                 if (msg is Response) {
 
-
-                    // known nodes - routing table entries - keep track of their own RTTs
-                    // they are also biased towards lower RTTs compared to the general population
-                    // encountered during regular lookups
-                    // don't let them skew the measurement of the general node population
-                    if (!call.knownReachableAtCreationTime()) {
-                        timeoutFilter.updateAndRecalc(call.rTT)
-                    }
                     recieved(msg, call)
                 }
                 return
@@ -499,7 +488,6 @@ internal const val OLD_AND_STALE_TIMEOUTS = 2
 
 // DHT
 internal const val MAX_ENTRIES_PER_BUCKET: Int = 8
-internal const val RPC_CALL_TIMEOUT_MAX: Long = 10 * 1000
 internal const val TOKEN_TIMEOUT: Int = 5 * 60 * 1000
 internal const val MAX_DB_ENTRIES_PER_KEY: Int = 6000
 internal const val MAX_PEERS_PER_ANNOUNCE: Int = 10

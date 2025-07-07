@@ -10,7 +10,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.Test
 
 
-class MdhtTest {
+class MdhtLookupTest {
     @Test
     fun randomKey(): Unit = runBlocking(Dispatchers.IO) {
 

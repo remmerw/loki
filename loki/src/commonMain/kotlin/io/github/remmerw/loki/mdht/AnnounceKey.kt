@@ -8,11 +8,10 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
-import kotlin.random.Random
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.lookupKey(
+fun CoroutineScope.announceKey(
     peerId: ByteArray, port: Int,
     bootstrap: List<InetSocketAddress>,
     key: ByteArray,
@@ -26,7 +25,7 @@ fun CoroutineScope.lookupKey(
     bootstrap.forEach { address: InetSocketAddress ->
         mdht.ping(address, null)
     }
-    val peers: MutableSet<String> = mutableSetOf()
+
 
 
     try {
@@ -39,6 +38,7 @@ fun CoroutineScope.lookupKey(
             val entries = mdht.routingTable.closestPeers(key, 32)
             candidates.addCandidates(null, entries)
 
+            val announces: MutableMap<Peer, AnnounceRequest> = mutableMapOf()
             do {
                 do {
                     ensureActive()
@@ -58,6 +58,13 @@ fun CoroutineScope.lookupKey(
                 } while (peer != null)
 
 
+                announces.forEach { entry ->
+                    val call = Call(entry.value, entry.key.id)
+                    inFlight.add(call)
+                    mdht.doRequestCall(call)
+                }
+                announces.clear()
+
                 ensureActive()
 
                 val removed: MutableList<Call> = mutableListOf()
@@ -68,6 +75,9 @@ fun CoroutineScope.lookupKey(
                             candidates.decreaseFailures(call)
 
                             val rsp = call.response
+                            if (rsp is AnnounceResponse) {
+                                send(rsp.address)
+                            }
                             if (rsp is GetPeersResponse) {
                                 val match = candidates.acceptResponse(call)
 
@@ -84,17 +94,20 @@ fun CoroutineScope.lookupKey(
 
                                     candidates.addCandidates(match, returnedNodes)
 
-                                    for (item in rsp.items) {
-                                        if (peers.add(item.hostname)) {
-                                            send(item)
-                                        }
-                                    }
 
                                     // if we scrape we don't care about tokens.
                                     // otherwise we're only done if we have found the closest
                                     // nodes that also returned tokens
                                     if (rsp.token != null) {
                                         closest.insert(match)
+
+                                        val tid = createRandomKey(TID_LENGTH)
+                                        val request = AnnounceRequest(
+                                            match.address,
+                                            peerId, tid, key, port, rsp.token, null
+                                        )
+                                        announces.put(match, request)
+
                                     }
                                 }
                             }
@@ -131,20 +144,6 @@ fun CoroutineScope.lookupKey(
     } finally {
         mdht.shutdown()
     }
-}
-
-
-fun peerId(): ByteArray {
-    val peerId = ByteArray(SHA1_HASH_LENGTH)
-    peerId[0] = '-'.code.toByte()
-    peerId[1] = 'T'.code.toByte()
-    peerId[2] = 'H'.code.toByte()
-    peerId[3] = '0'.code.toByte()
-    peerId[4] = '8'.code.toByte()
-    peerId[5] = '1'.code.toByte()
-    peerId[6] = '5'.code.toByte()
-    peerId[7] = '-'.code.toByte()
-    return Random.nextBytes(peerId, 8)
 }
 
 
