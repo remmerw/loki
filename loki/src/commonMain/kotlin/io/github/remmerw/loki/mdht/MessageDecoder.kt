@@ -290,7 +290,10 @@ private fun parseResponse(
             val nodes6 = extractNodes6(args)
             val nodes = extractNodes(args)
             val data = args[Names.V]
-            return GetResponse(address, id, tid, token, nodes, nodes6, data)
+            val k = arrayGet(args[Names.K])
+            val sec = longGet(args[Names.SEQ])
+            val sig = arrayGet(args[Names.SIG])
+            return GetResponse(address, id, tid, token, nodes, nodes6, data, k, sec, sig)
         }
 
         is AnnounceRequest -> msg = AnnounceResponse(address, id, tid)

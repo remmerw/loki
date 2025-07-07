@@ -45,6 +45,7 @@ kotlin {
                 implementation(libs.atomicfu)
                 implementation(libs.ktor.network)
                 implementation("io.github.remmerw:grid:0.0.5")
+                implementation("io.github.andreypfau:curve25519-kotlin:0.0.8")
             }
         }
 

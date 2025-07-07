@@ -26,4 +26,10 @@ internal object Names {
     const val GET_PEERS: String = "get_peers"
     const val GET: String = "get"
 
+    const val CAS: String = "cas"
+    const val SEQ: String = "seq"
+    const val SIG: String = "sig"
+    const val K: String = "k"
+    const val SALT: String = "salt"
+
 }

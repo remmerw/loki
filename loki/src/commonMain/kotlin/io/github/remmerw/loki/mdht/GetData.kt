@@ -11,13 +11,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 
 
+@Suppress("ArrayInDataClass")
+data class Data(val data: BEObject, val seq: Long?, val k: ByteArray?, val sig: ByteArray?)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 fun CoroutineScope.getData(
     peerId: ByteArray, port: Int,
     bootstrap: List<InetSocketAddress>,
     key: ByteArray,
     timeout: () -> Long
-): ReceiveChannel<BEObject> = produce {
+): ReceiveChannel<Data> = produce {
 
 
     val mdht = Mdht(peerId, port)
@@ -86,8 +89,9 @@ fun CoroutineScope.getData(
                                     candidates.addCandidates(match, returnedNodes)
 
 
-                                    if (rsp.data != null) {
-                                        send(rsp.data)
+                                    if (rsp.v != null) {
+                                        val data = Data(rsp.v, rsp.seq, rsp.k, rsp.sig)
+                                        send(data)
                                     }
 
                                     // if we scrape we don't care about tokens.

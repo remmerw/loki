@@ -16,7 +16,12 @@ fun CoroutineScope.putData(
     peerId: ByteArray, port: Int,
     bootstrap: List<InetSocketAddress>,
     key: ByteArray,
-    data: BEObject,
+    v: BEObject,
+    cas: Long? = null,
+    k: ByteArray? = null,
+    salt: ByteArray? = null,
+    seq: Long? = null,
+    sig: ByteArray? = null,
     timeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
 
@@ -106,7 +111,8 @@ fun CoroutineScope.putData(
                                         val tid = createRandomKey(TID_LENGTH)
                                         val request = PutRequest(
                                             match.address,
-                                            peerId, tid, rsp.token, data
+                                            peerId, tid, rsp.token, v,
+                                            cas, k, salt, seq, sig
                                         )
                                         puts.put(match, request)
 

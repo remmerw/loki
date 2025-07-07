@@ -298,7 +298,13 @@ internal data class PutRequest(
     override val id: ByteArray,
     override val tid: ByteArray,
     val token: ByteArray,
-    val data: BEObject
+    val v: BEObject,
+    val cas: Long? = null,
+    val k: ByteArray? = null,
+    val salt: ByteArray? = null,
+    val seq: Long? = null,
+    val sig: ByteArray? = null
+
 ) :
     Request {
 
@@ -307,8 +313,13 @@ internal data class PutRequest(
         val inner: MutableMap<String, BEObject> = mutableMapOf()
 
         inner[Names.ID] = BEString(id)
-        inner[Names.V] = data
+        inner[Names.V] = v
         inner[Names.TOKEN] = BEString(token)
+        if (cas != null) inner.put(Names.CAS, BEInteger(cas))
+        if (k != null) inner.put(Names.K, BEString(k))
+        if (salt != null) inner.put(Names.SALT, BEString(salt))
+        if (seq != null) inner.put(Names.SEQ, BEInteger(seq))
+        if (sig != null) inner.put(Names.SIG, BEString(sig))
 
         base[Names.A] = BEMap(inner)
 
@@ -354,18 +365,20 @@ internal data class GetRequest(
     override val address: InetSocketAddress,
     override val id: ByteArray,
     override val tid: ByteArray,
-    val target: ByteArray
+    val target: ByteArray,
+    val seq: Long? = null
 ) :
     Request {
 
     override fun encode(buffer: Buffer) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
-        base[Names.A] = BEMap(
-            mapOf<String, BEObject>(
-                Names.ID to BEString(id),
-                Names.TARGET to BEString(target)
-            )
+        val inner = mutableMapOf<String, BEObject>(
+            Names.ID to BEString(id),
+            Names.TARGET to BEString(target)
         )
+        if (seq != null) inner.put(Names.SEQ, BEInteger(seq))
+
+        base[Names.A] = BEMap(inner)
 
         // transaction ID
         base[Names.T] = BEString(tid)
@@ -388,7 +401,10 @@ internal data class GetResponse(
     val token: ByteArray?,
     val nodes: List<Peer>,
     val nodes6: List<Peer>,
-    val data: BEObject?
+    val v: BEObject?,
+    val k: ByteArray? = null,
+    val seq: Long? = null,
+    val sig: ByteArray? = null
 ) : Response {
 
 
@@ -399,7 +415,11 @@ internal data class GetResponse(
         if (token != null) inner[Names.TOKEN] = BEString(token)
         if (nodes.isNotEmpty()) inner[Names.NODES] = writeBuckets(nodes)
         if (nodes6.isNotEmpty()) inner[Names.NODES6] = writeBuckets(nodes6)
-        if (data != null) inner[Names.V] = data
+        if (v != null) inner[Names.V] = v
+        if (k != null) inner.put(Names.K, BEString(k))
+        if (seq != null) inner.put(Names.SEQ, BEInteger(seq))
+        if (sig != null) inner.put(Names.SIG, BEString(sig))
+
 
         base[Names.R] = BEMap(inner)
 
