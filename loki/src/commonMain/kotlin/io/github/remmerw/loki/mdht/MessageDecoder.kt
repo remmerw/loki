@@ -260,6 +260,7 @@ private fun parseResponse(
 
     when (request) {
         is PingRequest -> msg = PingResponse(address, id, tid)
+        is PutRequest -> msg = PutResponse(address, id, tid)
         is AnnounceRequest -> msg = AnnounceResponse(address, id, tid)
         is FindNodeRequest -> {
             require(args.containsKey(Names.NODES) || args.containsKey(Names.NODES6)) {

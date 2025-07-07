@@ -14,7 +14,7 @@ import kotlin.test.Test
 class MdhtAnnounceTest {
 
     @Test
-    fun swarmTest(): Unit = runBlocking(Dispatchers.IO) {
+    fun announceTest(): Unit = runBlocking(Dispatchers.IO) {
 
         val key = createRandomKey(SHA1_HASH_LENGTH)
 

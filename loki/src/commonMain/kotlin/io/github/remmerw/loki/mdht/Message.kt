@@ -292,3 +292,58 @@ internal data class PingResponse(
 
 }
 
+@Suppress("ArrayInDataClass")
+internal data class PutRequest(
+    override val address: InetSocketAddress,
+    override val id: ByteArray,
+    override val tid: ByteArray,
+    val token: ByteArray,
+    val data: ByteArray
+) :
+    Request {
+
+    override fun encode(buffer: Buffer) {
+        val base: MutableMap<String, BEObject> = mutableMapOf()
+        val inner: MutableMap<String, BEObject> = mutableMapOf()
+
+        inner[Names.ID] = BEString(id)
+        inner[Names.V] = BEString(data)
+        inner[Names.TOKEN] = BEString(token)
+
+        base[Names.A] = BEMap(inner)
+
+        // transaction ID
+        base[Names.T] = BEString(tid)
+        // message type
+        base[Names.Y] = BEString(Names.Q.encodeToByteArray())
+
+        // message method
+        base[Names.Q] = BEString(Names.PUT.encodeToByteArray())
+
+        encode(base, buffer)
+    }
+}
+
+
+@Suppress("ArrayInDataClass")
+internal data class PutResponse(
+    override val address: InetSocketAddress,
+    override val id: ByteArray,
+    override val tid: ByteArray
+) : Response {
+
+    override fun encode(buffer: Buffer) {
+        val base: MutableMap<String, BEObject> = mutableMapOf()
+        val inner: MutableMap<String, BEObject> = mutableMapOf()
+        inner[Names.ID] = BEString(id)
+        base[Names.R] = BEMap(inner)
+
+        // transaction ID
+        base[Names.T] = BEString(tid)
+        // message type
+        base[Names.Y] = BEString(Names.R.encodeToByteArray())
+
+        encode(base, buffer)
+    }
+
+}

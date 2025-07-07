@@ -173,6 +173,40 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         recieved(request, null)
     }
 
+    suspend fun put(request: PutRequest) {
+        // ignore requests we get from ourself
+        if (isLocalId(request.id)) {
+            return
+        }
+
+        // first check if the token is OK
+        if (!database.checkToken(
+                request.token,
+                request.id,
+                encode(request.address),
+                byteArrayOf() // todo maybe
+            )
+        ) {
+            sendError(
+                request, PROTOCOL_ERROR,
+                "Invalid Token; tokens expire after " + TOKEN_TIMEOUT + "ms; " +
+                        "only valid for the IP/port to which it was issued;" +
+                        " only valid for the info hash for which it was issued"
+            )
+            return
+        }
+
+        // everything OK, so store the value
+        // todo store the data somewhere
+
+
+        // send a proper response to indicate everything is OK
+        val rsp = PutResponse(request.address, peerId, request.tid)
+        sendMessage(rsp)
+
+        recieved(request, null)
+    }
+
     suspend fun announce(request: AnnounceRequest) {
         // ignore requests we get from ourself
         if (isLocalId(request.id)) {
@@ -346,6 +380,7 @@ internal class Mdht(val peerId: ByteArray, val port: Int) {
         // just respond to incoming requests, no need to match them to pending requests
         if (msg is Request) {
             when (msg) {
+                is PutRequest -> put(msg)
                 is AnnounceRequest -> announce(msg)
                 is FindNodeRequest -> findNode(msg)
                 is GetPeersRequest -> getPeers(msg)
