@@ -109,7 +109,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
 
         val rsp = PingResponse(
             request.address, peerId, request.tid,
-            request.address.encode()
+            request.address.encoded()
         )
 
         sendMessage(rsp)
@@ -126,7 +126,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
         val entries = routingTable.closestPeers(request.target, 8)
 
         val response = FindNodeResponse(
-            request.address, peerId, request.tid, request.address.encode(),
+            request.address, peerId, request.tid, request.address.encoded(),
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 4
             },
@@ -155,7 +155,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
         if (database.insertForKeyAllowed(request.infoHash)) token =
             database.generateToken(
                 request.id,
-                request.address.encode()!!,
+                request.address.encoded()!!,
                 request.infoHash
             )
 
@@ -164,7 +164,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
 
 
         val resp = GetPeersResponse(
-            request.address, peerId, request.tid, request.address.encode(),
+            request.address, peerId, request.tid, request.address.encoded(),
             token,
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 4
@@ -192,7 +192,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
         if (database.insertForKeyAllowed(request.target)) token =
             database.generateToken(
                 request.id,
-                request.address.encode()!!,
+                request.address.encoded()!!,
                 request.target
             )
 
@@ -201,7 +201,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
 
 
         val resp = GetResponse(
-            request.address, peerId, request.tid, request.address.encode(),
+            request.address, peerId, request.tid, request.address.encoded(),
             token,
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 4
@@ -231,7 +231,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
         if (!database.checkToken(
                 request.token,
                 request.id,
-                request.address.encode()!!,
+                request.address.encoded()!!,
                 sha1(data)
             )
         ) {
@@ -250,7 +250,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
         // send a proper response to indicate everything is OK
         val rsp = PutResponse(
             request.address, peerId, request.tid,
-            request.address.encode()
+            request.address.encoded()
         )
         sendMessage(rsp)
 
@@ -267,7 +267,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
         if (!database.checkToken(
                 request.token,
                 request.id,
-                request.address.encode()!!,
+                request.address.encoded()!!,
                 request.infoHash
             )
         ) {
@@ -281,13 +281,18 @@ class Mdht(val peerId: ByteArray, val port: Int) {
         }
 
         // everything OK, so store the value
-        database.store(request.infoHash, request.address)
+        val address = Address(
+            request.address.resolveAddress()!!,
+            request.address.port.toUShort()
+        )
+
+        database.store(request.infoHash, address)
 
 
         // send a proper response to indicate everything is OK
         val rsp = AnnounceResponse(
             request.address, peerId, request.tid,
-            request.address.encode()
+            request.address.encoded()
         )
         sendMessage(rsp)
 
@@ -716,7 +721,7 @@ internal fun goodForRequest(
 }
 
 
-internal fun InetSocketAddress.encode(): ByteArray? {
+internal fun InetSocketAddress.encoded(): ByteArray? {
     val address = this.resolveAddress()
     if (address != null) {
         val buffer = Buffer()

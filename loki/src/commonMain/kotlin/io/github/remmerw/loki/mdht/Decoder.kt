@@ -8,7 +8,6 @@ import io.github.remmerw.loki.benc.BEString
 import io.github.remmerw.loki.benc.arrayGet
 import io.github.remmerw.loki.benc.longGet
 import io.github.remmerw.loki.benc.stringGet
-import io.github.remmerw.loki.createInetSocketAddress
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
@@ -78,7 +77,7 @@ private fun extractNodes(
 internal fun writeBuckets(list: List<Peer>): BEString {
     val buffer = Buffer()
     list.forEach { peer: Peer ->
-        val address = peer.address.encode()!!
+        val address = peer.address.encoded()!!
         buffer.write(peer.id)
         buffer.write(address)
     }
@@ -312,7 +311,7 @@ private fun parseResponse(
             val token = arrayGet(args[Names.TOKEN])
             val nodes6 = extractNodes6(args)
             val nodes = extractNodes(args)
-            val addresses: MutableList<InetSocketAddress> = mutableListOf()
+            val addresses: MutableList<Address> = mutableListOf()
 
             var vals: List<ByteArray> = listOf()
             val values = args[Names.VALUES]
@@ -337,7 +336,7 @@ private fun parseResponse(
 
                             if (port > 0.toUShort() && port <= 65535.toUShort()) {
                                 addresses.add(
-                                    createInetSocketAddress(address, port.toInt())
+                                    Address(address, port)
                                 )
                             }
                         }
@@ -351,7 +350,7 @@ private fun parseResponse(
 
                             if (port > 0.toUShort() && port <= 65535.toUShort()) {
                                 addresses.add(
-                                    createInetSocketAddress(address, port.toInt())
+                                    Address(address, port)
                                 )
                             }
                         }

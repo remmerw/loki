@@ -1,7 +1,6 @@
 package io.github.remmerw.loki.mdht
 
 import io.github.remmerw.loki.debug
-import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -10,25 +9,27 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 
 
+/**
+ * Returns all nodes on the way
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.requestGetPeers(
+fun CoroutineScope.findNode(
     mdht: Mdht,
-    key: ByteArray,
+    target: ByteArray,
     timeout: () -> Long
-): ReceiveChannel<InetSocketAddress> = produce {
+): ReceiveChannel<Peer> = produce {
 
 
     val peerId = mdht.peerId
-    val peers: MutableSet<Address> = mutableSetOf()
 
-
+    val peers: MutableSet<Peer> = mutableSetOf()
     while (true) {
 
-        val closest = ClosestSet(key)
-        val candidates = Candidates(key)
+        val closest = ClosestSet(target)
+        val candidates = Candidates(target)
         val inFlight: MutableSet<Call> = mutableSetOf()
 
-        val entries = mdht.routingTable.closestPeers(key, 32)
+        val entries = mdht.routingTable.closestPeers(target, 32)
         candidates.addCandidates(null, entries)
 
         do {
@@ -41,7 +42,7 @@ fun CoroutineScope.requestGetPeers(
 
                 if (peer != null) {
                     val tid = createRandomKey(TID_LENGTH)
-                    val request = GetPeersRequest(peer.address, peerId, tid, key)
+                    val request = FindNodeRequest(peer.address, peerId, tid, target)
                     val call = Call(request, peer.id)
                     candidates.addCall(call, peer)
                     inFlight.add(call)
@@ -60,7 +61,7 @@ fun CoroutineScope.requestGetPeers(
                         candidates.decreaseFailures(call)
 
                         val message = call.response
-                        message as GetPeersResponse
+                        message as FindNodeResponse
                         val match = candidates.acceptResponse(call)
 
                         if (match != null) {
@@ -76,18 +77,12 @@ fun CoroutineScope.requestGetPeers(
 
                             candidates.addCandidates(match, returnedNodes)
 
-                            for (item in message.items) {
-                                if (peers.add(item)) {
-                                    send(item.toInetSocketAddress())
-                                }
+                            if (peers.add(match)) {
+                                send(match)
                             }
 
-                            // if we scrape we don't care about tokens.
-                            // otherwise we're only done if we have found the closest
-                            // nodes that also returned tokens
-                            if (message.token != null) {
-                                closest.insert(match)
-                            }
+                            closest.insert(match)
+
                         }
 
                     }

@@ -1,27 +1,26 @@
 package io.github.remmerw.loki.mdht
 
-import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.util.collections.ConcurrentMap
 import kotlin.random.Random
 
 internal class Database internal constructor() {
     private val tokenManager = TokenManager()
-    private val items: ConcurrentMap<Int, MutableList<InetSocketAddress>> = ConcurrentMap()
+    private val items: ConcurrentMap<Int, MutableList<Address>> = ConcurrentMap()
 
-    fun store(key: ByteArray, address: InetSocketAddress) {
+    fun store(key: ByteArray, address: Address) {
 
         val keyEntry = items[key.contentHashCode()]
         if (keyEntry != null) {
             add(keyEntry, address)
         } else {
-            val peers = mutableListOf<InetSocketAddress>()
+            val peers = mutableListOf<Address>()
             peers.add(address)
             items[key.contentHashCode()] = peers
         }
 
     }
 
-    fun sample(key: ByteArray, maxEntries: Int): List<InetSocketAddress> {
+    fun sample(key: ByteArray, maxEntries: Int): List<Address> {
 
         val keyEntry = items[key.contentHashCode()] ?: return emptyList()
         return snapshot(keyEntry, maxEntries)
@@ -62,7 +61,7 @@ internal class Database internal constructor() {
         return tokenManager.checkToken(token, nodeId, address, lookup)
     }
 
-    private fun add(items: MutableList<InetSocketAddress>, toAdd: InetSocketAddress) {
+    private fun add(items: MutableList<Address>, toAdd: Address) {
 
         val idx = items.indexOf(toAdd)
         if (idx >= 0) {
@@ -72,8 +71,8 @@ internal class Database internal constructor() {
 
     }
 
-    private fun snapshot(items: MutableList<InetSocketAddress>, maxEntries: Int)
-            : List<InetSocketAddress> {
+    private fun snapshot(items: MutableList<Address>, maxEntries: Int)
+            : List<Address> {
         return items.shuffled().take(maxEntries).toList()
 
     }

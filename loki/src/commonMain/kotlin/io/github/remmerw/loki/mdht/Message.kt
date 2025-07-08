@@ -8,8 +8,6 @@ import io.github.remmerw.loki.benc.BEString
 import io.github.remmerw.loki.benc.encode
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
-import kotlinx.io.readByteArray
-import kotlinx.io.writeUShort
 
 
 internal interface Message {
@@ -214,7 +212,7 @@ internal data class GetPeersResponse(
     val token: ByteArray?,
     val nodes: List<Peer>,
     val nodes6: List<Peer>,
-    val items: List<InetSocketAddress>
+    val items: List<Address>
 ) : Response {
 
 
@@ -243,18 +241,12 @@ internal data class GetPeersResponse(
     }
 }
 
-private fun InetSocketAddress.encoded(): ByteArray {
-    val buffer = Buffer()
-    buffer.write(resolveAddress()!!)
-    buffer.writeUShort(port.toUShort())
-    return buffer.readByteArray()
-}
 
 @Suppress("ArrayInDataClass")
 internal data class PingRequest(
     override val address: InetSocketAddress,
     override val id: ByteArray,
-    override val tid: ByteArray
+    override val tid: ByteArray = createRandomKey(TID_LENGTH)
 ) : Request {
 
     override fun encode(buffer: Buffer) {
