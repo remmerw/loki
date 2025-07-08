@@ -49,9 +49,7 @@ internal class Database internal constructor() {
         address: ByteArray,
         key: ByteArray
     ): ByteArray {
-
         return tokenManager.generateToken(nodeId, address, key)
-
     }
 
 

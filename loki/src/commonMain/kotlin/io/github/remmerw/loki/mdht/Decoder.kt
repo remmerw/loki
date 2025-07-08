@@ -78,7 +78,7 @@ private fun extractNodes(
 internal fun writeBuckets(list: List<Peer>): BEString {
     val buffer = Buffer()
     list.forEach { peer: Peer ->
-        val address = encode(peer.address)
+        val address = peer.address.encode()!!
         buffer.write(peer.id)
         buffer.write(address)
     }
@@ -303,10 +303,6 @@ private fun parseResponse(
 
         is AnnounceRequest -> msg = AnnounceResponse(address, id, tid, ip)
         is FindNodeRequest -> {
-            require(args.containsKey(Names.NODES) || args.containsKey(Names.NODES6)) {
-                "received response to find_node request with " +
-                        "neither 'nodes' nor 'nodes6' entry"
-            }
             val nodes6 = extractNodes6(args)
             val nodes = extractNodes(args)
             msg = FindNodeResponse(address, id, tid, ip, nodes, nodes6)

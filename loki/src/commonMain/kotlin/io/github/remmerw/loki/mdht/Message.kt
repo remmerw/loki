@@ -166,8 +166,7 @@ internal data class FindNodeResponse(
         // message type
         base[Names.Y] = BEString(Names.R.encodeToByteArray())
 
-        // message method if we are a response
-        base[Names.IP] = BEString(encode(address))
+        if (ip != null) base[Names.IP] = BEString(ip)
 
         encode(base, buffer)
     }
@@ -238,6 +237,8 @@ internal data class GetPeersResponse(
         // message type
         base[Names.Y] = BEString(Names.R.encodeToByteArray())
 
+        if (ip != null) base[Names.IP] = BEString(ip)
+
         encode(base, buffer)
     }
 }
@@ -291,8 +292,8 @@ internal data class PingResponse(
         // message type
         base[Names.Y] = BEString(Names.R.encodeToByteArray())
 
-        // message method if we are a response
-        base[Names.IP] = BEString(encode(address))
+
+        if (ip != null) base[Names.IP] = BEString(ip)
 
         encode(base, buffer)
     }
