@@ -205,7 +205,7 @@ internal class Connection internal constructor(
                     is ExtendedMessage -> {
 
                         val buffer = Buffer()
-                        encode(message, buffer)
+                        extendedProtocol.doEncode(address(), message, buffer)
                         val size = buffer.size
                         sendChannel.writeInt(size.toInt())
                         sendChannel.writeBuffer(buffer)
@@ -224,7 +224,7 @@ internal class Connection internal constructor(
     }
 
 
-    suspend fun decode(channel: ByteReadChannel, length: Int): Message {
+    private suspend fun decode(channel: ByteReadChannel, length: Int): Message {
 
         val messageType = channel.readByte()
         var size = length - Byte.SIZE_BYTES
@@ -299,12 +299,6 @@ internal class Connection internal constructor(
         }
     }
 
-
-    fun encode(message: ExtendedMessage, buffer: Buffer) {
-        extendedProtocol.doEncode(address(), message, buffer)
-    }
-
-
     @OptIn(ExperimentalAtomicApi::class)
     fun close() {
 
@@ -321,6 +315,4 @@ internal class Connection internal constructor(
             }
         }
     }
-
-
 }
