@@ -50,9 +50,7 @@ internal class PeerRequestAgent(
                     val length = request.length
                     val offset = request.offset
                     val piece = request.piece
-                    val data = dataStorage.readBlock(piece, offset, length)
-
-                    messageConsumer.invoke(Piece(piece, offset, data))
+                    messageConsumer.invoke(Piece(piece, offset, length))
                 }
             } while (request != null)
         }

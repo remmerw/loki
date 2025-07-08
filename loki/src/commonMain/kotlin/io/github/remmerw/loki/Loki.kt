@@ -19,7 +19,7 @@ import io.github.remmerw.loki.core.performConnection
 import io.github.remmerw.loki.core.performHandshake
 import io.github.remmerw.loki.core.processMessages
 import io.github.remmerw.loki.data.ExtendedMessageHandler
-import io.github.remmerw.loki.data.Messages
+import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
@@ -66,7 +66,8 @@ suspend fun CoroutineScope.download(
         PeerExchangeHandler(),
         UtMetadataHandler()
     )
-    val messages = Messages(extendedMessagesHandler)
+
+    val extendedProtocol = ExtendedProtocol(extendedMessagesHandler)
 
     // add default handshake handlers to the beginning of the connection handling chain
     val handshakeHandlers = setOf(
@@ -106,7 +107,10 @@ suspend fun CoroutineScope.download(
                 5000 // 5 sec
             }
         }
-        val connections = performConnection(messages, worker, selectorManager, addresses)
+        val connections = performConnection(
+            extendedProtocol, dataStorage,
+            worker, selectorManager, addresses
+        )
         val handshakes = performHandshake(
             peerId, torrentId, handshakeHandlers, worker, connections
         )

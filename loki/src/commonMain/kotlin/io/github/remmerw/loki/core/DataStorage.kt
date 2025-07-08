@@ -200,6 +200,7 @@ internal data class DataStorage(val directory: Path) : Storage {
             }
         }
     }
+
     private fun chunkSize(): Int {
         return torrent!!.chunkSize
     }
@@ -252,17 +253,15 @@ internal data class DataStorage(val directory: Path) : Storage {
     }
 
 
-    internal fun readBlock(piece: Int, offset: Int, length: Int): ByteArray {
+    internal fun readBlock(piece: Int, offset: Int, bytes: ByteArray, length: Int) {
         return lock.withLock {
-            val bytes = ByteArray(length)
-            database.readBytes(position(piece, offset), bytes)
-            bytes
+            database.readBytes(position(piece, offset), bytes, 0, length)
         }
     }
 
-    internal fun writeBlock(piece: Int, offset: Int, data: ByteArray) {
+    internal fun writeBlock(piece: Int, offset: Int, data: ByteArray, length: Int) {
         return lock.withLock {
-            database.writeBytes( position(piece, offset) , data)
+            database.writeBytes(position(piece, offset), data, 0, length)
         }
     }
 

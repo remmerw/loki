@@ -1,8 +1,8 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
-import io.github.remmerw.loki.data.Messages
 import io.github.remmerw.loki.data.PROTOCOL_NAME
 import io.github.remmerw.loki.data.TorrentId
 import io.ktor.network.selector.SelectorManager
@@ -99,11 +99,7 @@ internal fun CoroutineScope.processMessages(
         launch {
             while (!connection.isClosed) {
                 ensureActive()
-                val message = connection.reading()
-                if (message == null) {
-                    break // done
-                }
-                worker.consume(connection, message)
+                connection.reading()
             }
         }
         launch {
@@ -141,7 +137,8 @@ internal fun CoroutineScope.performHandshake(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.performConnection(
-    messages: Messages,
+    extendedProtocol: ExtendedProtocol,
+    dataStorage: DataStorage,
     worker: Worker,
     selectorManager: SelectorManager,
     channel: ReceiveChannel<InetSocketAddress>
@@ -155,7 +152,9 @@ internal fun CoroutineScope.performConnection(
                         .tcp().connect(address) {
                             socketTimeout = 30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
                         }
-                    send(Connection(address, worker, socket, messages))
+                    send(
+                        Connection(address, dataStorage, worker, socket, extendedProtocol)
+                    )
                 } catch (_: Throwable) {
                     // this is the normal case when address is unreachable or timeouted
                 }

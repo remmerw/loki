@@ -209,7 +209,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 16
             },
-            null // todo
+            null // storing data not yet supported
         )
 
         sendMessage(resp)
@@ -309,7 +309,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
         val ip = msg.address
         val id = msg.id
 
-        /* TODO not yet used
+        /* Someday in the future the IP might be used in the implementation
         if (msg is Response) {
            val ip = msg.ip
            if (ip != null) {

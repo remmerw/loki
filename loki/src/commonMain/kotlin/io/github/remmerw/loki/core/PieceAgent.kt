@@ -69,8 +69,9 @@ internal class PieceAgent(
             return
         }
 
-        dataStorage.writeBlock(piece.piece, piece.offset, piece.data)
-        chunk.markAvailable(piece.offset, piece.data.size)
+        val data = connection.writeBlock()
+        dataStorage.writeBlock(piece.piece, piece.offset, data, piece.length)
+        chunk.markAvailable(piece.offset, piece.length)
 
         if (chunk.isComplete) {
             if (dataStorage.digestChunk(piece.piece, chunk)) {
