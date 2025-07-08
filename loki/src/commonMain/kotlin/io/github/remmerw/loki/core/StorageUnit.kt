@@ -29,7 +29,7 @@ class StorageUnit internal constructor(
 
     fun transferTo(sink: Sink) {
         randomAccessFile(database).use { database ->
-            database.transferTo(sink, startPos, size())
+            database.transferTo(startPos, sink, size())
         }
     }
 

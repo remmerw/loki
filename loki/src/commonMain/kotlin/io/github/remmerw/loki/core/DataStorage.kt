@@ -187,7 +187,8 @@ internal data class DataStorage(val directory: Path) : Storage {
 
     internal fun digestChunk(piece: Int, chunk: Chunk): Boolean {
         lock.withLock {
-            val bytes = database.readBytes(offset(piece), chunk.chunkSize())
+            val bytes = ByteArray(chunk.chunkSize())
+            database.readBytes(position(piece), bytes)
             val digest = sha1(bytes)
             val result = digest.contentEquals(chunk.checksum)
             if (result) {
@@ -199,14 +200,12 @@ internal data class DataStorage(val directory: Path) : Storage {
             }
         }
     }
-
-
     private fun chunkSize(): Int {
         return torrent!!.chunkSize
     }
 
-    private fun offset(piece: Int): Long {
-        return (chunkSize() * piece).toLong()
+    private fun position(piece: Int, offset: Int = 0): Long {
+        return (chunkSize() * piece).toLong() + offset
     }
 
     internal fun verifiedPieces(totalPieces: Int) {
@@ -255,13 +254,15 @@ internal data class DataStorage(val directory: Path) : Storage {
 
     internal fun readBlock(piece: Int, offset: Int, length: Int): ByteArray {
         return lock.withLock {
-            database.readBytes(offset(piece) + offset, length)
+            val bytes = ByteArray(length)
+            database.readBytes(position(piece, offset), bytes)
+            bytes
         }
     }
 
     internal fun writeBlock(piece: Int, offset: Int, data: ByteArray) {
         return lock.withLock {
-            database.writeBytes(data, offset(piece) + offset)
+            database.writeBytes( position(piece, offset) , data)
         }
     }
 
