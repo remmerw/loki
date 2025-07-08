@@ -209,7 +209,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 16
             },
-            null // storing data not yet supported
+            null, null, null, null // todo
         )
 
         sendMessage(resp)

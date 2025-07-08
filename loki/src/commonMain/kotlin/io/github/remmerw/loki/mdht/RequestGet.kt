@@ -17,6 +17,7 @@ data class Data(val data: BEObject, val seq: Long?, val k: ByteArray?, val sig: 
 fun CoroutineScope.requestGet(
     mdht: Mdht,
     key: ByteArray,
+    seq: Long? = null,
     timeout: () -> Long
 ): ReceiveChannel<Data> = produce {
 
@@ -40,7 +41,15 @@ fun CoroutineScope.requestGet(
 
                 if (peer != null) {
                     val tid = createRandomKey(TID_LENGTH)
-                    val request = GetRequest(peer.address, peerId, tid, key)
+
+                    val request = GetRequest(
+                        address = peer.address,
+                        id = peerId,
+                        tid = tid,
+                        target = key,
+                        seq = seq
+                    )
+
                     val call = Call(request, peer.id)
                     candidates.addCall(call, peer)
                     inFlight.add(call)

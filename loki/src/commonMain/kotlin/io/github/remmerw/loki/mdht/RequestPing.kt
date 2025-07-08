@@ -16,7 +16,8 @@ suspend fun requestPing(
     val inFlight: MutableSet<Call> = mutableSetOf()
 
     val peerId = mdht.peerId
-    val request = PingRequest(peer.address, peerId)
+    val tid = createRandomKey(TID_LENGTH)
+    val request = PingRequest(peer.address, peerId, tid)
     val call = Call(request, peer.id)
     inFlight.add(call)
     mdht.doRequestCall(call)

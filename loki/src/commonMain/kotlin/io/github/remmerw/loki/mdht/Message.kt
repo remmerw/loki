@@ -246,7 +246,7 @@ internal data class GetPeersResponse(
 internal data class PingRequest(
     override val address: InetSocketAddress,
     override val id: ByteArray,
-    override val tid: ByteArray = createRandomKey(TID_LENGTH)
+    override val tid: ByteArray
 ) : Request {
 
     override fun encode(buffer: Buffer) {
@@ -299,11 +299,11 @@ internal data class PutRequest(
     override val tid: ByteArray,
     val token: ByteArray,
     val v: BEObject,
-    val cas: Long? = null,
-    val k: ByteArray? = null,
-    val salt: ByteArray? = null,
-    val seq: Long? = null,
-    val sig: ByteArray? = null
+    val cas: Long?,
+    val k: ByteArray?,
+    val salt: ByteArray?,
+    val seq: Long?,
+    val sig: ByteArray?
 
 ) :
     Request {
@@ -367,7 +367,7 @@ internal data class GetRequest(
     override val id: ByteArray,
     override val tid: ByteArray,
     val target: ByteArray,
-    val seq: Long? = null
+    val seq: Long?
 ) :
     Request {
 
@@ -404,9 +404,9 @@ internal data class GetResponse(
     val nodes: List<Peer>,
     val nodes6: List<Peer>,
     val v: BEObject?,
-    val k: ByteArray? = null,
-    val seq: Long? = null,
-    val sig: ByteArray? = null
+    val k: ByteArray?,
+    val seq: Long?,
+    val sig: ByteArray?
 ) : Response {
 
 

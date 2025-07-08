@@ -180,7 +180,7 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
 
                 Names.GET_PEERS -> GetPeersRequest(address, id, tid, hash)
 
-                Names.GET -> GetRequest(address, id, tid, hash)
+                Names.GET -> GetRequest(address, id, tid, hash, null) // todo
 
                 else -> {
                     debug("not handled branch $requestMethod")
@@ -208,7 +208,7 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
             }
 
 
-            PutRequest(address, id, tid, token, data)
+            PutRequest(address, id, tid, token, data, null, null, null, null, null) // todo
         }
 
         Names.ANNOUNCE_PEER -> {
