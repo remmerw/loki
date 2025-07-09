@@ -52,7 +52,7 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
-                implementation("io.github.andreypfau:curve25519-kotlin:0.0.8")
+                implementation("io.github.remmerw:borr:0.0.2")
             }
         }
 

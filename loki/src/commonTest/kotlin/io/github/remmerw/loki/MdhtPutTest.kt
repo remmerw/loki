@@ -1,8 +1,7 @@
 package io.github.remmerw.loki
 
-import io.github.andreypfau.curve25519.ed25519.Ed25519
-import io.github.andreypfau.curve25519.ed25519.Ed25519PrivateKey
-import io.github.andreypfau.curve25519.ed25519.Ed25519PublicKey
+
+import io.github.remmerw.borr.Ed25519Sign
 import io.github.remmerw.loki.benc.BEString
 import io.github.remmerw.loki.benc.stringGet
 import io.github.remmerw.loki.mdht.hostname
@@ -17,7 +16,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
-import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -33,12 +31,12 @@ class MdhtPutTest {
 
         val data = "moin".encodeToByteArray()
 
-        val privateKey: Ed25519PrivateKey = Ed25519.generateKey(Random)
-        val publicKey: Ed25519PublicKey = privateKey.publicKey()
+        val keys = Ed25519Sign.KeyPair.newKeyPair()
+
 
         val v = BEString(data)
         val cas: Long? = null
-        val k: ByteArray = publicKey.toByteArray()
+        val k: ByteArray = keys.getPublicKey()
         val salt: ByteArray? = null
         val seq: Long = Clock.System.now().toEpochMilliseconds()
         val signBuffer = Buffer()
@@ -48,7 +46,9 @@ class MdhtPutTest {
         signBuffer.write(data.size.toString().encodeToByteArray())
         signBuffer.write(":".encodeToByteArray())
         signBuffer.write(data)
-        val sig: ByteArray = privateKey.sign(signBuffer.readByteArray())
+
+        val signer = Ed25519Sign(keys.getPrivateKey())
+        val sig = signer.sign(signBuffer.readByteArray())
 
         val target = sha1(k)
 
