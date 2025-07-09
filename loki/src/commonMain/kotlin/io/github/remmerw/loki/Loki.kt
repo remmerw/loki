@@ -43,7 +43,11 @@ data class State(val piecesTotal: Int, val piecesComplete: Int)
 
 interface Storage {
     fun storeTo(directory: Path)
-    fun finish()
+
+    /**
+     * Delete the storage, all intermediate files will be deleted
+     */
+    fun delete()
     fun storageUnits(): List<StorageUnit>
 }
 

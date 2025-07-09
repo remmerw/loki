@@ -53,7 +53,7 @@ class TorrentParserTest {
             assertEquals(files.size, torrent.files.size)
 
         }
-        dataStorage.finish()
+        dataStorage.delete()
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -76,7 +76,7 @@ class TorrentParserTest {
         assertFalse(dataStorage.isVerified(9))
 
         dataStorage.shutdown()
-        dataStorage.finish()
+        dataStorage.delete()
     }
 
     @Test

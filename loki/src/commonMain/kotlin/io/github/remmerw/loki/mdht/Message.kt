@@ -21,6 +21,11 @@ internal interface Response : Message {
     val ip: ByteArray?
 }
 
+internal interface NodesResponse : Response {
+    val nodes: List<Peer>
+    val nodes6: List<Peer>
+}
+
 internal interface Request : Message
 
 
@@ -146,9 +151,9 @@ internal data class FindNodeResponse(
     override val id: ByteArray,
     override val tid: ByteArray,
     override val ip: ByteArray?,
-    val nodes: List<Peer>,
-    val nodes6: List<Peer>
-) : Response {
+    override val nodes: List<Peer>,
+    override val nodes6: List<Peer>
+) : NodesResponse {
 
     override fun encode(buffer: Buffer) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
@@ -210,10 +215,10 @@ internal data class GetPeersResponse(
     override val tid: ByteArray,
     override val ip: ByteArray?,
     val token: ByteArray?,
-    val nodes: List<Peer>,
-    val nodes6: List<Peer>,
+    override val nodes: List<Peer>,
+    override val nodes6: List<Peer>,
     val items: List<Address>
-) : Response {
+) : NodesResponse {
 
 
     override fun encode(buffer: Buffer) {
@@ -401,13 +406,13 @@ internal data class GetResponse(
     override val tid: ByteArray,
     override val ip: ByteArray?,
     val token: ByteArray?,
-    val nodes: List<Peer>,
-    val nodes6: List<Peer>,
+    override val nodes: List<Peer>,
+    override val nodes6: List<Peer>,
     val v: BEObject?,
     val k: ByteArray?,
     val seq: Long?,
     val sig: ByteArray?
-) : Response {
+) : NodesResponse {
 
 
     override fun encode(buffer: Buffer) {

@@ -13,7 +13,7 @@ import kotlinx.coroutines.ensureActive
 @OptIn(ExperimentalCoroutinesApi::class)
 fun CoroutineScope.requestAnnounce(
     mdht: Mdht,
-    key: ByteArray,
+    target: ByteArray,
     port: Int,
     timeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
@@ -21,11 +21,10 @@ fun CoroutineScope.requestAnnounce(
     val peerId = mdht.peerId
     while (true) {
 
-        val closest = ClosestSet(key)
+        val closest = ClosestSet(mdht, target)
 
         val inFlight: MutableSet<Call> = mutableSetOf()
 
-        closest.init(mdht)
 
         val announces: MutableMap<Peer, AnnounceRequest> = mutableMapOf()
         do {
@@ -36,11 +35,10 @@ fun CoroutineScope.requestAnnounce(
 
                 if (peer != null) {
                     val tid = createRandomKey(TID_LENGTH)
-                    val request = GetPeersRequest(peer.address, peerId, tid, key)
+                    val request = GetPeersRequest(peer.address, peerId, tid, target)
                     val call = Call(request, peer.id)
-                    closest.addCall(call, peer)
+                    closest.requestCall(call, peer)
                     inFlight.add(call)
-                    mdht.doRequestCall(call)
                 }
             } while (peer != null)
 
@@ -56,65 +54,36 @@ fun CoroutineScope.requestAnnounce(
 
             val removed: MutableList<Call> = mutableListOf()
             inFlight.forEach { call ->
-                when (call.state()) {
-                    CallState.RESPONDED -> {
-                        removed.add(call)
-                        closest.decreaseFailures(call)
+                if (call.state() == CallState.RESPONDED) {
+                    removed.add(call)
 
-                        val rsp = call.response
-                        if (rsp is AnnounceResponse) {
-                            send(rsp.address)
-                        }
-                        if (rsp is GetPeersResponse) {
-                            val match = closest.acceptResponse(call)
+                    val rsp = call.response
+                    if (rsp is AnnounceResponse) {
+                        send(rsp.address)
+                    }
+                    if (rsp is GetPeersResponse) {
+                        val match = closest.acceptResponse(call)
 
-                            if (match != null) {
-                                val returnedNodes: MutableSet<Peer> = mutableSetOf()
+                        if (match != null) {
 
-                                rsp.nodes6.filter { peer: Peer ->
-                                    !mdht.isLocalId(peer.id)
-                                }.forEach { e: Peer -> returnedNodes.add(e) }
+                            // if we scrape we don't care about tokens.
+                            // otherwise we're only done if we have found the closest
+                            // nodes that also returned tokens
+                            if (rsp.token != null) {
+                                closest.insert(match)
 
-                                rsp.nodes.filter { peer: Peer ->
-                                    !mdht.isLocalId(peer.id)
-                                }.forEach { e: Peer -> returnedNodes.add(e) }
-
-                                closest.addCandidates(match, returnedNodes)
-
-
-                                // if we scrape we don't care about tokens.
-                                // otherwise we're only done if we have found the closest
-                                // nodes that also returned tokens
-                                if (rsp.token != null) {
-                                    closest.insert(match)
-
-                                    val tid = createRandomKey(TID_LENGTH)
-                                    val request = AnnounceRequest(
-                                        match.address,
-                                        peerId, tid, key, port, rsp.token, null
-                                    )
-                                    announces.put(match, request)
-
-                                }
+                                val tid = createRandomKey(TID_LENGTH)
+                                val request = AnnounceRequest(
+                                    match.address,
+                                    peerId, tid, target, port, rsp.token, null
+                                )
+                                announces.put(match, request)
                             }
                         }
-                    }
-
-                    CallState.ERROR, CallState.STALLED -> {
-                        removed.add(call)
-                        closest.increaseFailures(call)
-                    }
-
-                    else -> {
-                        val sendTime = call.sentTime
-
-                        if (sendTime != null) {
-                            val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                            if (elapsed > 3000) { // 3 sec
-                                removed.add(call)
-                                closest.increaseFailures(call)
-                                mdht.timeout(call)
-                            }
+                    } else {
+                        val failure = closest.checkTimeoutOrFailure(call)
+                        if (failure) {
+                            removed.add(call)
                         }
                     }
                 }

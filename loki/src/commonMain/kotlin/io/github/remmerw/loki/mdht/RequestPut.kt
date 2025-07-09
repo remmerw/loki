@@ -27,11 +27,9 @@ fun CoroutineScope.requestPut(
     val peerId = mdht.peerId
     while (true) {
 
-        val closest = ClosestSet(target)
+        val closest = ClosestSet(mdht, target)
 
         val inFlight: MutableSet<Call> = mutableSetOf()
-
-        closest.init(mdht)
 
         val puts: MutableMap<Peer, PutRequest> = mutableMapOf()
         do {
@@ -44,9 +42,8 @@ fun CoroutineScope.requestPut(
                     val tid = createRandomKey(TID_LENGTH)
                     val request = GetPeersRequest(peer.address, peerId, tid, target)
                     val call = Call(request, peer.id)
-                    closest.addCall(call, peer)
+                    closest.requestCall(call, peer)
                     inFlight.add(call)
-                    mdht.doRequestCall(call)
                 }
             } while (peer != null)
 
@@ -62,65 +59,36 @@ fun CoroutineScope.requestPut(
 
             val removed: MutableList<Call> = mutableListOf()
             inFlight.forEach { call ->
-                when (call.state()) {
-                    CallState.RESPONDED -> {
-                        removed.add(call)
-                        closest.decreaseFailures(call)
+                if (call.state() == CallState.RESPONDED) {
 
-                        val message = call.response
-                        if (message is PutResponse) {
-                            send(message.address)
-                        } else if (message is GetPeersResponse) {
-                            val match = closest.acceptResponse(call)
+                    removed.add(call)
+                    val message = call.response
+                    if (message is PutResponse) {
+                        send(message.address)
+                    } else if (message is GetPeersResponse) {
+                        val match = closest.acceptResponse(call)
 
-                            if (match != null) {
-                                val returnedNodes: MutableSet<Peer> = mutableSetOf()
+                        if (match != null) {
 
-                                message.nodes6.filter { peer: Peer ->
-                                    !mdht.isLocalId(peer.id)
-                                }.forEach { e: Peer -> returnedNodes.add(e) }
+                            // if we scrape we don't care about tokens.
+                            // otherwise we're only done if we have found the closest
+                            // nodes that also returned tokens
+                            if (message.token != null) {
+                                closest.insert(match)
 
-                                message.nodes.filter { peer: Peer ->
-                                    !mdht.isLocalId(peer.id)
-                                }.forEach { e: Peer -> returnedNodes.add(e) }
-
-                                closest.addCandidates(match, returnedNodes)
-
-
-                                // if we scrape we don't care about tokens.
-                                // otherwise we're only done if we have found the closest
-                                // nodes that also returned tokens
-                                if (message.token != null) {
-                                    closest.insert(match)
-
-                                    val tid = createRandomKey(TID_LENGTH)
-                                    val request = PutRequest(
-                                        match.address,
-                                        peerId, tid, message.token, v,
-                                        cas, k, salt, seq, sig
-                                    )
-                                    puts.put(match, request)
-
-                                }
+                                val tid = createRandomKey(TID_LENGTH)
+                                val request = PutRequest(
+                                    match.address,
+                                    peerId, tid, message.token, v,
+                                    cas, k, salt, seq, sig
+                                )
+                                puts.put(match, request)
                             }
                         }
-                    }
-
-                    CallState.ERROR, CallState.STALLED -> {
-                        removed.add(call)
-                        closest.increaseFailures(call)
-                    }
-
-                    else -> {
-                        val sendTime = call.sentTime
-
-                        if (sendTime != null) {
-                            val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                            if (elapsed > 3000) { // 3 sec
-                                removed.add(call)
-                                closest.increaseFailures(call)
-                                mdht.timeout(call)
-                            }
+                    } else {
+                        val failure = closest.checkTimeoutOrFailure(call)
+                        if (failure) {
+                            removed.add(call)
                         }
                     }
                 }

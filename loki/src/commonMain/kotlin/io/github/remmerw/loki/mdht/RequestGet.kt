@@ -24,12 +24,8 @@ fun CoroutineScope.requestGet(
     val peerId = mdht.peerId
     while (true) {
 
-        val closest = ClosestSet(key)
+        val closest = ClosestSet(mdht, key)
         val inFlight: MutableSet<Call> = mutableSetOf()
-
-        closest.init(mdht)
-
-
         do {
             do {
                 ensureActive()
@@ -48,9 +44,8 @@ fun CoroutineScope.requestGet(
                     )
 
                     val call = Call(request, peer.id)
-                    closest.addCall(call, peer)
+                    closest.requestCall(call, peer)
                     inFlight.add(call)
-                    mdht.doRequestCall(call)
                 }
             } while (peer != null)
 
@@ -59,60 +54,32 @@ fun CoroutineScope.requestGet(
 
             val removed: MutableList<Call> = mutableListOf()
             inFlight.forEach { call ->
-                when (call.state()) {
-                    CallState.RESPONDED -> {
-                        removed.add(call)
-                        closest.decreaseFailures(call)
+                if (call.state() == CallState.RESPONDED) {
+                    removed.add(call)
 
-                        val rsp = call.response
+                    val rsp = call.response
 
-                        rsp as GetResponse
+                    rsp as GetResponse
 
-                        val match = closest.acceptResponse(call)
+                    val match = closest.acceptResponse(call)
 
-                        if (match != null) {
-                            val returnedNodes: MutableSet<Peer> = mutableSetOf()
+                    if (match != null) {
 
-                            rsp.nodes6.filter { peer: Peer ->
-                                !mdht.isLocalId(peer.id)
-                            }.forEach { e: Peer -> returnedNodes.add(e) }
-
-                            rsp.nodes.filter { peer: Peer ->
-                                !mdht.isLocalId(peer.id)
-                            }.forEach { e: Peer -> returnedNodes.add(e) }
-
-                            closest.addCandidates(match, returnedNodes)
-
-
-                            if (rsp.v != null) {
-                                val data = Data(rsp.v, rsp.seq, rsp.k, rsp.sig)
-                                send(data)
-                            }
-
-                            // if we scrape we don't care about tokens.
-                            // otherwise we're only done if we have found the closest
-                            // nodes that also returned tokens
-                            if (rsp.token != null) {
-                                closest.insert(match)
-                            }
+                        if (rsp.v != null) {
+                            val data = Data(rsp.v, rsp.seq, rsp.k, rsp.sig)
+                            send(data)
                         }
-                    }
 
-                    CallState.ERROR, CallState.STALLED -> {
-                        removed.add(call)
-                        closest.increaseFailures(call)
-                    }
-
-                    else -> {
-                        val sendTime = call.sentTime
-
-                        if (sendTime != null) {
-                            val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                            if (elapsed > 3000) { // 3 sec
-                                removed.add(call)
-                                closest.increaseFailures(call)
-                                mdht.timeout(call)
-                            }
+                        // if we scrape we don't care about tokens.
+                        // otherwise we're only done if we have found the closest
+                        // nodes that also returned tokens
+                        if (rsp.token != null) {
+                            closest.insert(match)
+                        }
+                    } else {
+                        val failure = closest.checkTimeoutOrFailure(call)
+                        if (failure) {
+                            removed.add(call)
                         }
                     }
                 }

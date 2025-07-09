@@ -25,29 +25,19 @@ suspend fun requestPing(
     do {
         val removed: MutableList<Call> = mutableListOf()
         inFlight.forEach { call ->
-            when (call.state()) {
-                CallState.RESPONDED -> {
-                    removed.add(call)
-                    if (call.matchesExpectedID()) {
-                        val rsp = call.response
-                        rsp as PingResponse
-                        result.store(true)
-                    }
-                }
+            if (call.state() == CallState.RESPONDED) {
+                removed.add(call)
+                val rsp = call.response
+                rsp as PingResponse
+                result.store(call.matchesExpectedID())
+            } else {
+                val sendTime = call.sentTime
 
-                CallState.ERROR, CallState.STALLED -> {
-                    removed.add(call)
-                }
-
-                else -> {
-                    val sendTime = call.sentTime
-
-                    if (sendTime != null) {
-                        val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                        if (elapsed > 3000) { // 3 sec
-                            removed.add(call)
-                            mdht.timeout(call)
-                        }
+                if (sendTime != null) {
+                    val elapsed = sendTime.elapsedNow().inWholeMilliseconds
+                    if (elapsed > 3000) { // 3 sec
+                        removed.add(call)
+                        mdht.timeout(call)
                     }
                 }
             }

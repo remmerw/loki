@@ -276,7 +276,7 @@ internal data class DataStorage(val directory: Path) : Storage {
         }
     }
 
-    override fun finish() {
+    override fun delete() {
         cleanupDirectory(directory)
     }
 

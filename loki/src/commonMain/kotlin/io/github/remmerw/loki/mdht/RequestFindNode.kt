@@ -25,11 +25,9 @@ fun CoroutineScope.findNode(
     val peers: MutableSet<Peer> = mutableSetOf()
     while (true) {
 
-        val closest = ClosestSet(target)
+        val closest = ClosestSet(mdht, target)
 
         val inFlight: MutableSet<Call> = mutableSetOf()
-
-        closest.init(mdht)
 
         do {
             do {
@@ -41,9 +39,8 @@ fun CoroutineScope.findNode(
                     val tid = createRandomKey(TID_LENGTH)
                     val request = FindNodeRequest(peer.address, peerId, tid, target)
                     val call = Call(request, peer.id)
-                    closest.addCall(call, peer)
+                    closest.requestCall(call, peer)
                     inFlight.add(call)
-                    mdht.doRequestCall(call)
                 }
             } while (peer != null)
 
@@ -52,53 +49,22 @@ fun CoroutineScope.findNode(
 
             val removed: MutableList<Call> = mutableListOf()
             inFlight.forEach { call ->
-                when (call.state()) {
-                    CallState.RESPONDED -> {
-                        removed.add(call)
-                        closest.decreaseFailures(call)
+                if (call.state() == CallState.RESPONDED) {
+                    removed.add(call)
 
-                        val message = call.response
-                        message as FindNodeResponse
-                        val match = closest.acceptResponse(call)
+                    val message = call.response
+                    message as FindNodeResponse
+                    val match = closest.acceptResponse(call)
 
-                        if (match != null) {
-                            val returnedNodes: MutableSet<Peer> = mutableSetOf()
-
-                            message.nodes6.filter { peer: Peer ->
-                                !mdht.isLocalId(peer.id)
-                            }.forEach { e: Peer -> returnedNodes.add(e) }
-
-                            message.nodes.filter { peer: Peer ->
-                                !mdht.isLocalId(peer.id)
-                            }.forEach { e: Peer -> returnedNodes.add(e) }
-
-                            closest.addCandidates(match, returnedNodes)
-
-                            if (peers.add(match)) {
-                                send(match)
-                            }
-
-                            closest.insert(match)
-
+                    if (match != null) {
+                        if (peers.add(match)) {
+                            send(match)
                         }
-
-                    }
-
-                    CallState.ERROR, CallState.STALLED -> {
-                        removed.add(call)
-                        closest.increaseFailures(call)
-                    }
-
-                    else -> {
-                        val sendTime = call.sentTime
-
-                        if (sendTime != null) {
-                            val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                            if (elapsed > 3000) { // 3 sec
-                                removed.add(call)
-                                closest.increaseFailures(call)
-                                mdht.timeout(call)
-                            }
+                        closest.insert(match)
+                    } else {
+                        val failure = closest.checkTimeoutOrFailure(call)
+                        if (failure) {
+                            removed.add(call)
                         }
                     }
                 }

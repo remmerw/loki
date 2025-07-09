@@ -4,13 +4,16 @@ package io.github.remmerw.loki.mdht
 * We need to detect when the closest set is stable
 *  - in principle we're done as soon as there is no request candidates
 */
-internal class ClosestSet(private val target: ByteArray) {
+internal class ClosestSet(
+    private val mdht: Mdht,
+    private val target: ByteArray
+) {
     private val closest: MutableSet<Peer> = mutableSetOf()
     private val candidates = Candidates(target)
     private var insertAttemptsSinceTailModification = 0
 
 
-    fun init(mdht: Mdht) {
+    init {
         val entries = mdht.closestPeers(target, 32)
         candidates.addCandidates(null, entries)
     }
@@ -21,23 +24,55 @@ internal class ClosestSet(private val target: ByteArray) {
         }
     }
 
-    fun addCall(call: Call, peer: Peer) {
+    suspend fun requestCall(call: Call, peer: Peer) {
         candidates.addCall(call, peer)
+        mdht.doRequestCall(call)
     }
 
-    fun decreaseFailures(call: Call) {
-        candidates.decreaseFailures(call)
+    fun checkTimeoutOrFailure(call: Call): Boolean {
+        val state = call.state()
+        if (state != CallState.RESPONDED) {
+            if (state == CallState.ERROR || state == CallState.STALLED) {
+                return true
+            } else {
+                val sendTime = call.sentTime
+
+                if (sendTime != null) {
+                    val elapsed = sendTime.elapsedNow().inWholeMilliseconds
+                    if (elapsed > 3000) { // 3 sec
+                        candidates.increaseFailures(call)
+                        mdht.timeout(call)
+                    }
+                }
+            }
+        }
+        return false
     }
 
-    fun increaseFailures(call: Call) {
-        candidates.increaseFailures(call)
-    }
 
     fun acceptResponse(call: Call): Peer? {
-        return candidates.acceptResponse(call)
+        candidates.decreaseFailures(call)
+        val match = candidates.acceptResponse(call)
+        if (match != null) {
+            val message = call.response
+            if (message is NodesResponse) {
+                val returnedNodes: MutableSet<Peer> = mutableSetOf()
+
+                message.nodes6.filter { peer: Peer ->
+                    !mdht.isLocalId(peer.id)
+                }.forEach { e: Peer -> returnedNodes.add(e) }
+
+                message.nodes.filter { peer: Peer ->
+                    !mdht.isLocalId(peer.id)
+                }.forEach { e: Peer -> returnedNodes.add(e) }
+
+                addCandidates(match, returnedNodes)
+            }
+        }
+        return match
     }
 
-    fun addCandidates(source: Peer?, entries: Collection<Peer>) {
+    private fun addCandidates(source: Peer?, entries: Collection<Peer>) {
         candidates.addCandidates(source, entries)
     }
 

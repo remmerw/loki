@@ -13,7 +13,7 @@ import kotlinx.coroutines.ensureActive
 @OptIn(ExperimentalCoroutinesApi::class)
 fun CoroutineScope.requestGetPeers(
     mdht: Mdht,
-    key: ByteArray,
+    target: ByteArray,
     timeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
 
@@ -24,8 +24,7 @@ fun CoroutineScope.requestGetPeers(
 
     while (true) {
 
-        val closest = ClosestSet(key)
-        closest.init(mdht)
+        val closest = ClosestSet(mdht, target)
 
         val inFlight: MutableSet<Call> = mutableSetOf()
 
@@ -36,11 +35,10 @@ fun CoroutineScope.requestGetPeers(
                 val peer = closest.nextCandidate(inFlight)
                 if (peer != null) {
                     val tid = createRandomKey(TID_LENGTH)
-                    val request = GetPeersRequest(peer.address, peerId, tid, key)
+                    val request = GetPeersRequest(peer.address, peerId, tid, target)
                     val call = Call(request, peer.id)
-                    closest.addCall(call, peer)
+                    closest.requestCall(call, peer)
                     inFlight.add(call)
-                    mdht.doRequestCall(call)
                 }
             } while (peer != null)
 
@@ -49,59 +47,31 @@ fun CoroutineScope.requestGetPeers(
 
             val removed: MutableList<Call> = mutableListOf()
             inFlight.forEach { call ->
-                when (call.state()) {
-                    CallState.RESPONDED -> {
-                        removed.add(call)
-                        closest.decreaseFailures(call)
+                if (call.state() == CallState.RESPONDED) {
+                    removed.add(call)
 
+                    val match = closest.acceptResponse(call)
+
+                    if (match != null) {
                         val message = call.response
                         message as GetPeersResponse
-                        val match = closest.acceptResponse(call)
 
-                        if (match != null) {
-                            val returnedNodes: MutableSet<Peer> = mutableSetOf()
-
-                            message.nodes6.filter { peer: Peer ->
-                                !mdht.isLocalId(peer.id)
-                            }.forEach { e: Peer -> returnedNodes.add(e) }
-
-                            message.nodes.filter { peer: Peer ->
-                                !mdht.isLocalId(peer.id)
-                            }.forEach { e: Peer -> returnedNodes.add(e) }
-
-                            closest.addCandidates(match, returnedNodes)
-
-                            for (item in message.items) {
-                                if (peers.add(item)) {
-                                    send(item.toInetSocketAddress())
-                                }
-                            }
-
-                            // if we scrape we don't care about tokens.
-                            // otherwise we're only done if we have found the closest
-                            // nodes that also returned tokens
-                            if (message.token != null) {
-                                closest.insert(match)
+                        for (item in message.items) {
+                            if (peers.add(item)) {
+                                send(item.toInetSocketAddress())
                             }
                         }
 
-                    }
-
-                    CallState.ERROR, CallState.STALLED -> {
-                        removed.add(call)
-                        closest.increaseFailures(call)
-                    }
-
-                    else -> {
-                        val sendTime = call.sentTime
-
-                        if (sendTime != null) {
-                            val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                            if (elapsed > 3000) { // 3 sec
-                                removed.add(call)
-                                closest.increaseFailures(call)
-                                mdht.timeout(call)
-                            }
+                        // if we scrape we don't care about tokens.
+                        // otherwise we're only done if we have found the closest
+                        // nodes that also returned tokens
+                        if (message.token != null) {
+                            closest.insert(match)
+                        }
+                    } else {
+                        val failure = closest.checkTimeoutOrFailure(call)
+                        if (failure) {
+                            removed.add(call)
                         }
                     }
                 }
