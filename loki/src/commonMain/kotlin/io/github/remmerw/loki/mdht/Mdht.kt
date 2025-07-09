@@ -32,9 +32,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
     private val database: Database = Database()
     private val selectorManager = SelectorManager(Dispatchers.IO)
     private var socket: BoundDatagramSocket? = null
-
-
-    internal val routingTable = RoutingTable()
+    private val routingTable = RoutingTable()
 
     suspend fun startup() {
         socket = aSocket(selectorManager).udp().bind(
@@ -47,6 +45,10 @@ class Mdht(val peerId: ByteArray, val port: Int) {
                 handleDatagram(datagram)
             }
         }
+    }
+
+    internal fun closestPeers(key: ByteArray, take: Int): List<Peer> {
+        return routingTable.closestPeers(key, take)
     }
 
     private suspend fun send(es: EnqueuedSend) {

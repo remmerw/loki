@@ -29,7 +29,7 @@ fun CoroutineScope.findNode(
         val candidates = Candidates(target)
         val inFlight: MutableSet<Call> = mutableSetOf()
 
-        val entries = mdht.routingTable.closestPeers(target, 32)
+        val entries = mdht.closestPeers(target, 32)
         candidates.addCandidates(null, entries)
 
         do {

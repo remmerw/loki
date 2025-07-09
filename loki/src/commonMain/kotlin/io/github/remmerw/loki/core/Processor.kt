@@ -9,16 +9,20 @@ import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+internal const val MAX_CONCURRENCY: Int = 10
 
 private suspend fun performHandshake(
     connection: Connection,
@@ -35,7 +39,7 @@ private suspend fun performHandshake(
             handler.processOutgoingHandshake(handshake)
         }
 
-        connection.posting(handshake)
+        connection.posting(handshake, byteArrayOf())
 
         val peerHandshake = connection.receiveHandshake()
 
@@ -63,10 +67,6 @@ internal suspend fun performHandshake(
     worker: Worker
 ): Boolean {
 
-    if (!worker.mightAdd()) {
-        return false
-    }
-
     val existing = worker.getConnection(connection.address())
     if (existing != null) {
         return false
@@ -87,28 +87,25 @@ internal suspend fun performHandshake(
     return false
 }
 
+private fun process(connection: Connection): Unit = runBlocking(Dispatchers.IO) {
+    launch {
+        connection.reading()
+    }
+    launch {
+        connection.posting()
+    }
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.processMessages(
-    worker: Worker,
     channel: ReceiveChannel<Connection>
 ): ReceiveChannel<Any> = produce {
 
-
+    val semaphore = Semaphore(2 * MAX_CONCURRENCY)
     channel.consumeEach { connection ->
-
         launch {
-            while (!connection.isClosed) {
-                ensureActive()
-                connection.reading()
-            }
-        }
-        launch {
-            while (!connection.isClosed) {
-                ensureActive()
-                val send = worker.produce(connection)
-                if (send != null) {
-                    connection.posting(send)
-                }
+            semaphore.withPermit {
+                process(connection)
             }
         }
     }
@@ -123,11 +120,21 @@ internal fun CoroutineScope.performHandshake(
     channel: ReceiveChannel<Connection>
 ): ReceiveChannel<Connection> = produce {
 
+    val semaphore = Semaphore(MAX_CONCURRENCY)
     channel.consumeEach { connection ->
         launch {
-            withTimeoutOrNull(3000) {
-                if (performHandshake(connection, peerId, torrentId, handshakeHandlers, worker)) {
-                    send(connection)
+            semaphore.withPermit {
+                withTimeoutOrNull(3000) {
+                    if (performHandshake(
+                            connection,
+                            peerId,
+                            torrentId,
+                            handshakeHandlers,
+                            worker
+                        )
+                    ) {
+                        send(connection)
+                    }
                 }
             }
         }
@@ -144,19 +151,25 @@ internal fun CoroutineScope.performConnection(
     channel: ReceiveChannel<InetSocketAddress>
 ): ReceiveChannel<Connection> = produce {
 
+    val semaphore = Semaphore(MAX_CONCURRENCY)
     channel.consumeEach { address ->
+
         launch {
-            withTimeoutOrNull(3000) {
-                try {
-                    val socket = aSocket(selectorManager)
-                        .tcp().connect(address) {
-                            socketTimeout = 30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
-                        }
-                    send(
-                        Connection(address, dataStorage, worker, socket, extendedProtocol)
-                    )
-                } catch (_: Throwable) {
-                    // this is the normal case when address is unreachable or timeouted
+            semaphore.withPermit {
+                withTimeoutOrNull(3000) {
+                    try {
+                        val socket = aSocket(selectorManager)
+                            .tcp().connect(address) {
+                                socketTimeout =
+                                    30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
+                            }
+                        send(
+                            Connection(address, dataStorage, worker, socket, extendedProtocol)
+                        )
+                    } catch (_: Throwable) {
+
+                        // this is the normal case when address is unreachable or timeouted
+                    }
                 }
             }
         }

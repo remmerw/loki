@@ -52,7 +52,7 @@ internal data class ExtendedProtocolHandshakeHandler(
         // do not send the extended handshake
         // if local client does not have any extensions turned on
         if (extendedHandshake.data.isNotEmpty()) {
-            connection.posting(extendedHandshake)
+            connection.posting(extendedHandshake, byteArrayOf())
         }
     }
 

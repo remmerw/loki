@@ -25,7 +25,7 @@ fun CoroutineScope.requestAnnounce(
         val candidates = Candidates(key)
         val inFlight: MutableSet<Call> = mutableSetOf()
 
-        val entries = mdht.routingTable.closestPeers(key, 32)
+        val entries = mdht.closestPeers(key, 32)
         candidates.addCandidates(null, entries)
 
         val announces: MutableMap<Peer, AnnounceRequest> = mutableMapOf()

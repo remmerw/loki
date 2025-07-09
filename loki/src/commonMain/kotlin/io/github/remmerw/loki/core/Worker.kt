@@ -1,9 +1,6 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.MAX_CONCURRENT_ACTIVE_PEERS_TORRENT
-import io.github.remmerw.loki.MAX_PEER_CONNECTIONS
 import io.github.remmerw.loki.PEER_INACTIVITY_THRESHOLD
-import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_MANDATORY_INTERVAL
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
 import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.Type
@@ -102,15 +99,7 @@ internal class Worker(
 
 
     fun getConnection(peer: InetSocketAddress): Connection? {
-
         return connections[peer]
-
-    }
-
-    fun mightAdd(): Boolean {
-
-        return connections.count() < MAX_PEER_CONNECTIONS
-
     }
 
     fun addConnection(connection: Connection) {
@@ -147,7 +136,7 @@ internal class Worker(
             (bitfield.piecesRemaining() > 0 || assignments.count() > 0)
         ) {
             inspectAssignment(connection, assignments)
-            if (shouldUpdateAssignments(assignments)) {
+            if (shouldUpdateAssignments()) {
                 connection.interestUpdate = null
                 updateAssignments(assignments)
             }
@@ -175,26 +164,14 @@ internal class Worker(
                 assignments.remove(connection)
             }
         } else if (!connection.isPeerChoking) {
-            if (mightCreateMoreAssignments(assignments)) {
-                assignments.assign(connection)
-            }
+            assignments.assign(connection)
         }
     }
 
 
-    private fun mightUseMoreAssignees(assignments: Assignments): Boolean {
-        return assignments.count() < MAX_CONCURRENT_ACTIVE_PEERS_TORRENT
-    }
-
-    private fun mightCreateMoreAssignments(assignments: Assignments): Boolean {
-        return assignments.count() < MAX_CONCURRENT_ACTIVE_PEERS_TORRENT
-    }
-
-    private fun shouldUpdateAssignments(assignments: Assignments): Boolean {
+    private fun shouldUpdateAssignments(): Boolean {
         val elapsed = lastUpdatedAssignments.elapsedNow().inWholeMilliseconds
-        return (elapsed > UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
-                && mightUseMoreAssignees(assignments))
-                || elapsed > UPDATE_ASSIGNMENTS_MANDATORY_INTERVAL
+        return elapsed > UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
     }
 
 

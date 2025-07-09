@@ -52,8 +52,7 @@ import io.ktor.utils.io.writeBuffer
 import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeInt
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.yield
 import kotlinx.io.Buffer
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -75,13 +74,16 @@ internal class Connection internal constructor(
     private val closed = AtomicBoolean(false)
     private val receiveChannel = socket.openReadChannel()
     private val sendChannel = socket.openWriteChannel(autoFlush = false)
-    private val readBlock = ByteArray(BLOCK_SIZE)
-    private val writeBlock = ByteArray(BLOCK_SIZE)
-    private val mutex = Mutex()
+    private var writeBlock: ByteArray? = null
+
 
     fun writeBlock(): ByteArray {
-        return writeBlock
+        if (writeBlock == null) {
+            writeBlock = ByteArray(BLOCK_SIZE)
+        }
+        return writeBlock!!
     }
+
 
     fun address(): InetSocketAddress {
         return address
@@ -89,18 +91,24 @@ internal class Connection internal constructor(
 
     suspend fun reading() {
         lastActive = TimeSource.Monotonic.markNow()
-        try {
-            val length = receiveChannel.readInt()
-            require(length >= 0) { "Invalid read token received" }
 
-            if (length == 0) {
-                worker.consume(this, keepAlive()) // keep has length 0
-            } else {
-                val message = decode(receiveChannel, length)
-                worker.consume(this, message)
+        while (!isClosed) {
+            try {
+                val length = receiveChannel.readInt()
+                require(length >= 0) { "Invalid read token received" }
+
+                if (length == 0) {
+                    worker.consume(this, keepAlive()) // keep has length 0
+                } else {
+                    val message = decode(receiveChannel, length)
+                    worker.consume(this, message)
+                }
+                yield()
+            } catch (throwable: Throwable) {
+                println("Connection.reading " + throwable.message)
+                close()
+                break
             }
-        } catch (_: Throwable) {
-            close()
         }
     }
 
@@ -132,94 +140,109 @@ internal class Connection internal constructor(
     val isClosed: Boolean
         get() = closed.load()
 
+    suspend fun posting() {
+        val readBlock = ByteArray(BLOCK_SIZE)
+        while (!isClosed) {
+            try {
+                val send = worker.produce(this)
+                if (send != null) {
+                    posting(send, readBlock)
+                }
+                yield()
+            } catch (throwable: Throwable) {
+                debug("Connection.posting  " + throwable.message)
+                break
+            }
+        }
+    }
 
     @OptIn(ExperimentalAtomicApi::class)
-    suspend fun posting(message: Message) {
+    suspend fun posting(message: Message, readBlock: ByteArray) { // todo make private
         lastActive = TimeSource.Monotonic.markNow()
 
         // only one coroutine should enter this section, because of Piece data
-        mutex.withLock {
-            try {
-                when (message) {
-                    is Handshake -> {
-                        message.encode(sendChannel)
-                    }
 
-                    is KeepAlive -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is Piece -> {
-
-                        val size =
-                            Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + message.length
-                        sendChannel.writeInt(size)
-                        sendChannel.writeByte(PIECE_ID)
-                        sendChannel.writeInt(message.piece)
-                        sendChannel.writeInt(message.offset)
-
-                        dataStorage.readBlock(
-                            message.piece, message.offset,
-                            readBlock, message.length
-                        )
-                        sendChannel.writeByteArray(readBlock)
-
-                    }
-
-                    is Have -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is Request -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is Bitfield -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is Cancel -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is Choke -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is Unchoke -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is Interested -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is NotInterested -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is Port -> {
-                        message.encode(sendChannel)
-                    }
-
-                    is ExtendedMessage -> {
-
-                        val buffer = Buffer()
-                        extendedProtocol.doEncode(address(), message, buffer)
-                        val size = buffer.size
-                        sendChannel.writeInt(size.toInt())
-                        sendChannel.writeBuffer(buffer)
-                    }
-
-                    else -> {
-                        debug("not supported message " + message.type.name)
-                        throw Exception("not supported message " + message.type.name)
-                    }
+        try {
+            when (message) {
+                is Handshake -> {
+                    message.encode(sendChannel)
                 }
-                sendChannel.flush()
-            } catch (_: Throwable) {
-                close()
+
+                is KeepAlive -> {
+                    message.encode(sendChannel)
+                }
+
+                is Piece -> {
+
+                    val size =
+                        Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + message.length
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(PIECE_ID)
+                    sendChannel.writeInt(message.piece)
+                    sendChannel.writeInt(message.offset)
+
+                    dataStorage.readBlock(
+                        message.piece, message.offset,
+                        readBlock, message.length
+                    )
+                    sendChannel.writeByteArray(readBlock)
+
+                }
+
+                is Have -> {
+                    message.encode(sendChannel)
+                }
+
+                is Request -> {
+                    message.encode(sendChannel)
+                }
+
+                is Bitfield -> {
+                    message.encode(sendChannel)
+                }
+
+                is Cancel -> {
+                    message.encode(sendChannel)
+                }
+
+                is Choke -> {
+                    message.encode(sendChannel)
+                }
+
+                is Unchoke -> {
+                    message.encode(sendChannel)
+                }
+
+                is Interested -> {
+                    message.encode(sendChannel)
+                }
+
+                is NotInterested -> {
+                    message.encode(sendChannel)
+                }
+
+                is Port -> {
+                    message.encode(sendChannel)
+                }
+
+                is ExtendedMessage -> {
+
+                    val buffer = Buffer()
+                    extendedProtocol.doEncode(address(), message, buffer)
+                    val size = buffer.size
+                    sendChannel.writeInt(size.toInt())
+                    sendChannel.writeBuffer(buffer)
+                }
+
+                else -> {
+                    debug("not supported message " + message.type.name)
+                    throw Exception("not supported message " + message.type.name)
+                }
             }
+            sendChannel.flush()
+        } catch (throwable: Throwable) {
+            close()
+            throw throwable
         }
     }
 

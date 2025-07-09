@@ -114,7 +114,7 @@ suspend fun CoroutineScope.download(
         val handshakes = performHandshake(
             peerId, torrentId, handshakeHandlers, worker, connections
         )
-        processMessages(worker, handshakes)
+        processMessages(handshakes)
 
         if (!dataStorage.initializeDone()) {
             metadataConsumer.waitForTorrent()
@@ -186,8 +186,6 @@ suspend fun CoroutineScope.download(
 
 
 internal const val MAX_SIMULTANEOUSLY_ASSIGNED_PIECES: Int = 3
-internal const val MAX_PEER_CONNECTIONS: Int = 500
-internal const val MAX_CONCURRENT_ACTIVE_PEERS_TORRENT: Int = 10
 internal const val BLOCK_SIZE: Int = 16 * 1024 // 16 KB
 internal const val META_EXCHANGE_MAX_SIZE: Int = 2 * 1024 * 1024 // 2 MB
 internal const val MAX_OUTSTANDING_REQUESTS: Int = 250
@@ -197,7 +195,6 @@ internal const val CHOKING_THRESHOLD: Long = 10000 // millis
 internal const val FIRST_BLOCK_ARRIVAL_TIMEOUT: Long = 10000 // 10 sec
 internal const val WAIT_BEFORE_REREQUESTING_AFTER_REJECT: Long = 10000 // 10 sec
 internal const val UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL: Long = 1000
-internal const val UPDATE_ASSIGNMENTS_MANDATORY_INTERVAL: Long = 5000
 internal const val VERSION = "Thor 1.7.6"
 internal const val SCHEME: String = "magnet"
 internal const val INFO_HASH_PREFIX: String = "urn:btih:"
