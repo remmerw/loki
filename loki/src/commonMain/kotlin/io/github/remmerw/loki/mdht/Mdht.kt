@@ -664,65 +664,6 @@ internal fun mismatch(a: ByteArray, b: ByteArray): Int {
 }
 
 
-private fun activeInFlight(inFlight: MutableSet<Call>): Int {
-    return inFlight.filter { call: Call ->
-        val state = call.state()
-        state == CallState.UNSENT || state == CallState.SENT
-    }.map { call: Call -> call.expectedID!! }.count()
-}
-
-private fun inStabilization(closest: ClosestSet, candidates: Candidates): Boolean {
-    val suggestedCounts = closest.entries().map { k: Peer ->
-        candidates.nodeForEntry(
-            k
-        )!!.numSources()
-    }
-
-    return suggestedCounts.any { i: Int -> i >= 5 } ||
-            suggestedCounts.count { i: Int -> i >= 4 } >= 2
-}
-
-
-private fun terminationPrecondition(
-    candidate: Peer,
-    closest: ClosestSet,
-    candidates: Candidates
-): Boolean {
-    return !closest.candidateAheadOfTail(candidate) && (
-            inStabilization(closest, candidates) ||
-                    closest.maxAttemptsSinceTailModificationFailed())
-}
-
-/* algo:
-* 1. check termination condition
-* 2. allow if free slot
-* 3. if stall slot check
-* a) is candidate better than non-stalled in flight
-* b) is candidate better than head (homing phase)
-* c) is candidate better than tail (stabilizing phase)
-*/
-internal fun goodForRequest(
-    candidate: Peer,
-    closest: ClosestSet,
-    candidates: Candidates,
-    inFlight: MutableSet<Call>
-): Boolean {
-
-    var result = closest.candidateAheadOf(candidate)
-
-    if (closest.candidateAheadOfTail(candidate) && inStabilization(closest, candidates)) result =
-        true
-    if (!terminationPrecondition(
-            candidate,
-            closest,
-            candidates
-        ) && activeInFlight(inFlight) == 0
-    ) result = true
-
-    return result
-}
-
-
 internal fun InetSocketAddress.encoded(): ByteArray? {
     val address = this.resolveAddress()
     if (address != null) {

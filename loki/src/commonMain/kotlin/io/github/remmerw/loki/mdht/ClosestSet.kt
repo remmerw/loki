@@ -4,23 +4,55 @@ package io.github.remmerw.loki.mdht
 * We need to detect when the closest set is stable
 *  - in principle we're done as soon as there is no request candidates
 */
-internal class ClosestSet(private val key: ByteArray) {
+internal class ClosestSet(private val target: ByteArray) {
     private val closest: MutableSet<Peer> = mutableSetOf()
+    private val candidates = Candidates(target)
     private var insertAttemptsSinceTailModification = 0
 
+
+    fun init(mdht: Mdht) {
+        val entries = mdht.closestPeers(target, 32)
+        candidates.addCandidates(null, entries)
+    }
+
+    fun nextCandidate(inFlight: Set<Call>): Peer? {
+        return candidates.next { peer: Peer ->
+            goodForRequest(peer, inFlight)
+        }
+    }
+
+    fun addCall(call: Call, peer: Peer) {
+        candidates.addCall(call, peer)
+    }
+
+    fun decreaseFailures(call: Call) {
+        candidates.decreaseFailures(call)
+    }
+
+    fun increaseFailures(call: Call) {
+        candidates.increaseFailures(call)
+    }
+
+    fun acceptResponse(call: Call): Peer? {
+        return candidates.acceptResponse(call)
+    }
+
+    fun addCandidates(source: Peer?, entries: Collection<Peer>) {
+        candidates.addCandidates(source, entries)
+    }
 
     fun candidateAheadOf(
         candidate: Peer
     ): Boolean {
         return !reachedTargetCapacity() ||
-                threeWayDistance(key, head(), candidate.id) > 0
+                threeWayDistance(target, head(), candidate.id) > 0
     }
 
     fun candidateAheadOfTail(
         candidate: Peer
     ): Boolean {
         return !reachedTargetCapacity() ||
-                threeWayDistance(key, tail(), candidate.id) > 0
+                threeWayDistance(target, tail(), candidate.id) > 0
     }
 
     fun maxAttemptsSinceTailModificationFailed(): Boolean {
@@ -36,7 +68,7 @@ internal class ClosestSet(private val key: ByteArray) {
         if (closest.add(peer)) {
             if (closest.size > MAX_ENTRIES_PER_BUCKET) {
                 val last = closest.sortedWith(
-                    Peer.DistanceOrder(key)
+                    Peer.DistanceOrder(target)
                 ).last()
                 closest.remove(last)
                 if (last === peer) {
@@ -53,13 +85,67 @@ internal class ClosestSet(private val key: ByteArray) {
     }
 
     fun tail(): ByteArray {
-        if (closest.isEmpty()) return distance(key, Key.MAX_KEY)
+        if (closest.isEmpty()) return distance(target, Key.MAX_KEY)
         return closest.last().id
     }
 
     fun head(): ByteArray {
-        if (closest.isEmpty()) return distance(key, Key.MAX_KEY)
+        if (closest.isEmpty()) return distance(target, Key.MAX_KEY)
         return closest.first().id
     }
+
+
+    private fun inStabilization(): Boolean {
+        val suggestedCounts = entries().map { k: Peer ->
+            candidates.nodeForEntry(
+                k
+            )!!.numSources()
+        }
+
+        return suggestedCounts.any { i: Int -> i >= 5 } ||
+                suggestedCounts.count { i: Int -> i >= 4 } >= 2
+    }
+
+
+    private fun terminationPrecondition(
+        candidate: Peer
+    ): Boolean {
+        return !candidateAheadOfTail(candidate) && (
+                inStabilization() || maxAttemptsSinceTailModificationFailed())
+    }
+
+    /* algo:
+    * 1. check termination condition
+    * 2. allow if free slot
+    * 3. if stall slot check
+    * a) is candidate better than non-stalled in flight
+    * b) is candidate better than head (homing phase)
+    * c) is candidate better than tail (stabilizing phase)
+    */
+    private fun goodForRequest(
+        candidate: Peer,
+        inFlight: Set<Call>
+    ): Boolean {
+
+        var result = candidateAheadOf(candidate)
+
+        if (candidateAheadOfTail(candidate) && inStabilization()) result =
+            true
+        if (!terminationPrecondition(
+                candidate,
+            ) && activeInFlight(inFlight) == 0
+        ) result = true
+
+        return result
+    }
+
+
+    private fun activeInFlight(inFlight: Set<Call>): Int {
+        return inFlight.filter { call: Call ->
+            val state = call.state()
+            state == CallState.UNSENT || state == CallState.SENT
+        }.map { call: Call -> call.expectedID!! }.count()
+    }
+
 
 }

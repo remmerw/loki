@@ -25,19 +25,16 @@ fun CoroutineScope.requestGet(
     while (true) {
 
         val closest = ClosestSet(key)
-        val candidates = Candidates(key)
         val inFlight: MutableSet<Call> = mutableSetOf()
 
-        val entries = mdht.closestPeers(key, 32)
-        candidates.addCandidates(null, entries)
+        closest.init(mdht)
+
 
         do {
             do {
                 ensureActive()
 
-                val peer = candidates.next { peer: Peer ->
-                    goodForRequest(peer, closest, candidates, inFlight)
-                }
+                val peer = closest.nextCandidate(inFlight)
 
                 if (peer != null) {
                     val tid = createRandomKey(TID_LENGTH)
@@ -51,7 +48,7 @@ fun CoroutineScope.requestGet(
                     )
 
                     val call = Call(request, peer.id)
-                    candidates.addCall(call, peer)
+                    closest.addCall(call, peer)
                     inFlight.add(call)
                     mdht.doRequestCall(call)
                 }
@@ -65,13 +62,13 @@ fun CoroutineScope.requestGet(
                 when (call.state()) {
                     CallState.RESPONDED -> {
                         removed.add(call)
-                        candidates.decreaseFailures(call)
+                        closest.decreaseFailures(call)
 
                         val rsp = call.response
 
                         rsp as GetResponse
 
-                        val match = candidates.acceptResponse(call)
+                        val match = closest.acceptResponse(call)
 
                         if (match != null) {
                             val returnedNodes: MutableSet<Peer> = mutableSetOf()
@@ -84,7 +81,7 @@ fun CoroutineScope.requestGet(
                                 !mdht.isLocalId(peer.id)
                             }.forEach { e: Peer -> returnedNodes.add(e) }
 
-                            candidates.addCandidates(match, returnedNodes)
+                            closest.addCandidates(match, returnedNodes)
 
 
                             if (rsp.v != null) {
@@ -103,7 +100,7 @@ fun CoroutineScope.requestGet(
 
                     CallState.ERROR, CallState.STALLED -> {
                         removed.add(call)
-                        candidates.increaseFailures(call)
+                        closest.increaseFailures(call)
                     }
 
                     else -> {
@@ -113,7 +110,7 @@ fun CoroutineScope.requestGet(
                             val elapsed = sendTime.elapsedNow().inWholeMilliseconds
                             if (elapsed > 3000) { // 3 sec
                                 removed.add(call)
-                                candidates.increaseFailures(call)
+                                closest.increaseFailures(call)
                                 mdht.timeout(call)
                             }
                         }

@@ -28,26 +28,23 @@ fun CoroutineScope.requestPut(
     while (true) {
 
         val closest = ClosestSet(target)
-        val candidates = Candidates(target)
+
         val inFlight: MutableSet<Call> = mutableSetOf()
 
-        val entries = mdht.closestPeers(target, 32)
-        candidates.addCandidates(null, entries)
+        closest.init(mdht)
 
         val puts: MutableMap<Peer, PutRequest> = mutableMapOf()
         do {
             do {
                 ensureActive()
 
-                val peer = candidates.next { peer: Peer ->
-                    goodForRequest(peer, closest, candidates, inFlight)
-                }
+                val peer = closest.nextCandidate(inFlight)
 
                 if (peer != null) {
                     val tid = createRandomKey(TID_LENGTH)
                     val request = GetPeersRequest(peer.address, peerId, tid, target)
                     val call = Call(request, peer.id)
-                    candidates.addCall(call, peer)
+                    closest.addCall(call, peer)
                     inFlight.add(call)
                     mdht.doRequestCall(call)
                 }
@@ -68,13 +65,13 @@ fun CoroutineScope.requestPut(
                 when (call.state()) {
                     CallState.RESPONDED -> {
                         removed.add(call)
-                        candidates.decreaseFailures(call)
+                        closest.decreaseFailures(call)
 
                         val message = call.response
                         if (message is PutResponse) {
                             send(message.address)
                         } else if (message is GetPeersResponse) {
-                            val match = candidates.acceptResponse(call)
+                            val match = closest.acceptResponse(call)
 
                             if (match != null) {
                                 val returnedNodes: MutableSet<Peer> = mutableSetOf()
@@ -87,7 +84,7 @@ fun CoroutineScope.requestPut(
                                     !mdht.isLocalId(peer.id)
                                 }.forEach { e: Peer -> returnedNodes.add(e) }
 
-                                candidates.addCandidates(match, returnedNodes)
+                                closest.addCandidates(match, returnedNodes)
 
 
                                 // if we scrape we don't care about tokens.
@@ -111,7 +108,7 @@ fun CoroutineScope.requestPut(
 
                     CallState.ERROR, CallState.STALLED -> {
                         removed.add(call)
-                        candidates.increaseFailures(call)
+                        closest.increaseFailures(call)
                     }
 
                     else -> {
@@ -121,7 +118,7 @@ fun CoroutineScope.requestPut(
                             val elapsed = sendTime.elapsedNow().inWholeMilliseconds
                             if (elapsed > 3000) { // 3 sec
                                 removed.add(call)
-                                candidates.increaseFailures(call)
+                                closest.increaseFailures(call)
                                 mdht.timeout(call)
                             }
                         }
