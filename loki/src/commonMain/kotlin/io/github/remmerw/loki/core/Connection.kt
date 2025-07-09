@@ -157,10 +157,8 @@ internal class Connection internal constructor(
     }
 
     @OptIn(ExperimentalAtomicApi::class)
-    suspend fun posting(message: Message, readBlock: ByteArray) { // todo make private
+    suspend fun posting(message: Message, readBlock: ByteArray) {
         lastActive = TimeSource.Monotonic.markNow()
-
-        // only one coroutine should enter this section, because of Piece data
 
         try {
             when (message) {

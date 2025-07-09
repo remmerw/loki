@@ -211,7 +211,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
             entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 16
             },
-            null, null, null, null // todo
+            null, null, null, null // // TODO [Low Priority]
         )
 
         sendMessage(resp)
