@@ -1,14 +1,7 @@
 package io.github.remmerw.loki
 
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.decodeToList
-import io.github.remmerw.loki.benc.decodeToLong
-import io.github.remmerw.loki.benc.decodeToMap
-import io.github.remmerw.loki.benc.decodeToString
-import io.github.remmerw.loki.benc.encodeInteger
-import io.github.remmerw.loki.benc.encodeList
-import io.github.remmerw.loki.benc.encodeMap
-import io.github.remmerw.loki.benc.encodeString
+import io.github.remmerw.loki.benc.Bencode
 import kotlinx.io.Buffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,8 +12,8 @@ class BencodeTest {
     fun encodeDecodeString() {
         val testData = "hi"
         val buffer = Buffer()
-        encodeString(testData, buffer)
-        val cmp = decodeToString(buffer)
+        Bencode.encodeString(testData, buffer)
+        val cmp = Bencode.decodeToString(buffer)
         assertEquals(cmp, testData)
     }
 
@@ -28,8 +21,8 @@ class BencodeTest {
     fun encodeDecodeInteger() {
         val value = 6666L
         val buffer = Buffer()
-        encodeInteger(value, buffer)
-        val cmp = decodeToLong(buffer)
+        Bencode.encodeInteger(value, buffer)
+        val cmp = Bencode.decodeToLong(buffer)
         assertEquals(cmp, value)
     }
 
@@ -37,8 +30,8 @@ class BencodeTest {
     fun encodeDecodeEmptyList() {
         val value: List<BEObject> = emptyList()
         val buffer = Buffer()
-        encodeList(value, buffer)
-        val cmp = decodeToList(buffer)
+        Bencode.encodeList(value, buffer)
+        val cmp = Bencode.decodeToList(buffer)
         assertEquals(cmp, value)
     }
 
@@ -46,8 +39,8 @@ class BencodeTest {
     fun encodeDecodeEmptyMap() {
         val value: Map<String, BEObject> = emptyMap()
         val buffer = Buffer()
-        encodeMap(value, buffer)
-        val cmp = decodeToMap(buffer)
+        Bencode.encodeMap(value, buffer)
+        val cmp = Bencode.decodeToMap(buffer)
         assertEquals(cmp, value)
     }
 }

@@ -3,7 +3,6 @@ package io.github.remmerw.loki
 
 import io.github.remmerw.borr.Ed25519Sign
 import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.stringGet
 import io.github.remmerw.loki.mdht.hostname
 import io.github.remmerw.loki.mdht.mdht
 import io.github.remmerw.loki.mdht.peerId
@@ -79,7 +78,7 @@ class MdhtPutTest {
                 }
 
                 for (data in channel) {
-                    println("data received " + stringGet(data.data) + " " + data.k?.encodeBase64())
+                    println("data received " + data.data.toString() + " " + data.k?.encodeBase64())
                 }
             } finally {
                 mdht.shutdown()

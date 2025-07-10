@@ -2,7 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.encodeMap
+import io.github.remmerw.loki.benc.Bencode
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
@@ -35,7 +35,7 @@ internal class PeerExchange(
             encodePeers(filterByAddressLength(dropped, 16)) // ipv6
         )
 
-        encodeMap(map, buffer)
+        Bencode.encodeMap(map, buffer) // todo
     }
 
 

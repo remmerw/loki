@@ -3,7 +3,10 @@ package io.github.remmerw.loki.benc
 import kotlinx.io.Source
 
 
-class BEParser internal constructor(private val type: BEType, private val scanner: Scanner) {
+internal class BEParser internal constructor(
+    private val type: BEType,
+    private val scanner: Scanner
+) {
 
     fun readType(): BEType {
         return type

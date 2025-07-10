@@ -2,6 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.loki.benc.BEInteger
 import io.github.remmerw.loki.benc.BEObject
+import io.github.remmerw.loki.benc.Bencode
 import kotlinx.io.Buffer
 
 
@@ -70,7 +71,7 @@ internal data class UtMetadata(
             )
         }
 
-        io.github.remmerw.loki.benc.encodeMap(map, buffer)
+        Bencode.encodeMap(map, buffer)
 
         if (data.isNotEmpty()) {
             buffer.write(data)

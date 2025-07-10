@@ -5,16 +5,16 @@ import io.github.remmerw.loki.benc.BEList
 import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.encodeMap
+import io.github.remmerw.loki.benc.Bencode
 import io.ktor.network.sockets.InetSocketAddress
-import kotlinx.io.Buffer
+import kotlinx.io.Sink
 
 
 internal interface Message {
     val address: InetSocketAddress
     val id: ByteArray
     val tid: ByteArray
-    fun encode(buffer: Buffer)
+    fun encode(sink: Sink)
 }
 
 internal interface Response : Message {
@@ -41,7 +41,7 @@ internal data class AnnounceRequest(
 ) :
     Request {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
 
@@ -60,7 +60,7 @@ internal data class AnnounceRequest(
         // message method
         base[Names.Q] = BEString(Names.ANNOUNCE_PEER.encodeToByteArray())
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 }
 
@@ -72,7 +72,7 @@ internal data class AnnounceResponse(
     override val ip: ByteArray?
 ) : Response {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
         inner[Names.ID] = BEString(id)
@@ -83,7 +83,7 @@ internal data class AnnounceResponse(
         // message type
         base[Names.Y] = BEString(Names.R.encodeToByteArray())
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 
 }
@@ -97,7 +97,7 @@ internal data class Error(
     val message: ByteArray
 ) : Message {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
 
 
         val base: MutableMap<String, BEObject> = mutableMapOf()
@@ -109,7 +109,7 @@ internal data class Error(
 
         base[Names.E] = BEList(listOf(BEInteger(code.toLong()), BEString(message)))
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 
 }
@@ -124,7 +124,7 @@ internal data class FindNodeRequest(
 ) :
     Request {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         base[Names.A] = BEMap(
             mapOf<String, BEObject>(
@@ -140,7 +140,7 @@ internal data class FindNodeRequest(
         // message method
         base[Names.Q] = BEString(Names.FIND_NODE.encodeToByteArray())
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 
 }
@@ -155,7 +155,7 @@ internal data class FindNodeResponse(
     override val nodes6: List<Peer>
 ) : NodesResponse {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
         inner[Names.ID] = BEString(id)
@@ -171,7 +171,7 @@ internal data class FindNodeResponse(
 
         if (ip != null) base[Names.IP] = BEString(ip)
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 
 
@@ -186,7 +186,7 @@ internal data class GetPeersRequest(
 ) :
     Request {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         base[Names.A] = BEMap(
             mapOf<String, BEObject>(
@@ -204,7 +204,7 @@ internal data class GetPeersRequest(
         // message method
         base[Names.Q] = BEString(Names.GET_PEERS.encodeToByteArray())
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 }
 
@@ -221,7 +221,7 @@ internal data class GetPeersResponse(
 ) : NodesResponse {
 
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
         inner[Names.ID] = BEString(id)
@@ -242,7 +242,7 @@ internal data class GetPeersResponse(
 
         if (ip != null) base[Names.IP] = BEString(ip)
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 }
 
@@ -254,7 +254,7 @@ internal data class PingRequest(
     override val tid: ByteArray
 ) : Request {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         base[Names.A] = BEMap(mapOf<String, BEObject>(Names.ID to BEString(id)))
 
@@ -267,7 +267,7 @@ internal data class PingRequest(
         // message method
         base[Names.Q] = BEString(Names.PING.encodeToByteArray())
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 
 }
@@ -280,7 +280,7 @@ internal data class PingResponse(
     override val ip: ByteArray?
 ) : Response {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         base[Names.R] = BEMap(mapOf<String, BEObject>(Names.ID to BEString(id)))
 
@@ -292,7 +292,7 @@ internal data class PingResponse(
 
         if (ip != null) base[Names.IP] = BEString(ip)
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 
 }
@@ -313,7 +313,7 @@ internal data class PutRequest(
 ) :
     Request {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
 
@@ -336,7 +336,7 @@ internal data class PutRequest(
         // message method
         base[Names.Q] = BEString(Names.PUT.encodeToByteArray())
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 }
 
@@ -349,7 +349,7 @@ internal data class PutResponse(
     override val ip: ByteArray?
 ) : Response {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
         inner[Names.ID] = BEString(id)
@@ -360,7 +360,7 @@ internal data class PutResponse(
         // message type
         base[Names.Y] = BEString(Names.R.encodeToByteArray())
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 
 }
@@ -376,7 +376,7 @@ internal data class GetRequest(
 ) :
     Request {
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner = mutableMapOf<String, BEObject>(
             Names.ID to BEString(id),
@@ -395,7 +395,7 @@ internal data class GetRequest(
         // message method
         base[Names.Q] = BEString(Names.GET.encodeToByteArray())
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 }
 
@@ -415,7 +415,7 @@ internal data class GetResponse(
 ) : NodesResponse {
 
 
-    override fun encode(buffer: Buffer) {
+    override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
         inner[Names.ID] = BEString(id)
@@ -436,6 +436,6 @@ internal data class GetResponse(
         // message type
         base[Names.Y] = BEString(Names.R.encodeToByteArray())
 
-        encodeMap(base, buffer)
+        Bencode.encodeMap(base, sink)
     }
 }

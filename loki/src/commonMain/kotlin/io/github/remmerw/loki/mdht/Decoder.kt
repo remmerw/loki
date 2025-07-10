@@ -5,9 +5,6 @@ import io.github.remmerw.loki.benc.BEList
 import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.arrayGet
-import io.github.remmerw.loki.benc.longGet
-import io.github.remmerw.loki.benc.stringGet
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
@@ -412,6 +409,39 @@ internal fun hostname(address: ByteArray): String {
         return numericInet6(address)
     }
     throw Exception("Invalid address")
+}
+
+
+fun stringGet(beObject: BEObject?): String? {
+    if (beObject == null) {
+        return null
+    }
+
+    if (beObject is BEString) {
+        return beObject.toString()
+    }
+    return null
+}
+
+fun arrayGet(beObject: BEObject?): ByteArray? {
+    if (beObject == null) {
+        return null
+    }
+
+    if (beObject is BEString) {
+        return beObject.toByteArray()
+    }
+    return null
+}
+
+fun longGet(beObject: BEObject?): Long? {
+    if (beObject == null) {
+        return null
+    }
+    if (beObject is BEInteger) {
+        return beObject.toLong()
+    }
+    return null
 }
 
 internal const val GENERIC_ERROR = 201

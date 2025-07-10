@@ -6,7 +6,7 @@ import io.github.remmerw.loki.benc.BEList
 import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.decodeToMap
+import io.github.remmerw.loki.benc.Bencode
 import io.github.remmerw.loki.data.Message
 import kotlinx.io.Buffer
 import kotlinx.io.files.Path
@@ -135,7 +135,7 @@ internal fun buildTorrent(bs: ByteArray): Torrent {
     require(bs.isNotEmpty()) { "Can't parse bytes array: null or empty" }
     val buffer = Buffer()
     buffer.write(bs)
-    val root = decodeToMap(buffer)
+    val root = Bencode.decodeToMap(buffer)
 
     val infoMap = if (root.containsKey(INFOMAP_KEY)) {
         // standard BEP-3 format

@@ -1,6 +1,6 @@
 package io.github.remmerw.loki.benc
 
-enum class BEType {
+internal enum class BEType {
     STRING,
     INTEGER,
     LIST,
