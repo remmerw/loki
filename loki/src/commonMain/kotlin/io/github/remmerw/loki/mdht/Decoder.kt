@@ -1,11 +1,11 @@
 package io.github.remmerw.loki.mdht
 
-import io.github.remmerw.loki.benc.BEInteger
-import io.github.remmerw.loki.benc.BEList
-import io.github.remmerw.loki.benc.BEMap
-import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.bencode
+import io.github.remmerw.buri.BEInteger
+import io.github.remmerw.buri.BEList
+import io.github.remmerw.buri.BEMap
+import io.github.remmerw.buri.BEObject
+import io.github.remmerw.buri.BEString
+import io.github.remmerw.buri.bencode
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
@@ -274,7 +274,11 @@ private fun parseResponse(
     map: Map<String, BEObject>,
     request: Request, tid: ByteArray
 ): Message? {
-    val args = (map[Names.R] as BEMap).toMap()
+    val inner = map[Names.R]
+    if (inner !is BEMap) {
+        return null
+    }
+    val args = inner.toMap()
 
     val id = arrayGet(args[Names.ID])
     require(id != null) { "mandatory parameter 'id' missing" }

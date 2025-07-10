@@ -1,6 +1,6 @@
 package io.github.remmerw.loki.mdht
 
-import io.github.remmerw.loki.benc.BEObject
+import io.github.remmerw.buri.BEObject
 import io.github.remmerw.loki.debug
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi

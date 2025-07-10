@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.mdht
 
-import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.decodeBencodeToMap
+import io.github.remmerw.buri.BEObject
+import io.github.remmerw.buri.decodeBencodeToMap
 import io.github.remmerw.loki.debug
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.BoundDatagramSocket

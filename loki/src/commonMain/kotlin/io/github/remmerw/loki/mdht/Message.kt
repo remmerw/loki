@@ -1,9 +1,9 @@
 package io.github.remmerw.loki.mdht
 
 
-import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.bencode
-import io.github.remmerw.loki.benc.encodeBencodeTo
+import io.github.remmerw.buri.BEObject
+import io.github.remmerw.buri.bencode
+import io.github.remmerw.buri.encodeBencodeTo
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Sink
 

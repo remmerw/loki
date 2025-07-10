@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.bencode
+import io.github.remmerw.buri.BEObject
+import io.github.remmerw.buri.bencode
 import io.github.remmerw.loki.data.ExtendedHandshake
 import io.github.remmerw.loki.data.ExtendedMessageHandler
 import io.github.remmerw.loki.data.Handshake

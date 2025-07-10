@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.data
 
-import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.bencode
+import io.github.remmerw.buri.BEObject
+import io.github.remmerw.buri.bencode
 import kotlinx.io.Buffer
 
 
