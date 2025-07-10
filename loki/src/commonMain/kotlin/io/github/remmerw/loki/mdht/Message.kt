@@ -44,7 +44,7 @@ internal data class AnnounceRequest(
 
         inner[Names.ID] = id.bencode()
         inner[Names.INFO_HASH] = infoHash.bencode()
-        inner[Names.PORT] = port.toLong().bencode()
+        inner[Names.PORT] = port.bencode()
         inner[Names.TOKEN] = token.bencode()
         if (name != null) inner[Names.NAME] = name.bencode()
         base[Names.A] = inner.bencode()
