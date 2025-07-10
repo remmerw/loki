@@ -2,7 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.loki.benc.BEInteger
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.decode
+import io.github.remmerw.loki.benc.decodeToMap
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
@@ -33,7 +33,7 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
 
     private fun decodeMetadata(buffer: Buffer): ExtendedMessage {
 
-        val map = decode(buffer)
+        val map = decodeToMap(buffer)
         val messageType = getMessageType(map)
         val pieceIndex = getPieceIndex(map)
         val totalSize = getTotalSize(map)
@@ -56,7 +56,7 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
 
     private fun getMessageType(map: Map<String, BEObject>): MetaType {
         val type = map["msg_type"] as BEInteger?
-        val typeId = checkNotNull(type).value.toInt()
+        val typeId = checkNotNull(type).toInt()
         return metaTypeForId(typeId)
     }
 
@@ -81,6 +81,6 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
     private fun getIntAttribute(name: String, m: Map<String, BEObject>): Int {
         val value = (m[name] as BEInteger?)
         checkNotNull(value) { "Message attribute is missing: $name" }
-        return value.value.toInt()
+        return value.toInt()
     }
 }

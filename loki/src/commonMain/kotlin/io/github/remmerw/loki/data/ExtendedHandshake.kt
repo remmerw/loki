@@ -29,7 +29,7 @@ internal data class ExtendedHandshake(val data: Map<String, BEObject>) : Extende
     init {
         val supportedMessageTypes = data["m"] as BEMap?
         if (supportedMessageTypes != null) {
-            this.supportedMessageTypes = supportedMessageTypes.map.keys.toSet()
+            this.supportedMessageTypes = supportedMessageTypes.toMap().keys.toSet()
         } else {
             this.supportedMessageTypes = emptySet()
         }
@@ -42,6 +42,6 @@ internal data class ExtendedHandshake(val data: Map<String, BEObject>) : Extende
         get() = data["p"] as BEInteger?
 
     fun encode(buffer: Buffer) {
-        io.github.remmerw.loki.benc.encode(data, buffer)
+        io.github.remmerw.loki.benc.encodeMap(data, buffer)
     }
 }

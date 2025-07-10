@@ -17,7 +17,7 @@ internal class BEMapBuilder internal constructor() : BEPrefixedTypeBuilder() {
             }
         } else {
             if (!valueBuilder!!.accept(b)) {
-                map[keyBuilder!!.build().string()] = valueBuilder!!.build()
+                map[keyBuilder!!.build().toString()] = valueBuilder!!.build()
                 keyBuilder = null
                 valueBuilder = null
                 return accept(b)

@@ -70,7 +70,7 @@ internal data class UtMetadata(
             )
         }
 
-        io.github.remmerw.loki.benc.encode(map, buffer)
+        io.github.remmerw.loki.benc.encodeMap(map, buffer)
 
         if (data.isNotEmpty()) {
             buffer.write(data)

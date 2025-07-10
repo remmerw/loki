@@ -26,9 +26,9 @@ private fun parseError(
 
     if (error is BEString) errorMsg = stringGet(error)
     else if (error is BEList) {
-        val errmap = error.list
+        val errmap = error.toList()
         try {
-            errorCode = (errmap[0] as BEInteger).value.toInt()
+            errorCode = (errmap[0] as BEInteger).toInt()
             errorMsg = stringGet(errmap[1])
         } catch (_: Exception) {
             // do nothing
@@ -144,7 +144,7 @@ internal fun parseMessage(
 private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>): Message? {
     val root = map[Names.A] as BEMap
 
-    val args = root.map
+    val args = root.toMap()
 
     val tid = arrayGet(map[Names.T])
     checkNotNull(tid) { "missing transaction ID in request" }
@@ -208,8 +208,10 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
             }
 
 
-            PutRequest(address, id, tid, token, data, null, null,
-                null, null, null) // TODO [Low Priority]
+            PutRequest(
+                address, id, tid, token, data, null, null,
+                null, null, null
+            ) // TODO [Low Priority]
         }
 
         Names.ANNOUNCE_PEER -> {
@@ -274,7 +276,7 @@ private fun parseResponse(
     map: Map<String, BEObject>,
     request: Request, tid: ByteArray
 ): Message? {
-    val args = (map[Names.R] as BEMap).map
+    val args = (map[Names.R] as BEMap).toMap()
 
     val id = arrayGet(args[Names.ID])
     require(id != null) { "mandatory parameter 'id' missing" }
@@ -317,8 +319,8 @@ private fun parseResponse(
             var vals: List<ByteArray> = listOf()
             val values = args[Names.VALUES]
             if (values != null) {
-                vals = (values as BEList).list.map { it ->
-                    (it as BEString).content
+                vals = (values as BEList).toList().map { it ->
+                    (it as BEString).toByteArray()
                 }
             }
 

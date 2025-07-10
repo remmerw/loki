@@ -2,7 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.decode
+import io.github.remmerw.loki.benc.decodeToMap
 import io.github.remmerw.loki.createInetSocketAddress
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
@@ -12,7 +12,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         setOf(Type.PeerExchange)
 
     override fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
-        val map = decode(buffer)
+        val map = decodeToMap(buffer)
         val added: MutableSet<InetSocketAddress> = mutableSetOf()
         extractPeers(map, "added", "added.f", 4, added) // ipv4
         extractPeers(map, "added6", "added6.f", 16, added) // ipv6
@@ -45,9 +45,9 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         destination: MutableCollection<InetSocketAddress>
     ) {
         if (map.containsKey(peersKey)) {
-            val peers = (checkNotNull(map[peersKey]) as BEString).content
+            val peers = (checkNotNull(map[peersKey]) as BEString).toByteArray()
             if (flagsKey != null && map.containsKey(flagsKey)) {
-                val flags = (checkNotNull(map[flagsKey]) as BEString).content
+                val flags = (checkNotNull(map[flagsKey]) as BEString).toByteArray()
                 extractPeers(peers, flags, addressLength, destination)
             } else {
                 extractPeers(peers, addressLength, destination)

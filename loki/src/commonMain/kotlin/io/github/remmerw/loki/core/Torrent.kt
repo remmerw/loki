@@ -6,7 +6,7 @@ import io.github.remmerw.loki.benc.BEList
 import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.decode
+import io.github.remmerw.loki.benc.decodeToMap
 import io.github.remmerw.loki.data.Message
 import kotlinx.io.Buffer
 import kotlinx.io.files.Path
@@ -135,11 +135,11 @@ internal fun buildTorrent(bs: ByteArray): Torrent {
     require(bs.isNotEmpty()) { "Can't parse bytes array: null or empty" }
     val buffer = Buffer()
     buffer.write(bs)
-    val root = decode(buffer)
+    val root = decodeToMap(buffer)
 
     val infoMap = if (root.containsKey(INFOMAP_KEY)) {
         // standard BEP-3 format
-        (root[INFOMAP_KEY] as BEMap).map
+        (root[INFOMAP_KEY] as BEMap).toMap()
     } else {
         // BEP-9 exchanged metadata (just the info dictionary)
         root
@@ -148,19 +148,18 @@ internal fun buildTorrent(bs: ByteArray): Torrent {
 
     var name = UNDEFINED_TORRENT_NAME
     if (infoMap[TORRENT_NAME_KEY] != null) {
-        val data = (checkNotNull(
+        name = (checkNotNull(
             infoMap[TORRENT_NAME_KEY]
-        ) as BEString).content
-        name = data.decodeToString()
+        ) as BEString).toString()
     }
 
     val chunkSize = (checkNotNull(
         infoMap[CHUNK_SIZE_KEY]
-    ) as BEInteger).value
+    ) as BEInteger).toLong()
 
 
     val chunkHashes =
-        (checkNotNull(infoMap[CHUNK_HASHES_KEY]) as BEString).content
+        (checkNotNull(infoMap[CHUNK_HASHES_KEY]) as BEString).toByteArray()
 
 
     val torrentFiles: MutableList<TorrentFile> = mutableListOf()
@@ -168,23 +167,23 @@ internal fun buildTorrent(bs: ByteArray): Torrent {
     if (infoMap[TORRENT_SIZE_KEY] != null) {
         val torrentSize = (checkNotNull(
             infoMap[TORRENT_SIZE_KEY]
-        ) as BEInteger).value
+        ) as BEInteger).toLong()
         size = torrentSize
     } else {
         val files =
-            (checkNotNull(infoMap[FILES_KEY]) as BEList).list
+            (checkNotNull(infoMap[FILES_KEY]) as BEList).toList()
         var torrentSize = 0L
         for (data in files) {
             val file = data as BEMap
-            val fileMap = file.map
+            val fileMap = file.toMap()
 
             val fileSize = (checkNotNull(
                 fileMap[FILE_SIZE_KEY]
-            ) as BEInteger).value
+            ) as BEInteger).toLong()
 
             torrentSize = torrentSize + fileSize
 
-            val objectList = (checkNotNull(fileMap[FILE_PATH_ELEMENTS_KEY]) as BEList).list
+            val objectList = (checkNotNull(fileMap[FILE_PATH_ELEMENTS_KEY]) as BEList).toList()
 
             val pathElements: MutableList<BEString> = mutableListOf()
             objectList.forEach { beObject: BEObject ->
@@ -196,7 +195,7 @@ internal fun buildTorrent(bs: ByteArray): Torrent {
             torrentFiles.add(
                 createTorrentFile(
                     fileSize, pathElements
-                        .map { obj: BEString -> obj.string() })
+                        .map { obj: BEString -> obj.toString() })
             )
         }
 
@@ -206,7 +205,7 @@ internal fun buildTorrent(bs: ByteArray): Torrent {
     if (infoMap[PRIVATE_KEY] != null) {
         if (1 == (checkNotNull(
                 infoMap[PRIVATE_KEY]
-            ) as BEInteger).value.toInt()
+            ) as BEInteger).toInt()
         ) {
             isPrivate = true
         }
@@ -217,7 +216,7 @@ internal fun buildTorrent(bs: ByteArray): Torrent {
     if (root[CREATED_BY_KEY] != null) {
         createdBy = (checkNotNull(
             root[CREATED_BY_KEY]
-        ) as BEString).string()
+        ) as BEString).toString()
     }
     return createTorrent(
         name, torrentFiles,

@@ -5,7 +5,7 @@ import io.github.remmerw.loki.benc.BEList
 import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.encode
+import io.github.remmerw.loki.benc.encodeMap
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 
@@ -60,7 +60,7 @@ internal data class AnnounceRequest(
         // message method
         base[Names.Q] = BEString(Names.ANNOUNCE_PEER.encodeToByteArray())
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 }
 
@@ -83,7 +83,7 @@ internal data class AnnounceResponse(
         // message type
         base[Names.Y] = BEString(Names.R.encodeToByteArray())
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 
 }
@@ -109,7 +109,7 @@ internal data class Error(
 
         base[Names.E] = BEList(listOf(BEInteger(code.toLong()), BEString(message)))
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 
 }
@@ -140,7 +140,7 @@ internal data class FindNodeRequest(
         // message method
         base[Names.Q] = BEString(Names.FIND_NODE.encodeToByteArray())
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 
 }
@@ -171,7 +171,7 @@ internal data class FindNodeResponse(
 
         if (ip != null) base[Names.IP] = BEString(ip)
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 
 
@@ -204,7 +204,7 @@ internal data class GetPeersRequest(
         // message method
         base[Names.Q] = BEString(Names.GET_PEERS.encodeToByteArray())
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 }
 
@@ -242,7 +242,7 @@ internal data class GetPeersResponse(
 
         if (ip != null) base[Names.IP] = BEString(ip)
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 }
 
@@ -267,7 +267,7 @@ internal data class PingRequest(
         // message method
         base[Names.Q] = BEString(Names.PING.encodeToByteArray())
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 
 }
@@ -292,7 +292,7 @@ internal data class PingResponse(
 
         if (ip != null) base[Names.IP] = BEString(ip)
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 
 }
@@ -336,7 +336,7 @@ internal data class PutRequest(
         // message method
         base[Names.Q] = BEString(Names.PUT.encodeToByteArray())
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 }
 
@@ -360,7 +360,7 @@ internal data class PutResponse(
         // message type
         base[Names.Y] = BEString(Names.R.encodeToByteArray())
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 
 }
@@ -395,7 +395,7 @@ internal data class GetRequest(
         // message method
         base[Names.Q] = BEString(Names.GET.encodeToByteArray())
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 }
 
@@ -436,6 +436,6 @@ internal data class GetResponse(
         // message type
         base[Names.Y] = BEString(Names.R.encodeToByteArray())
 
-        encode(base, buffer)
+        encodeMap(base, buffer)
     }
 }

@@ -3,32 +3,59 @@ package io.github.remmerw.loki.benc
 import kotlinx.io.Source
 
 
-/**
- * BEncoding parser. Should be closed when the source is processed.
- */
 class BEParser internal constructor(private val type: BEType, private val scanner: Scanner) {
-    /**
-     * Read type of the root object of the bencoded document that this parser was created for.
-     */
+
     fun readType(): BEType {
         return type
     }
 
-    /**
-     * Try to read the document's root object as a bencoded dictionary.
-     */
+
     fun readMap(): BEMap {
         return readMapObject(BEMapBuilder())
     }
 
+    fun readList(): BEList {
+        return readListObject(BEListBuilder())
+    }
+
+    fun readString(): BEString {
+        return readStringObject(BEStringBuilder())
+    }
+
+    fun readInteger(): BEInteger {
+        return readIntegerObject(BEIntegerBuilder())
+    }
+
+    private fun readListObject(builder: BEListBuilder): BEList {
+        check(this.type == BEType.LIST) {
+            "Can't read " + BEType.LIST.name.lowercase() +
+                    " from: " + type.name.lowercase()
+        }
+        return scanner.readListObject(builder)
+    }
 
     private fun readMapObject(builder: BEMapBuilder): BEMap {
         check(this.type == BEType.MAP) {
             "Can't read " + BEType.MAP.name.lowercase() +
                     " from: " + type.name.lowercase()
         }
-        // relying on the default constructor being present
         return scanner.readMapObject(builder)
+    }
+
+    private fun readIntegerObject(builder: BEIntegerBuilder): BEInteger {
+        check(this.type == BEType.INTEGER) {
+            "Can't read " + BEType.INTEGER.name.lowercase() +
+                    " from: " + type.name.lowercase()
+        }
+        return scanner.readIntegerObject(builder)
+    }
+
+    private fun readStringObject(builder: BEStringBuilder): BEString {
+        check(this.type == BEType.STRING) {
+            "Can't read " + BEType.STRING.name.lowercase() +
+                    " from: " + type.name.lowercase()
+        }
+        return scanner.readStringObject(builder)
     }
 
 
@@ -67,6 +94,45 @@ internal class Scanner(private val source: Source) {
             }
         }
         return builder.build() as BEMap
+    }
+
+    fun readListObject(builder: BEListBuilder): BEList {
+        var c: Int
+
+        while ((peek().also { c = it }) != -1) {
+            if (builder.accept(c)) {
+                read()
+            } else {
+                break
+            }
+        }
+        return builder.build() as BEList
+    }
+
+    fun readStringObject(builder: BEStringBuilder): BEString {
+        var c: Int
+
+        while ((peek().also { c = it }) != -1) {
+            if (builder.accept(c)) {
+                read()
+            } else {
+                break
+            }
+        }
+        return builder.build()
+    }
+
+    fun readIntegerObject(builder: BEIntegerBuilder): BEInteger {
+        var c: Int
+
+        while ((peek().also { c = it }) != -1) {
+            if (builder.accept(c)) {
+                read()
+            } else {
+                break
+            }
+        }
+        return builder.build() as BEInteger
     }
 }
 

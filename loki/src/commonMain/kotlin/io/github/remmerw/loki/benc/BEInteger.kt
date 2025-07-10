@@ -1,18 +1,21 @@
 package io.github.remmerw.loki.benc
 
-import kotlinx.io.Buffer
+import kotlinx.io.Sink
 
-/**
- * BEncoded integer.
- *
- *
- * «BEP-3: The BitTorrent Protocol Specification» defines integers
- * as unsigned numeric values with an arbitrary number of digits.
- */
 @JvmInline
-value class BEInteger(val value: Long) : BEObject {
+value class BEInteger(private val value: Long) : BEObject {
 
-    override fun writeTo(buffer: Buffer) {
-        encode(this, buffer)
+    override fun writeTo(sink: Sink) {
+        sink.writeByte(INTEGER_PREFIX.code.toByte())
+        sink.write(value.toString().encodeToByteArray())
+        sink.writeByte(EOF.code.toByte())
+    }
+
+    fun toLong(): Long {
+        return value
+    }
+
+    fun toInt(): Int {
+        return value.toInt()
     }
 }

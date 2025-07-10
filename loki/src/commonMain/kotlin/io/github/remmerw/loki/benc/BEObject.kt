@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.benc
 
-import kotlinx.io.Buffer
+import kotlinx.io.Sink
 
 interface BEObject {
-    fun writeTo(buffer: Buffer)
+    fun writeTo(sink: Sink)
 }

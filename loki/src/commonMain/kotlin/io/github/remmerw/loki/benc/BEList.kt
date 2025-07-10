@@ -1,14 +1,21 @@
 package io.github.remmerw.loki.benc
 
-import kotlinx.io.Buffer
+import kotlinx.io.Sink
 
-/**
- * BEncoded list. May contain objects of different types.
- */
 @JvmInline
-value class BEList(val list: List<BEObject>) : BEObject {
+value class BEList(private val list: List<BEObject>) : BEObject {
 
-    override fun writeTo(buffer: Buffer) {
-        encode(this, buffer)
+    override fun writeTo(sink: Sink) {
+        sink.writeByte(LIST_PREFIX.code.toByte())
+
+        list.forEach { value ->
+            value.writeTo(sink)
+        }
+
+        sink.writeByte(EOF.code.toByte())
+    }
+
+    fun toList(): List<BEObject> {
+        return list
     }
 }

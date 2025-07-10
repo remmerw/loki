@@ -3,7 +3,7 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.loki.benc.BEInteger
 import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.decode
+import io.github.remmerw.loki.benc.decodeToMap
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 
@@ -21,7 +21,7 @@ internal class ExtendedHandshakeHandler : MessageHandler {
 
         require(mappingObj is BEMap) { "Extended message type must be a dictionary." }
 
-        val mapping = mappingObj.map
+        val mapping = mappingObj.toMap()
         if (mapping.isNotEmpty()) {
             // according to BEP-10, peers are only required to send a delta of changes
             // on subsequent handshakes, so we need to store all mappings received from the peer
@@ -40,7 +40,7 @@ internal class ExtendedHandshakeHandler : MessageHandler {
     }
 
     override fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
-        val map = decode(buffer)
+        val map = decodeToMap(buffer)
         processTypeMapping(address, map["m"])
 
         return ExtendedHandshake(map)
@@ -57,7 +57,7 @@ internal class ExtendedHandshakeHandler : MessageHandler {
         changes: Map<String, BEObject>
     ): MutableMap<Int, String> {
         for ((typeName, value) in changes) {
-            val typeId = (value as BEInteger).value.toInt()
+            val typeId = (value as BEInteger).toInt()
             if (typeId == 0) {
                 // by setting type ID to 0 peer signals that he has disabled this extension
                 val iter = existing.keys.iterator()
