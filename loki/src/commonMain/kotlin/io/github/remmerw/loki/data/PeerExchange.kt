@@ -35,7 +35,7 @@ internal class PeerExchange(
             encodePeers(filterByAddressLength(dropped, 16)) // ipv6
         )
 
-        Bencode.encodeMap(map, buffer) // todo
+        Bencode.encodeMap(map, buffer)
     }
 
 

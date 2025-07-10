@@ -43,7 +43,7 @@ internal data class ExtendedHandshake(val data: Map<String, BEObject>) : Extende
         get() = data["p"] as BEInteger?
 
     fun encode(buffer: Buffer) {
-        Bencode.encodeMap(data, buffer) // todo
+        Bencode.encodeMap(data, buffer)
 
     }
 }
