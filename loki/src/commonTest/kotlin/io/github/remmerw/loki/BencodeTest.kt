@@ -1,9 +1,12 @@
 package io.github.remmerw.loki
 
+import io.github.remmerw.loki.benc.BEInteger
 import io.github.remmerw.loki.benc.BEObject
+import io.github.remmerw.loki.benc.BEString
 import io.github.remmerw.loki.benc.Bencode
 import kotlinx.io.Buffer
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class BencodeTest {
@@ -42,5 +45,22 @@ class BencodeTest {
         Bencode.encodeMap(value, buffer)
         val cmp = Bencode.decodeToMap(buffer)
         assertEquals(cmp, value)
+    }
+
+
+    @Test
+    fun encodeDecodeList() {
+        val value: List<BEObject> = listOf(
+            BEInteger(555),
+            BEString("hello".encodeToByteArray())
+        )
+        val buffer = Buffer()
+        Bencode.encodeList(value, buffer)
+        val list = Bencode.decodeToList(buffer)
+        assertEquals(value.size, list.size)
+        val a = value.first() as BEInteger
+        assertEquals(a.toInt(), 555)
+        val b = value.last() as BEString
+        assertContentEquals(b.toByteArray(), "hello".encodeToByteArray())
     }
 }
