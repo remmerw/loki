@@ -6,7 +6,7 @@ import kotlinx.io.Sink
 value class BEMap(private val map: Map<String, BEObject>) :
     BEObject {
 
-    override fun writeTo(sink: Sink) {
+    override fun encodeTo(sink: Sink) {
         sink.writeByte(MAP_PREFIX.code.toByte())
 
         val mapped: MutableMap<ByteArray, BEObject> = mutableMapOf()
@@ -22,7 +22,7 @@ value class BEMap(private val map: Map<String, BEObject>) :
             sink.writeByte(DELIMITER.code.toByte())
             sink.write(key)
 
-            value.writeTo(sink)
+            value.encodeTo(sink)
         }
         sink.writeByte(EOF.code.toByte())
     }

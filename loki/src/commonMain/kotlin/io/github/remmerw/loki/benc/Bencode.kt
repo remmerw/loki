@@ -1,27 +1,9 @@
 package io.github.remmerw.loki.benc
 
-import kotlinx.io.Sink
 import kotlinx.io.Source
 
 class Bencode {
     companion object {
-
-
-        fun encodeMap(map: Map<String, BEObject>, sink: Sink) {
-            BEMap(map).writeTo(sink)
-        }
-
-        fun encodeList(list: List<BEObject>, sink: Sink) {
-            BEList(list).writeTo(sink)
-        }
-
-        fun encodeString(string: String, sink: Sink) {
-            BEString(string.encodeToByteArray()).writeTo(sink)
-        }
-
-        fun encodeInteger(value: Long, sink: Sink) {
-            BEInteger(value).writeTo(sink)
-        }
 
         fun decode(source: Source): BEObject {
             val parser = createParser(source)
@@ -49,4 +31,33 @@ class Bencode {
             return (decode(source) as BEList).toList()
         }
     }
+}
+
+
+fun Byte.bencode(): BEInteger {
+    return BEInteger(toLong())
+}
+
+fun Int.bencode(): BEInteger {
+    return BEInteger(toLong())
+}
+
+fun Long.bencode(): BEInteger {
+    return BEInteger(this)
+}
+
+fun String.bencode(): BEString {
+    return BEString(encodeToByteArray())
+}
+
+fun ByteArray.bencode(): BEString {
+    return BEString(this)
+}
+
+fun List<BEObject>.bencode(): BEList {
+    return BEList(this)
+}
+
+fun Map<String, BEObject>.bencode(): BEMap {
+    return BEMap(this)
 }

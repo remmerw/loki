@@ -1,8 +1,7 @@
 package io.github.remmerw.loki.data
 
-import io.github.remmerw.loki.benc.BEInteger
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.Bencode
+import io.github.remmerw.loki.benc.bencode
 import kotlinx.io.Buffer
 
 
@@ -53,25 +52,13 @@ internal data class UtMetadata(
 
         val map = mutableMapOf<String, BEObject>()
 
-        map.put(
-            "msg_type", BEInteger(
-                metaType.id.toLong()
-            )
-        )
-        map.put(
-            "piece", BEInteger(
-                pieceIndex.toLong()
-            )
-        )
+        map.put("msg_type", metaType.id.bencode())
+        map.put("piece", pieceIndex.bencode())
         if (totalSize > 0) {
-            map.put(
-                "total_size", BEInteger(
-                    totalSize.toLong()
-                )
-            )
+            map.put("total_size", totalSize.bencode())
         }
 
-        Bencode.encodeMap(map, buffer)
+        map.bencode().encodeTo(buffer)
 
         if (data.isNotEmpty()) {
             buffer.write(data)

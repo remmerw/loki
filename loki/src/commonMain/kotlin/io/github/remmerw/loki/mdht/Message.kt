@@ -1,11 +1,8 @@
 package io.github.remmerw.loki.mdht
 
-import io.github.remmerw.loki.benc.BEInteger
-import io.github.remmerw.loki.benc.BEList
-import io.github.remmerw.loki.benc.BEMap
+
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.Bencode
+import io.github.remmerw.loki.benc.bencode
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Sink
 
@@ -45,22 +42,22 @@ internal data class AnnounceRequest(
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
 
-        inner[Names.ID] = BEString(id)
-        inner[Names.INFO_HASH] = BEString(infoHash)
-        inner[Names.PORT] = BEInteger(port.toLong())
-        inner[Names.TOKEN] = BEString(token)
-        if (name != null) inner[Names.NAME] = BEString(name)
-        base[Names.A] = BEMap(inner)
+        inner[Names.ID] = id.bencode()
+        inner[Names.INFO_HASH] = infoHash.bencode()
+        inner[Names.PORT] = port.toLong().bencode()
+        inner[Names.TOKEN] = token.bencode()
+        if (name != null) inner[Names.NAME] = name.bencode()
+        base[Names.A] = inner.bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
         // message type
-        base[Names.Y] = BEString(Names.Q.encodeToByteArray())
+        base[Names.Y] = Names.Q.bencode()
 
         // message method
-        base[Names.Q] = BEString(Names.ANNOUNCE_PEER.encodeToByteArray())
+        base[Names.Q] = Names.ANNOUNCE_PEER.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 }
 
@@ -75,15 +72,15 @@ internal data class AnnounceResponse(
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
-        inner[Names.ID] = BEString(id)
-        base[Names.R] = BEMap(inner)
+        inner[Names.ID] = id.bencode()
+        base[Names.R] = inner.bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
         // message type
-        base[Names.Y] = BEString(Names.R.encodeToByteArray())
+        base[Names.Y] = Names.R.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 
 }
@@ -103,13 +100,13 @@ internal data class Error(
         val base: MutableMap<String, BEObject> = mutableMapOf()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
         // message type
-        base[Names.Y] = BEString(Names.E.encodeToByteArray())
+        base[Names.Y] = Names.E.bencode()
 
-        base[Names.E] = BEList(listOf(BEInteger(code.toLong()), BEString(message)))
+        base[Names.E] = listOf(code.bencode(), message.bencode()).bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 
 }
@@ -126,21 +123,21 @@ internal data class FindNodeRequest(
 
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
-        base[Names.A] = BEMap(
+        base[Names.A] =
             mapOf<String, BEObject>(
-                Names.ID to BEString(id),
-                Names.TARGET to BEString(target)
-            )
-        )
+                Names.ID to id.bencode(),
+                Names.TARGET to target.bencode()
+            ).bencode()
+
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
         // message type
-        base[Names.Y] = BEString(Names.Q.encodeToByteArray())
+        base[Names.Y] = Names.Q.bencode()
         // message method
-        base[Names.Q] = BEString(Names.FIND_NODE.encodeToByteArray())
+        base[Names.Q] = Names.FIND_NODE.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 
 }
@@ -158,20 +155,20 @@ internal data class FindNodeResponse(
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
-        inner[Names.ID] = BEString(id)
+        inner[Names.ID] = id.bencode()
         if (nodes.isNotEmpty()) inner[Names.NODES] = writeBuckets(nodes)
         if (nodes6.isNotEmpty()) inner[Names.NODES6] = writeBuckets(nodes6)
-        base[Names.R] = BEMap(inner)
+        base[Names.R] = inner.bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
 
         // message type
-        base[Names.Y] = BEString(Names.R.encodeToByteArray())
+        base[Names.Y] = Names.R.bencode()
 
-        if (ip != null) base[Names.IP] = BEString(ip)
+        if (ip != null) base[Names.IP] = ip.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 
 
@@ -188,23 +185,23 @@ internal data class GetPeersRequest(
 
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
-        base[Names.A] = BEMap(
+        base[Names.A] =
             mapOf<String, BEObject>(
-                Names.ID to BEString(id),
-                Names.INFO_HASH to BEString(infoHash)
-            )
-        )
+                Names.ID to id.bencode(),
+                Names.INFO_HASH to infoHash.bencode()
+            ).bencode()
+
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
 
         // message type
-        base[Names.Y] = BEString(Names.Q.encodeToByteArray())
+        base[Names.Y] = Names.Q.bencode()
 
         // message method
-        base[Names.Q] = BEString(Names.GET_PEERS.encodeToByteArray())
+        base[Names.Q] = Names.GET_PEERS.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 }
 
@@ -224,25 +221,25 @@ internal data class GetPeersResponse(
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
-        inner[Names.ID] = BEString(id)
-        if (token != null) inner[Names.TOKEN] = BEString(token)
+        inner[Names.ID] = id.bencode()
+        if (token != null) inner[Names.TOKEN] = token.bencode()
         if (nodes.isNotEmpty()) inner[Names.NODES] = writeBuckets(nodes)
         if (nodes6.isNotEmpty()) inner[Names.NODES6] = writeBuckets(nodes6)
         if (items.isNotEmpty()) {
-            val values: List<BEObject> = items.map { it -> BEString(it.encoded()) }
-            inner[Names.VALUES] = BEList(values)
+            val values: List<BEObject> = items.map { it -> it.encoded().bencode() }
+            inner[Names.VALUES] = values.bencode()
         }
-        base[Names.R] = BEMap(inner)
+        base[Names.R] = inner.bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
 
         // message type
-        base[Names.Y] = BEString(Names.R.encodeToByteArray())
+        base[Names.Y] = Names.R.bencode()
 
-        if (ip != null) base[Names.IP] = BEString(ip)
+        if (ip != null) base[Names.IP] = ip.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 }
 
@@ -256,18 +253,18 @@ internal data class PingRequest(
 
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
-        base[Names.A] = BEMap(mapOf<String, BEObject>(Names.ID to BEString(id)))
+        base[Names.A] = mapOf<String, BEObject>(Names.ID to id.bencode()).bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
 
         // message type
-        base[Names.Y] = BEString(Names.Q.encodeToByteArray())
+        base[Names.Y] = Names.Q.bencode()
 
         // message method
-        base[Names.Q] = BEString(Names.PING.encodeToByteArray())
+        base[Names.Q] = Names.PING.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 
 }
@@ -282,17 +279,17 @@ internal data class PingResponse(
 
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
-        base[Names.R] = BEMap(mapOf<String, BEObject>(Names.ID to BEString(id)))
+        base[Names.R] = mapOf<String, BEObject>(Names.ID to id.bencode()).bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
         // message type
-        base[Names.Y] = BEString(Names.R.encodeToByteArray())
+        base[Names.Y] = Names.R.bencode()
 
 
-        if (ip != null) base[Names.IP] = BEString(ip)
+        if (ip != null) base[Names.IP] = ip.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 
 }
@@ -317,26 +314,26 @@ internal data class PutRequest(
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
 
-        inner[Names.ID] = BEString(id)
+        inner[Names.ID] = id.bencode()
         inner[Names.V] = v
-        inner[Names.TOKEN] = BEString(token)
-        if (cas != null) inner.put(Names.CAS, BEInteger(cas))
-        if (k != null) inner.put(Names.K, BEString(k))
-        if (salt != null) inner.put(Names.SALT, BEString(salt))
-        if (seq != null) inner.put(Names.SEQ, BEInteger(seq))
-        if (sig != null) inner.put(Names.SIG, BEString(sig))
+        inner[Names.TOKEN] = token.bencode()
+        if (cas != null) inner.put(Names.CAS, cas.bencode())
+        if (k != null) inner.put(Names.K, k.bencode())
+        if (salt != null) inner.put(Names.SALT, salt.bencode())
+        if (seq != null) inner.put(Names.SEQ, seq.bencode())
+        if (sig != null) inner.put(Names.SIG, sig.bencode())
 
-        base[Names.A] = BEMap(inner)
+        base[Names.A] = inner.bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
         // message type
-        base[Names.Y] = BEString(Names.Q.encodeToByteArray())
+        base[Names.Y] = Names.Q.bencode()
 
         // message method
-        base[Names.Q] = BEString(Names.PUT.encodeToByteArray())
+        base[Names.Q] = Names.PUT.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 }
 
@@ -352,15 +349,15 @@ internal data class PutResponse(
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
-        inner[Names.ID] = BEString(id)
-        base[Names.R] = BEMap(inner)
+        inner[Names.ID] = id.bencode()
+        base[Names.R] = inner.bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
         // message type
-        base[Names.Y] = BEString(Names.R.encodeToByteArray())
+        base[Names.Y] = Names.R.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 
 }
@@ -379,23 +376,23 @@ internal data class GetRequest(
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner = mutableMapOf<String, BEObject>(
-            Names.ID to BEString(id),
-            Names.TARGET to BEString(target)
+            Names.ID to id.bencode(),
+            Names.TARGET to target.bencode()
         )
-        if (seq != null) inner.put(Names.SEQ, BEInteger(seq))
+        if (seq != null) inner.put(Names.SEQ, seq.bencode())
 
-        base[Names.A] = BEMap(inner)
+        base[Names.A] = inner.bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
 
         // message type
-        base[Names.Y] = BEString(Names.Q.encodeToByteArray())
+        base[Names.Y] = Names.Q.bencode()
 
         // message method
-        base[Names.Q] = BEString(Names.GET.encodeToByteArray())
+        base[Names.Q] = Names.GET.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 }
 
@@ -418,24 +415,23 @@ internal data class GetResponse(
     override fun encode(sink: Sink) {
         val base: MutableMap<String, BEObject> = mutableMapOf()
         val inner: MutableMap<String, BEObject> = mutableMapOf()
-        inner[Names.ID] = BEString(id)
-        if (token != null) inner[Names.TOKEN] = BEString(token)
+        inner[Names.ID] = id.bencode()
+        if (token != null) inner[Names.TOKEN] = token.bencode()
         if (nodes.isNotEmpty()) inner[Names.NODES] = writeBuckets(nodes)
         if (nodes6.isNotEmpty()) inner[Names.NODES6] = writeBuckets(nodes6)
         if (v != null) inner[Names.V] = v
-        if (k != null) inner.put(Names.K, BEString(k))
-        if (seq != null) inner.put(Names.SEQ, BEInteger(seq))
-        if (sig != null) inner.put(Names.SIG, BEString(sig))
+        if (k != null) inner.put(Names.K, k.bencode())
+        if (seq != null) inner.put(Names.SEQ, seq.bencode())
+        if (sig != null) inner.put(Names.SIG, sig.bencode())
 
-
-        base[Names.R] = BEMap(inner)
+        base[Names.R] = inner.bencode()
 
         // transaction ID
-        base[Names.T] = BEString(tid)
+        base[Names.T] = tid.bencode()
 
         // message type
-        base[Names.Y] = BEString(Names.R.encodeToByteArray())
+        base[Names.Y] = Names.R.bencode()
 
-        Bencode.encodeMap(base, sink)
+        base.bencode().encodeTo(sink)
     }
 }

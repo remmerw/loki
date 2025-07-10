@@ -226,7 +226,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
         }
 
         val buffer = Buffer()
-        request.v.writeTo(buffer)
+        request.v.encodeTo(buffer)
         val data = buffer.readByteArray()
 
         // first check if the token is OK

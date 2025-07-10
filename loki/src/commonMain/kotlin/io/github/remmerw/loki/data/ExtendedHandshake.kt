@@ -3,7 +3,7 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.loki.benc.BEInteger
 import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.Bencode
+import io.github.remmerw.loki.benc.bencode
 import kotlinx.io.Buffer
 
 /**
@@ -43,7 +43,6 @@ internal data class ExtendedHandshake(val data: Map<String, BEObject>) : Extende
         get() = data["p"] as BEInteger?
 
     fun encode(buffer: Buffer) {
-        Bencode.encodeMap(data, buffer)
-
+        data.bencode().encodeTo(buffer)
     }
 }

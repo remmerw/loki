@@ -5,7 +5,7 @@ import kotlinx.io.Sink
 @JvmInline
 value class BEString(private val content: ByteArray) : BEObject {
 
-    override fun writeTo(sink: Sink) {
+    override fun encodeTo(sink: Sink) {
         sink.write(content.size.toString().encodeToByteArray())
         sink.writeByte(DELIMITER.code.toByte())
         sink.write(content)

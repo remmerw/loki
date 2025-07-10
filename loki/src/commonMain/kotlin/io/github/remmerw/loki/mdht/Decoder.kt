@@ -5,6 +5,7 @@ import io.github.remmerw.loki.benc.BEList
 import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
+import io.github.remmerw.loki.benc.bencode
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
@@ -78,7 +79,7 @@ internal fun writeBuckets(list: List<Peer>): BEString {
         buffer.write(peer.id)
         buffer.write(address)
     }
-    return BEString(buffer.readByteArray())
+    return buffer.readByteArray().bencode()
 }
 
 internal fun readBuckets(src: ByteArray, length: Int): List<Peer> {

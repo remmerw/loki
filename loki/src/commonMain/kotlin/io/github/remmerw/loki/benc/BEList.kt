@@ -5,11 +5,11 @@ import kotlinx.io.Sink
 @JvmInline
 value class BEList(private val list: List<BEObject>) : BEObject {
 
-    override fun writeTo(sink: Sink) {
+    override fun encodeTo(sink: Sink) {
         sink.writeByte(LIST_PREFIX.code.toByte())
 
         list.forEach { value ->
-            value.writeTo(sink)
+            value.encodeTo(sink)
         }
 
         sink.writeByte(EOF.code.toByte())

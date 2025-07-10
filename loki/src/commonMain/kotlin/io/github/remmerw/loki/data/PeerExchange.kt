@@ -2,7 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
-import io.github.remmerw.loki.benc.Bencode
+import io.github.remmerw.loki.benc.bencode
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
@@ -35,7 +35,7 @@ internal class PeerExchange(
             encodePeers(filterByAddressLength(dropped, 16)) // ipv6
         )
 
-        Bencode.encodeMap(map, buffer)
+        map.bencode().encodeTo(buffer)
     }
 
 
@@ -51,13 +51,13 @@ internal class PeerExchange(
             bos.write(peer.resolveAddress()!!)
             bos.writeUShort(peer.port.toUShort())
         }
-        return BEString(bos.readByteArray())
+        return bos.readByteArray().bencode()
     }
 
     private fun encodePeerOptions(peers: Collection<InetSocketAddress>): BEString {
         val bos = Buffer()
         repeat(peers.size) { bos.writeInt(0) }
-        return BEString(bos.readByteArray())
+        return bos.readByteArray().bencode()
     }
 
 }

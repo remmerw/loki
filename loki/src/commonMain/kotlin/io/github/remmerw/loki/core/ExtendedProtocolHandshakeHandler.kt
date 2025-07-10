@@ -1,9 +1,7 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.benc.BEInteger
-import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.BEString
+import io.github.remmerw.loki.benc.bencode
 import io.github.remmerw.loki.data.ExtendedHandshake
 import io.github.remmerw.loki.data.ExtendedMessageHandler
 import io.github.remmerw.loki.data.Handshake
@@ -22,14 +20,14 @@ internal data class ExtendedProtocolHandshakeHandler(
         val messageTypeMap: MutableMap<String, BEObject> = mutableMapOf()
 
 
-        data["e"] = BEInteger(0) // require no encryption (1 is encryption)
-        data["p"] = BEInteger(tcpAcceptorPort.toLong())
+        data["e"] = 0L.bencode() // require no encryption (1 is encryption)
+        data["p"] = tcpAcceptorPort.bencode()
 
         if (dataStorage.metadataSize() > 0) {
-            data["metadata_size"] = BEInteger(dataStorage.metadataSize().toLong())
+            data["metadata_size"] = dataStorage.metadataSize().bencode()
         }
 
-        data["v"] = BEString(version.encodeToByteArray())
+        data["v"] = version.bencode()
 
         extendedMessages.forEach { handler: ExtendedMessageHandler ->
 
@@ -37,11 +35,11 @@ internal data class ExtendedProtocolHandshakeHandler(
                 throw RuntimeException("Message type already defined: $handler.localName()")
             }
 
-            messageTypeMap[handler.localName()] = BEInteger(handler.localTypeId().toLong())
+            messageTypeMap[handler.localName()] = handler.localTypeId().bencode()
 
         }
         if (!messageTypeMap.isEmpty()) {
-            data["m"] = BEMap(messageTypeMap)
+            data["m"] = messageTypeMap.bencode()
         }
         return ExtendedHandshake(data.toMap())
 

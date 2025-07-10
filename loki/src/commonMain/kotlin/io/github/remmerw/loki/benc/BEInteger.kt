@@ -5,7 +5,7 @@ import kotlinx.io.Sink
 @JvmInline
 value class BEInteger(private val value: Long) : BEObject {
 
-    override fun writeTo(sink: Sink) {
+    override fun encodeTo(sink: Sink) {
         sink.writeByte(INTEGER_PREFIX.code.toByte())
         sink.write(value.toString().encodeToByteArray())
         sink.writeByte(EOF.code.toByte())

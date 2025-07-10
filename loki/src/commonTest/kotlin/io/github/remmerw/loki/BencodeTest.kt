@@ -4,6 +4,7 @@ import io.github.remmerw.loki.benc.BEInteger
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.BEString
 import io.github.remmerw.loki.benc.Bencode
+import io.github.remmerw.loki.benc.bencode
 import kotlinx.io.Buffer
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -15,7 +16,7 @@ class BencodeTest {
     fun encodeDecodeString() {
         val testData = "hi"
         val buffer = Buffer()
-        Bencode.encodeString(testData, buffer)
+        testData.bencode().encodeTo(buffer)
         val cmp = Bencode.decodeToString(buffer)
         assertEquals(cmp, testData)
     }
@@ -24,7 +25,7 @@ class BencodeTest {
     fun encodeDecodeInteger() {
         val value = 6666L
         val buffer = Buffer()
-        Bencode.encodeInteger(value, buffer)
+        value.bencode().encodeTo(buffer)
         val cmp = Bencode.decodeToLong(buffer)
         assertEquals(cmp, value)
     }
@@ -33,7 +34,7 @@ class BencodeTest {
     fun encodeDecodeEmptyList() {
         val value: List<BEObject> = emptyList()
         val buffer = Buffer()
-        Bencode.encodeList(value, buffer)
+        value.bencode().encodeTo(buffer)
         val cmp = Bencode.decodeToList(buffer)
         assertEquals(cmp, value)
     }
@@ -42,7 +43,7 @@ class BencodeTest {
     fun encodeDecodeEmptyMap() {
         val value: Map<String, BEObject> = emptyMap()
         val buffer = Buffer()
-        Bencode.encodeMap(value, buffer)
+        value.bencode().encodeTo(buffer)
         val cmp = Bencode.decodeToMap(buffer)
         assertEquals(cmp, value)
     }
@@ -50,12 +51,12 @@ class BencodeTest {
 
     @Test
     fun encodeDecodeList() {
+
         val value: List<BEObject> = listOf(
-            BEInteger(555),
-            BEString("hello".encodeToByteArray())
+            555L.bencode(), "hello".bencode()
         )
         val buffer = Buffer()
-        Bencode.encodeList(value, buffer)
+        value.bencode().encodeTo(buffer)
         val list = Bencode.decodeToList(buffer)
         assertEquals(value.size, list.size)
         val a = value.first() as BEInteger
@@ -63,4 +64,5 @@ class BencodeTest {
         val b = value.last() as BEString
         assertContentEquals(b.toByteArray(), "hello".encodeToByteArray())
     }
+
 }

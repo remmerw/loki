@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.mdht
 
 
-internal object Names {
+internal object Names { // todo maybe store bencode
     const val ID: String = "id"
     const val A: String = "a"
     const val INFO_HASH: String = "info_hash"
