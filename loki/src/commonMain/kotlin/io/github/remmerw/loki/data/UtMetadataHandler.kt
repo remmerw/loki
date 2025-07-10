@@ -2,7 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.loki.benc.BEInteger
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.Bencode
+import io.github.remmerw.loki.benc.decodeBencodeToMap
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
@@ -33,7 +33,7 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
 
     private fun decodeMetadata(buffer: Buffer): ExtendedMessage {
 
-        val map = Bencode.decodeToMap(buffer)
+        val map = decodeBencodeToMap(buffer)
         val messageType = getMessageType(map)
         val pieceIndex = getPieceIndex(map)
         val totalSize = getTotalSize(map)

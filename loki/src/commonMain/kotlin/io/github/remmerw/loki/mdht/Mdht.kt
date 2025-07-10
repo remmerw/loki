@@ -1,7 +1,7 @@
 package io.github.remmerw.loki.mdht
 
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.Bencode
+import io.github.remmerw.loki.benc.decodeBencodeToMap
 import io.github.remmerw.loki.debug
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.BoundDatagramSocket
@@ -436,7 +436,7 @@ class Mdht(val peerId: ByteArray, val port: Int) {
 
         val map: Map<String, BEObject>
         try {
-            map = Bencode.decodeToMap(source)
+            map = decodeBencodeToMap(source)
         } catch (throwable: Throwable) {
             debug("Node", throwable)
             return

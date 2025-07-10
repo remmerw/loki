@@ -3,7 +3,7 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.loki.benc.BEInteger
 import io.github.remmerw.loki.benc.BEMap
 import io.github.remmerw.loki.benc.BEObject
-import io.github.remmerw.loki.benc.Bencode
+import io.github.remmerw.loki.benc.decodeBencodeToMap
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 
@@ -40,7 +40,7 @@ internal class ExtendedHandshakeHandler : MessageHandler {
     }
 
     override fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
-        val map = Bencode.decodeToMap(buffer)
+        val map = decodeBencodeToMap(buffer)
         processTypeMapping(address, map["m"])
 
         return ExtendedHandshake(map)

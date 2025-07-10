@@ -142,8 +142,8 @@ internal class Scanner(private val source: Source) {
 /**
  * Create a parser for the provided bencoded document.
  */
-internal fun createParser(buffer: Source): BEParser {
-    val scanner = Scanner(buffer)
+internal fun createParser(source: Source): BEParser {
+    val scanner = Scanner(source)
     val type = getTypeForPrefix(scanner.peek().toChar())
     return BEParser(type, scanner)
 }

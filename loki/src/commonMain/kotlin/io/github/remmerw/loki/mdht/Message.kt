@@ -3,6 +3,7 @@ package io.github.remmerw.loki.mdht
 
 import io.github.remmerw.loki.benc.BEObject
 import io.github.remmerw.loki.benc.bencode
+import io.github.remmerw.loki.benc.encodeBencodeTo
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Sink
 
@@ -57,7 +58,7 @@ internal data class AnnounceRequest(
         // message method
         base[Names.Q] = Names.ANNOUNCE_PEER.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 }
 
@@ -80,7 +81,7 @@ internal data class AnnounceResponse(
         // message type
         base[Names.Y] = Names.R.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 
 }
@@ -106,7 +107,7 @@ internal data class Error(
 
         base[Names.E] = listOf(code.bencode(), message.bencode()).bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 
 }
@@ -137,7 +138,7 @@ internal data class FindNodeRequest(
         // message method
         base[Names.Q] = Names.FIND_NODE.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 
 }
@@ -168,7 +169,7 @@ internal data class FindNodeResponse(
 
         if (ip != null) base[Names.IP] = ip.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 
 
@@ -201,7 +202,7 @@ internal data class GetPeersRequest(
         // message method
         base[Names.Q] = Names.GET_PEERS.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 }
 
@@ -239,7 +240,7 @@ internal data class GetPeersResponse(
 
         if (ip != null) base[Names.IP] = ip.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 }
 
@@ -264,7 +265,7 @@ internal data class PingRequest(
         // message method
         base[Names.Q] = Names.PING.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 
 }
@@ -289,7 +290,7 @@ internal data class PingResponse(
 
         if (ip != null) base[Names.IP] = ip.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 
 }
@@ -333,7 +334,7 @@ internal data class PutRequest(
         // message method
         base[Names.Q] = Names.PUT.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 }
 
@@ -357,7 +358,7 @@ internal data class PutResponse(
         // message type
         base[Names.Y] = Names.R.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 
 }
@@ -392,7 +393,7 @@ internal data class GetRequest(
         // message method
         base[Names.Q] = Names.GET.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 }
 
@@ -432,6 +433,6 @@ internal data class GetResponse(
         // message type
         base[Names.Y] = Names.R.bencode()
 
-        base.bencode().encodeTo(sink)
+        base.encodeBencodeTo(sink)
     }
 }
