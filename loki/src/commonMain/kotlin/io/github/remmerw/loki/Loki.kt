@@ -23,6 +23,7 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
+import io.github.remmerw.loki.mdht.hostname
 import io.github.remmerw.loki.mdht.mdht
 import io.github.remmerw.loki.mdht.peerId
 import io.github.remmerw.loki.mdht.requestGetPeers
@@ -37,7 +38,9 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 
 
-expect fun createInetSocketAddress(address: ByteArray, port: Int): InetSocketAddress
+fun createInetSocketAddress(address: ByteArray, port: Int): InetSocketAddress {
+    return InetSocketAddress(hostname(address), port)
+}
 
 data class State(val piecesTotal: Int, val piecesComplete: Int)
 
