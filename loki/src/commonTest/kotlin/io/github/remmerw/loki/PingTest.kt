@@ -12,14 +12,14 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.Test
 
-class MdhtPingTest {
+class PingTest {
 
     @Test
     fun pingTest(): Unit = runBlocking(Dispatchers.IO) {
 
         val target = createRandomKey(SHA1_HASH_LENGTH) // random peer id
 
-        val mdht = newNott(peerId(), 4567, bootstrap())
+        val mdht = newNott(peerId(), 6005, bootstrap())
         try {
             val peers: MutableSet<Peer> = mutableSetOf()
             withTimeoutOrNull(30 * 1000) {

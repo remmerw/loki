@@ -11,13 +11,13 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.Test
 
 
-class MdhtLookupTest {
+class LookupTest {
     @Test
     fun randomKey(): Unit = runBlocking(Dispatchers.IO) {
 
         withTimeoutOrNull(60 * 1000) {
             val key = createRandomKey(SHA1_HASH_LENGTH)
-            val mdht = newNott(peerId(), 4567, bootstrap())
+            val mdht = newNott(peerId(), 6003, bootstrap())
             try {
                 val channel = requestGetPeers(mdht, key) {
                     5000
@@ -45,7 +45,7 @@ class MdhtLookupTest {
         withTimeoutOrNull(60 * 1000) {
             val key = magnetUri.torrentId.bytes
 
-            val mdht = newNott(peerId(), 4567, bootstrap())
+            val mdht = newNott(peerId(), 6004, bootstrap())
             try {
                 val channel = requestGetPeers(mdht, key) {
                     5000

@@ -12,7 +12,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.test.Test
 
-class MdhtAnnounceTest {
+class AnnounceTest {
 
     @Test
     fun announceTest(): Unit = runBlocking(Dispatchers.IO) {
@@ -20,7 +20,7 @@ class MdhtAnnounceTest {
         val key = createRandomKey(SHA1_HASH_LENGTH)
 
         withTimeoutOrNull(60 * 1000) {
-            val mdht = newNott(peerId(), 6666, bootstrap())
+            val mdht = newNott(peerId(), 6001, bootstrap())
             try {
                 val channel = requestAnnounce(mdht, key, 3443) {
                     5000
@@ -36,7 +36,7 @@ class MdhtAnnounceTest {
 
         withTimeoutOrNull(30 * 1000) {
 
-            val mdht = newNott(peerId(), 8888, bootstrap())
+            val mdht = newNott(peerId(), 6002, bootstrap())
             try {
                 val channel = requestGetPeers(mdht, key) {
                     5000

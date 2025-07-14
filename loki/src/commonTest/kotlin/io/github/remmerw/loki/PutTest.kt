@@ -19,7 +19,7 @@ import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class MdhtPutTest {
+class PutTest {
 
     @OptIn(ExperimentalTime::class)
     @Test
@@ -53,7 +53,7 @@ class MdhtPutTest {
 
 
         withTimeoutOrNull(60 * 1000) {
-            val mdht = newNott(peerId(), 7777, bootstrap())
+            val mdht = newNott(peerId(), 6006, bootstrap())
             try {
                 val channel = requestPut(
                     mdht, target, v, cas, k, salt, seq, sig
@@ -71,7 +71,7 @@ class MdhtPutTest {
 
 
         withTimeoutOrNull(30 * 1000) {
-            val mdht = newNott(peerId(), 8888, bootstrap())
+            val mdht = newNott(peerId(), 6007, bootstrap())
             try {
                 val channel = requestGet(mdht, target) {
                     5000
