@@ -1,6 +1,7 @@
 package io.github.remmerw.loki.mdht
 
 import io.github.remmerw.loki.debug
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -17,12 +18,12 @@ fun CoroutineScope.findNode(
     nott: Nott,
     target: ByteArray,
     timeout: () -> Long
-): ReceiveChannel<Peer> = produce {
+): ReceiveChannel<InetSocketAddress> = produce {
 
 
     val peerId = nott.peerId
 
-    val peers: MutableSet<Peer> = mutableSetOf()
+    val addresses: MutableSet<InetSocketAddress> = mutableSetOf()
     while (true) {
 
         val closest = ClosestSet(nott, target)
@@ -63,8 +64,12 @@ fun CoroutineScope.findNode(
                     val match = closest.acceptResponse(call)
 
                     if (match != null) {
-                        if (peers.add(match)) {
-                            send(match)
+                        if(target.contentEquals(match.id)) {
+                            // same ID found
+                            val isa = match.address
+                            if (addresses.add(isa)) {
+                                send(isa)
+                            }
                         }
                         closest.insert(match)
                     }

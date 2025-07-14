@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.mdht
 
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -8,7 +9,8 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
 suspend fun requestPing(
     nott: Nott,
-    peer: Peer
+    address: InetSocketAddress,
+    id : ByteArray
 ): Boolean {
 
     val result = AtomicBoolean(false)
@@ -18,12 +20,12 @@ suspend fun requestPing(
     val peerId = nott.peerId
     val tid = createRandomKey(TID_LENGTH)
     val request = PingRequest(
-        address = peer.address,
+        address = address,
         id = peerId,
         tid = tid,
         ro = nott.readOnlyState,
     )
-    val call = Call(request, peer.id)
+    val call = Call(request, id)
     inFlight.add(call)
     nott.doRequestCall(call)
 

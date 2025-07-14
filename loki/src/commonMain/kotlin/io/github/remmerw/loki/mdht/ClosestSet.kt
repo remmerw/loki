@@ -72,25 +72,25 @@ internal class ClosestSet(
         return match
     }
 
-    fun candidateAheadOf(
+    private fun candidateAheadOf(
         candidate: Peer
     ): Boolean {
         return !reachedTargetCapacity() ||
                 threeWayDistance(target, head(), candidate.id) > 0
     }
 
-    fun candidateAheadOfTail(
+    private fun candidateAheadOfTail(
         candidate: Peer
     ): Boolean {
         return !reachedTargetCapacity() ||
                 threeWayDistance(target, tail(), candidate.id) > 0
     }
 
-    fun maxAttemptsSinceTailModificationFailed(): Boolean {
+    private fun maxAttemptsSinceTailModificationFailed(): Boolean {
         return insertAttemptsSinceTailModification > MAX_ENTRIES_PER_BUCKET
     }
 
-    fun reachedTargetCapacity(): Boolean {
+    private fun reachedTargetCapacity(): Boolean {
         return closest.size >= MAX_ENTRIES_PER_BUCKET
     }
 
@@ -111,16 +111,16 @@ internal class ClosestSet(
         }
     }
 
-    fun entries(): List<Peer> {
+    private fun entries(): List<Peer> {
         return closest.toList()
     }
 
-    fun tail(): ByteArray {
+    private fun tail(): ByteArray {
         if (closest.isEmpty()) return distance(target, Key.MAX_KEY)
         return closest.last().id
     }
 
-    fun head(): ByteArray {
+    private fun head(): ByteArray {
         if (closest.isEmpty()) return distance(target, Key.MAX_KEY)
         return closest.first().id
     }

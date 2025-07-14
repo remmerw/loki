@@ -569,9 +569,11 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         if (msg is Response) {
 
             val err = Error(
-                msg.address, peerId,
-                msg.tid, SERVER_ERROR,
-                ("received a response message whose transaction ID did not " +
+                address = msg.address,
+                id = peerId,
+                tid = msg.tid,
+                code = SERVER_ERROR,
+                message = ("received a response message whose transaction ID did not " +
                         "match a pending request or transaction expired").encodeToByteArray()
             )
             sendMessage(err)
