@@ -6,7 +6,7 @@ import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.writeUShort
 
-data class Address(val data: ByteArray, val port: UShort) {
+internal data class Address(val data: ByteArray, val port: UShort) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
