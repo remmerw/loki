@@ -220,7 +220,7 @@ internal data class GetPeersResponse(
     val token: ByteArray?,
     override val nodes: List<Peer>,
     override val nodes6: List<Peer>,
-    val items: List<Address>
+    val values: List<Address>
 ) : NodesResponse {
 
 
@@ -231,8 +231,8 @@ internal data class GetPeersResponse(
         if (token != null) inner[Names.TOKEN] = token.bencode()
         if (nodes.isNotEmpty()) inner[Names.NODES] = writeBuckets(nodes)
         if (nodes6.isNotEmpty()) inner[Names.NODES6] = writeBuckets(nodes6)
-        if (items.isNotEmpty()) {
-            val values: List<BEObject> = items.map { it -> it.encoded().bencode() }
+        if (values.isNotEmpty()) {
+            val values: List<BEObject> = values.map { it -> it.encoded().bencode() }
             inner[Names.VALUES] = values.bencode()
         }
         base[Names.R] = inner.bencode()

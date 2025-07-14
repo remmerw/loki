@@ -43,7 +43,13 @@ private fun parseError(
         id = ByteArray(SHA1_HASH_LENGTH)
     }
 
-    return Error(address, id, tid, errorCode, errorMsg.encodeToByteArray())
+    return Error(
+        address = address,
+        id = id,
+        tid = tid,
+        code = errorCode,
+        message = errorMsg.encodeToByteArray()
+    )
 }
 
 private fun extractNodes6(
@@ -145,6 +151,7 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
     val tid = arrayGet(map[Names.T])
     checkNotNull(tid) { "missing transaction ID in request" }
     require(tid.isNotEmpty()) { "zero-length transaction ID in request" }
+    require(tid.size <= TID_LENGTH) { "invalid transaction ID length " + tid.size }
 
     val root = map[Names.A] as BEMap
     val args = root.toMap()
@@ -163,35 +170,73 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
             ro = ro
         )
 
-        Names.FIND_NODE, Names.GET_PEERS, Names.GET -> {
-            var hash = arrayGet(args[Names.TARGET])
-            if (hash == null) {
-                hash = arrayGet(args[Names.INFO_HASH])
-            }
+        Names.FIND_NODE -> {
+            val target = arrayGet(args[Names.TARGET])
 
-            if (hash == null) {
+            if (target == null) {
                 debug("missing/invalid target key in request")
                 return null
             }
 
-            if (hash.size != SHA1_HASH_LENGTH) {
+            if (target.size != SHA1_HASH_LENGTH) {
                 debug("invalid target key in request")
                 return null
             }
 
+            FindNodeRequest(
+                address = address,
+                id = id,
+                tid = tid,
+                ro = ro,
+                target = target
+            )
+        }
 
-            return when (requestMethod) {
-                Names.FIND_NODE -> FindNodeRequest(address, id, tid, ro, hash)
+        Names.GET_PEERS -> {
+            val infoHash = arrayGet(args[Names.INFO_HASH])
 
-                Names.GET_PEERS -> GetPeersRequest(address, id, tid, ro, hash)
 
-                Names.GET -> GetRequest(address, id, tid, ro, hash, null) // TODO [Low Priority]
-
-                else -> {
-                    debug("not handled branch $requestMethod")
-                    return null
-                }
+            if (infoHash == null) {
+                debug("missing/invalid target key in request")
+                return null
             }
+
+            if (infoHash.size != SHA1_HASH_LENGTH) {
+                debug("invalid target key in request")
+                return null
+            }
+            GetPeersRequest(
+                address = address,
+                id = id,
+                tid = tid,
+                ro = ro,
+                infoHash = infoHash
+            )
+        }
+
+        Names.GET -> {
+            val target = arrayGet(args[Names.TARGET])
+
+            if (target == null) {
+                debug("missing/invalid target key in request")
+                return null
+            }
+
+            if (target.size != SHA1_HASH_LENGTH) {
+                debug("invalid target key in request")
+                return null
+            }
+
+            val seq = longGet(args[Names.SEQ])
+
+            GetRequest(
+                address = address,
+                id = id,
+                tid = tid,
+                ro = ro,
+                target = target,
+                seq = seq
+            )
         }
 
         Names.PUT -> {
@@ -206,18 +251,31 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
                         "tokens might not have been issued by get_peers response"
             }
 
-            val data = args[Names.V]
+            val v = args[Names.V]
 
-            require(data != null) {
+            require(v != null) {
                 "missing or invalid mandatory arguments (v) for put"
             }
 
-
+            val cas = longGet(args[Names.CAS])
+            val k = arrayGet(args[Names.K])
+            val salt = arrayGet(args[Names.SALT])
+            val seq = longGet(args[Names.SEQ])
+            val sig = arrayGet(args[Names.SIG])
 
             PutRequest(
-                address, id, tid, ro, token, data, null, null,
-                null, null, null
-            ) // TODO [Low Priority]
+                address = address,
+                id = id,
+                tid = tid,
+                ro = ro,
+                token = token,
+                v = v,
+                cas = cas,
+                k = k,
+                salt = salt,
+                seq = seq,
+                sig = sig
+            )
         }
 
         Names.ANNOUNCE_PEER -> {
@@ -243,10 +301,17 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
                 "zero-length token in announce_peer request. see BEP33 for reasons why " +
                         "tokens might not have been issued by get_peers response"
             }
+
             val name = arrayGet(args[Names.NAME])
             AnnounceRequest(
-                address, id, tid, ro,
-                infoHash, port.toInt(), token, name
+                address = address,
+                id = id,
+                tid = tid,
+                ro = ro,
+                infoHash = infoHash,
+                port = port.toInt(),
+                token = token,
+                name = name
             )
 
         }
@@ -265,10 +330,9 @@ private fun parseResponse(
 ): Message? {
     val tid = arrayGet(map[Names.T])
 
-    if (tid == null || tid.isEmpty()) {
-        debug("missing transaction ID")
-        return null
-    }
+    checkNotNull(tid) { "missing transaction ID in request" }
+    require(tid.isNotEmpty()) { "zero-length transaction ID in request" }
+    require(tid.size <= TID_LENGTH) { "invalid transaction ID length " + tid.size }
 
     // responses don't have explicit methods, need to match them to a request to figure that one out
     val request = tidMapper.invoke(tid)
@@ -283,7 +347,8 @@ private fun parseResponse(
 private fun parseResponse(
     address: InetSocketAddress,
     map: Map<String, BEObject>,
-    request: Request, tid: ByteArray
+    request: Request,
+    tid: ByteArray
 ): Message? {
     val inner = map[Names.R]
     if (inner !is BEMap) {

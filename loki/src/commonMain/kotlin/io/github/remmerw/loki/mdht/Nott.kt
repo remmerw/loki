@@ -110,8 +110,10 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         }
 
         val rsp = PingResponse(
-            request.address, peerId, request.tid,
-            request.address.encoded()
+            address = request.address,
+            id = peerId,
+            tid = request.tid,
+            ip = request.address.encoded()
         )
 
         sendMessage(rsp)
@@ -127,11 +129,14 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         val entries = routingTable.closestPeers(request.target, 8)
 
         val response = FindNodeResponse(
-            request.address, peerId, request.tid, request.address.encoded(),
-            entries.filter { peer: Peer ->
+            address = request.address,
+            id = peerId,
+            tid = request.tid,
+            ip = request.address.encoded(),
+            nodes = entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 4
             },
-            entries.filter { peer: Peer ->
+            nodes6 = entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 16
             }
         )
@@ -148,7 +153,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
             return
         }
 
-        val addresses = database.sample(request.infoHash, MAX_PEERS_PER_ANNOUNCE)
+        val values = database.sample(request.infoHash, MAX_PEERS_PER_ANNOUNCE)
 
         // generate a token
         var token: ByteArray? = null
@@ -165,15 +170,18 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
 
         val resp = GetPeersResponse(
-            request.address, peerId, request.tid, request.address.encoded(),
-            token,
-            entries.filter { peer: Peer ->
+            address = request.address,
+            id = peerId,
+            tid = request.tid,
+            ip = request.address.encoded(),
+            token = token,
+            nodes = entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 4
             },
-            entries.filter { peer: Peer ->
+            nodes6 = entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 16
             },
-            addresses
+            values = values
         )
 
         sendMessage(resp)
@@ -201,19 +209,21 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
 
         val resp = GetResponse(
-            request.address, peerId, request.tid, request.address.encoded(),
-            token,
-            entries.filter { peer: Peer ->
+            address = request.address,
+            id = peerId,
+            tid = request.tid,
+            ip = request.address.encoded(),
+            token = token,
+            nodes = entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 4
             },
-            entries.filter { peer: Peer ->
+            nodes6 = entries.filter { peer: Peer ->
                 peer.address.resolveAddress()?.size == 16
             },
-            null, null, null, null // // TODO [Low Priority]
+            null, null, null, null // TODO [Low Priority]
         )
 
         sendMessage(resp)
-
 
     }
 
@@ -249,11 +259,12 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
         // send a proper response to indicate everything is OK
         val rsp = PutResponse(
-            request.address, peerId, request.tid,
-            request.address.encoded()
+            address = request.address,
+            id = peerId,
+            tid = request.tid,
+            ip = request.address.encoded()
         )
         sendMessage(rsp)
-
 
     }
 
@@ -291,8 +302,10 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
         // send a proper response to indicate everything is OK
         val rsp = AnnounceResponse(
-            request.address, peerId, request.tid,
-            request.address.encoded()
+            address = request.address,
+            id = peerId,
+            tid = request.tid,
+            ip = request.address.encoded()
         )
         sendMessage(rsp)
 
@@ -302,8 +315,11 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
     internal suspend fun sendError(origMsg: Message, code: Int, msg: String) {
         sendMessage(
             Error(
-                origMsg.address, peerId, origMsg.tid, code,
-                msg.encodeToByteArray()
+                address = origMsg.address,
+                id = peerId,
+                tid = origMsg.tid,
+                code = code,
+                message = msg.encodeToByteArray()
             )
         )
     }
@@ -455,8 +471,8 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
         val msg: Message
         try {
-            msg = parseMessage(address, map) { mtid: ByteArray ->
-                requestCalls[mtid.contentHashCode()]?.request
+            msg = parseMessage(address, map) { tid: ByteArray ->
+                requestCalls[tid.contentHashCode()]?.request
             } ?: return
         } catch (throwable: Throwable) {
             debug("Node", throwable)
@@ -482,24 +498,6 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
             recieved(msg, null)
             return
         }
-
-        // now only response or error
-
-        if (msg is Response && msg.tid.size != TID_LENGTH) {
-            val mtid = msg.tid
-
-            val err = Error(
-                msg.address, peerId,
-                mtid, SERVER_ERROR,
-                ("received a response with a transaction id length of " +
-                        mtid.size + " bytes, expected [implementation-specific]: " +
-                        TID_LENGTH + " bytes").encodeToByteArray()
-            )
-
-            sendMessage(err)
-            return
-        }
-
 
         // check if this is a response to an outstanding request
         val call = requestCalls[msg.tid.contentHashCode()]

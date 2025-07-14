@@ -91,8 +91,12 @@ fun CoroutineScope.requestGet(
         } while (!inFlight.isEmpty())
 
         val timeout = timeout.invoke()
-        debug("Timeout lookup for $timeout [ms]")
-        delay(timeout)
+        if (timeout <= 0) {
+            break
+        } else {
+            debug("Timeout lookup for $timeout [ms]")
+            delay(timeout)
+        }
     }
 
 }
