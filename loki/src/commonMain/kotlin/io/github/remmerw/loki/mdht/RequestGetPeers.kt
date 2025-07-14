@@ -18,7 +18,6 @@ fun CoroutineScope.requestGetPeers(
 ): ReceiveChannel<InetSocketAddress> = produce {
 
 
-    val peerId = nott.peerId
     val peers: MutableSet<Address> = mutableSetOf()
 
 
@@ -37,7 +36,7 @@ fun CoroutineScope.requestGetPeers(
                     val tid = createRandomKey(TID_LENGTH)
                     val request = GetPeersRequest(
                         address = peer.address,
-                        id = peerId,
+                        id = nott.peerId,
                         tid = tid,
                         ro = nott.readOnlyState,
                         infoHash = target

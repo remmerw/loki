@@ -10,18 +10,18 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 suspend fun requestPing(
     nott: Nott,
     address: InetSocketAddress,
-    id : ByteArray
+    id: ByteArray
 ): Boolean {
 
     val result = AtomicBoolean(false)
 
     val inFlight: MutableSet<Call> = mutableSetOf()
 
-    val peerId = nott.peerId
+
     val tid = createRandomKey(TID_LENGTH)
     val request = PingRequest(
         address = address,
-        id = peerId,
+        id = nott.peerId,
         tid = tid,
         ro = nott.readOnlyState,
     )

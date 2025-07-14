@@ -21,7 +21,7 @@ fun CoroutineScope.requestGet(
     timeout: () -> Long
 ): ReceiveChannel<Data> = produce {
 
-    val peerId = nott.peerId
+
     while (true) {
 
         val closest = ClosestSet(nott, key)
@@ -37,7 +37,7 @@ fun CoroutineScope.requestGet(
 
                     val request = GetRequest(
                         address = peer.address,
-                        id = peerId,
+                        id = nott.peerId,
                         tid = tid,
                         ro = nott.readOnlyState,
                         target = key,

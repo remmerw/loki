@@ -21,8 +21,6 @@ fun CoroutineScope.findNode(
 ): ReceiveChannel<InetSocketAddress> = produce {
 
 
-    val peerId = nott.peerId
-
     val addresses: MutableSet<InetSocketAddress> = mutableSetOf()
     while (true) {
 
@@ -40,7 +38,7 @@ fun CoroutineScope.findNode(
                     val tid = createRandomKey(TID_LENGTH)
                     val request = FindNodeRequest(
                         address = peer.address,
-                        id = peerId,
+                        id = nott.peerId,
                         tid = tid,
                         ro = nott.readOnlyState,
                         target = target
@@ -64,7 +62,7 @@ fun CoroutineScope.findNode(
                     val match = closest.acceptResponse(call)
 
                     if (match != null) {
-                        if(target.contentEquals(match.id)) {
+                        if (target.contentEquals(match.id)) {
                             // same ID found
                             val isa = match.address
                             if (addresses.add(isa)) {

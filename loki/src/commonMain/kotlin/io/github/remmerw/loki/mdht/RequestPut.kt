@@ -24,7 +24,7 @@ fun CoroutineScope.requestPut(
     timeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
 
-    val peerId = nott.peerId
+
     while (true) {
 
         val closest = ClosestSet(nott, target)
@@ -42,7 +42,7 @@ fun CoroutineScope.requestPut(
                     val tid = createRandomKey(TID_LENGTH)
                     val request = GetPeersRequest(
                         address = peer.address,
-                        id = peerId,
+                        id = nott.peerId,
                         tid = tid,
                         ro = nott.readOnlyState,
                         infoHash = target
@@ -85,7 +85,7 @@ fun CoroutineScope.requestPut(
                                 val tid = createRandomKey(TID_LENGTH)
                                 val request = PutRequest(
                                     address = match.address,
-                                    id = peerId,
+                                    id = nott.peerId,
                                     tid = tid,
                                     ro = nott.readOnlyState,
                                     token = message.token,
