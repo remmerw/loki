@@ -17,7 +17,7 @@ import kotlinx.coroutines.ensureActive
 fun CoroutineScope.findNode(
     nott: Nott,
     target: ByteArray,
-    timeout: () -> Long
+    intermediateTimeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
 
 
@@ -83,7 +83,7 @@ fun CoroutineScope.findNode(
             ensureActive()
         } while (!inFlight.isEmpty())
 
-        val timeout = timeout.invoke()
+        val timeout = intermediateTimeout.invoke()
         if (timeout <= 0) {
             break
         } else {

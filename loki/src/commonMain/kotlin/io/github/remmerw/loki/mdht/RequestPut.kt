@@ -21,7 +21,7 @@ fun CoroutineScope.requestPut(
     salt: ByteArray? = null,
     seq: Long? = null,
     sig: ByteArray? = null,
-    timeout: () -> Long
+    intermediateTimeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
 
 
@@ -112,7 +112,7 @@ fun CoroutineScope.requestPut(
             ensureActive()
         } while (!inFlight.isEmpty())
 
-        val timeout = timeout.invoke()
+        val timeout = intermediateTimeout.invoke()
         if (timeout <= 0) {
             break
         } else {

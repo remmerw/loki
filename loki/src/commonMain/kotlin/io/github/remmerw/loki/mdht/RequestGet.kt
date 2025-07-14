@@ -18,7 +18,7 @@ fun CoroutineScope.requestGet(
     nott: Nott,
     key: ByteArray,
     seq: Long? = null,
-    timeout: () -> Long
+    intermediateTimeout: () -> Long
 ): ReceiveChannel<Data> = produce {
 
 
@@ -90,7 +90,7 @@ fun CoroutineScope.requestGet(
             ensureActive()
         } while (!inFlight.isEmpty())
 
-        val timeout = timeout.invoke()
+        val timeout = intermediateTimeout.invoke()
         if (timeout <= 0) {
             break
         } else {

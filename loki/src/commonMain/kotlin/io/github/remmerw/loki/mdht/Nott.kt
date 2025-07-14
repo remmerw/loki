@@ -539,7 +539,7 @@ class Nott(val nodeId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
                 // this is more likely due to incorrect binding implementation in ipv6. notify peers about that
                 // don't bother with ipv4, there are too many complications
                 val err: Message = Error(
-                    address= call.request.address,
+                    address = call.request.address,
                     id = nodeId,
                     tid = msg.tid,
                     code = GENERIC_ERROR,

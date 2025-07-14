@@ -14,7 +14,7 @@ import kotlinx.coroutines.ensureActive
 fun CoroutineScope.requestGetPeers(
     nott: Nott,
     target: ByteArray,
-    timeout: () -> Long
+    intermediateTimeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
 
 
@@ -86,7 +86,7 @@ fun CoroutineScope.requestGetPeers(
             ensureActive()
         } while (!inFlight.isEmpty())
 
-        val timeout = timeout.invoke()
+        val timeout = intermediateTimeout.invoke()
         if (timeout <= 0) {
             break
         } else {

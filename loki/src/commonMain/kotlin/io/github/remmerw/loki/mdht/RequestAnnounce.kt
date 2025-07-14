@@ -15,7 +15,7 @@ fun CoroutineScope.requestAnnounce(
     nott: Nott,
     target: ByteArray,
     port: Int,
-    timeout: () -> Long
+    intermediateTimeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
 
     while (true) {
@@ -103,7 +103,7 @@ fun CoroutineScope.requestAnnounce(
             ensureActive()
         } while (!inFlight.isEmpty())
 
-        val timeout = timeout.invoke()
+        val timeout = intermediateTimeout.invoke()
         if (timeout <= 0) {
             break
         } else {
