@@ -425,15 +425,10 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
 
     internal suspend fun doRequestCall(call: Call) {
-
         requestCalls.put(call.request.tid.contentHashCode(), call)
-
-        val es = EnqueuedSend(call.request, call)
-
-
-        send(es)
-
+        send(EnqueuedSend(call.request, call))
     }
+
 
     suspend fun ping(address: InetSocketAddress, id: ByteArray?) {
         val tid = createRandomKey(TID_LENGTH)
@@ -544,9 +539,11 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
                 // this is more likely due to incorrect binding implementation in ipv6. notify peers about that
                 // don't bother with ipv4, there are too many complications
                 val err: Message = Error(
-                    call.request.address, peerId,
-                    msg.tid, GENERIC_ERROR,
-                    ("A request was sent to " + call.request.address +
+                    address= call.request.address,
+                    id = peerId,
+                    tid = msg.tid,
+                    code = GENERIC_ERROR,
+                    message = ("A request was sent to " + call.request.address +
                             " and a response with matching transaction id was received from "
                             + msg.address + " . Multihomed nodes should ensure that sockets are " +
                             "properly bound and responses are sent with the " +
