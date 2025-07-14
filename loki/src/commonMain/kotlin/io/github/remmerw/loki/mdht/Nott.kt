@@ -420,8 +420,13 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
     }
 
     suspend fun ping(address: InetSocketAddress, id: ByteArray?) {
-        val mtid = createRandomKey(TID_LENGTH)
-        val pr = PingRequest(address, peerId, mtid, readOnlyState)
+        val tid = createRandomKey(TID_LENGTH)
+        val pr = PingRequest(
+            address = address,
+            id = peerId,
+            tid = tid,
+            ro = readOnlyState
+        )
         doRequestCall(Call(pr, id)) // expectedId can not be available (only address is known)
     }
 
@@ -609,6 +614,7 @@ internal const val OLD_AND_STALE_TIME = 15 * 60 * 1000
 internal const val OLD_AND_STALE_TIMEOUTS = 2
 
 // DHT
+internal const val RESPONSE_TIMEOUT = 3000
 internal const val MAX_ENTRIES_PER_BUCKET: Int = 8
 internal const val TOKEN_TIMEOUT: Int = 5 * 60 * 1000
 internal const val MAX_DB_ENTRIES_PER_KEY: Int = 6000

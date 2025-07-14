@@ -156,7 +156,13 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
     val requestMethod = stringGet(map[Names.Q])
 
     return when (requestMethod) {
-        Names.PING -> PingRequest(address, id, tid, ro)
+        Names.PING -> PingRequest(
+            address = address,
+            id = id,
+            tid = tid,
+            ro = ro
+        )
+
         Names.FIND_NODE, Names.GET_PEERS, Names.GET -> {
             var hash = arrayGet(args[Names.TARGET])
             if (hash == null) {
@@ -205,6 +211,7 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
             require(data != null) {
                 "missing or invalid mandatory arguments (v) for put"
             }
+
 
 
             PutRequest(

@@ -99,11 +99,11 @@ fun CoroutineScope.requestPut(
                                 puts.put(match, request)
                             }
                         }
-                    } else {
-                        val failure = closest.checkTimeoutOrFailure(call)
-                        if (failure) {
-                            removed.add(call)
-                        }
+                    }
+                } else {
+                    val failure = closest.checkTimeoutOrFailure(call)
+                    if (failure) {
+                        removed.add(call)
                     }
                 }
             }

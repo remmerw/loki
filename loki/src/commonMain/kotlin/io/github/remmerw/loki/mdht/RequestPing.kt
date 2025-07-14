@@ -40,7 +40,7 @@ suspend fun requestPing(
 
                 if (sendTime != null) {
                     val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                    if (elapsed > 3000) { // 3 sec
+                    if (elapsed > RESPONSE_TIMEOUT) { // 3 sec
                         removed.add(call)
                         nott.timeout(call)
                     }

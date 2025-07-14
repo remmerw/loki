@@ -74,11 +74,11 @@ fun CoroutineScope.requestGetPeers(
                         if (message.token != null) {
                             closest.insert(match)
                         }
-                    } else {
-                        val failure = closest.checkTimeoutOrFailure(call)
-                        if (failure) {
-                            removed.add(call)
-                        }
+                    }
+                } else {
+                    val failure = closest.checkTimeoutOrFailure(call)
+                    if (failure) {
+                        removed.add(call)
                     }
                 }
             }

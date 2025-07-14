@@ -39,7 +39,7 @@ internal class ClosestSet(
 
                 if (sendTime != null) {
                     val elapsed = sendTime.elapsedNow().inWholeMilliseconds
-                    if (elapsed > 3000) { // 3 sec
+                    if (elapsed > RESPONSE_TIMEOUT) {
                         candidates.increaseFailures(call)
                         nott.timeout(call)
                     }
@@ -66,14 +66,10 @@ internal class ClosestSet(
                     !nott.isLocalId(peer.id)
                 }.forEach { e: Peer -> returnedNodes.add(e) }
 
-                addCandidates(match, returnedNodes)
+                candidates.addCandidates(match, returnedNodes)
             }
         }
         return match
-    }
-
-    private fun addCandidates(source: Peer?, entries: Collection<Peer>) {
-        candidates.addCandidates(source, entries)
     }
 
     fun candidateAheadOf(

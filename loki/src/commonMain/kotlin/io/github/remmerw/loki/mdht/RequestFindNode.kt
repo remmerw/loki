@@ -38,8 +38,11 @@ fun CoroutineScope.findNode(
                 if (peer != null) {
                     val tid = createRandomKey(TID_LENGTH)
                     val request = FindNodeRequest(
-                        peer.address, peerId, tid,
-                        nott.readOnlyState, target
+                        address = peer.address,
+                        id = peerId,
+                        tid = tid,
+                        ro = nott.readOnlyState,
+                        target = target
                     )
                     val call = Call(request, peer.id)
                     closest.requestCall(call, peer)
@@ -64,11 +67,11 @@ fun CoroutineScope.findNode(
                             send(match)
                         }
                         closest.insert(match)
-                    } else {
-                        val failure = closest.checkTimeoutOrFailure(call)
-                        if (failure) {
-                            removed.add(call)
-                        }
+                    }
+                } else {
+                    val failure = closest.checkTimeoutOrFailure(call)
+                    if (failure) {
+                        removed.add(call)
                     }
                 }
             }
