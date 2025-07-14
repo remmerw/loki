@@ -22,7 +22,7 @@ import kotlin.math.min
 import kotlin.random.Random
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
-class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = true) {
+class Nott(val nodeId: ByteArray, val port: Int, val readOnlyState: Boolean = true) {
 
     private val unsolicitedThrottle: MutableMap<InetSocketAddress, Long> =
         mutableMapOf() // runs in same thread
@@ -111,7 +111,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
         val rsp = PingResponse(
             address = request.address,
-            id = peerId,
+            id = nodeId,
             tid = request.tid,
             ip = request.address.encoded()
         )
@@ -130,7 +130,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
         val response = FindNodeResponse(
             address = request.address,
-            id = peerId,
+            id = nodeId,
             tid = request.tid,
             ip = request.address.encoded(),
             nodes = entries.filter { peer: Peer ->
@@ -171,7 +171,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
         val resp = GetPeersResponse(
             address = request.address,
-            id = peerId,
+            id = nodeId,
             tid = request.tid,
             ip = request.address.encoded(),
             token = token,
@@ -210,7 +210,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
         val resp = GetResponse(
             address = request.address,
-            id = peerId,
+            id = nodeId,
             tid = request.tid,
             ip = request.address.encoded(),
             token = token,
@@ -260,7 +260,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         // send a proper response to indicate everything is OK
         val rsp = PutResponse(
             address = request.address,
-            id = peerId,
+            id = nodeId,
             tid = request.tid,
             ip = request.address.encoded()
         )
@@ -303,7 +303,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         // send a proper response to indicate everything is OK
         val rsp = AnnounceResponse(
             address = request.address,
-            id = peerId,
+            id = nodeId,
             tid = request.tid,
             ip = request.address.encoded()
         )
@@ -316,7 +316,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         sendMessage(
             Error(
                 address = origMsg.address,
-                id = peerId,
+                id = nodeId,
                 tid = origMsg.tid,
                 code = code,
                 message = msg.encodeToByteArray()
@@ -387,7 +387,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         }
 
 
-        if (!peerId.contentEquals(newEntry.id)) {
+        if (!nodeId.contentEquals(newEntry.id)) {
             routingTable.insertOrRefresh(newEntry)
         }
 
@@ -420,7 +420,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
 
     internal fun isLocalId(id: ByteArray): Boolean {
-        return peerId.contentEquals(id)
+        return nodeId.contentEquals(id)
     }
 
 
@@ -434,7 +434,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         val tid = createRandomKey(TID_LENGTH)
         val pr = PingRequest(
             address = address,
-            id = peerId,
+            id = nodeId,
             tid = tid,
             ro = readOnlyState
         )
@@ -540,7 +540,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
                 // don't bother with ipv4, there are too many complications
                 val err: Message = Error(
                     address= call.request.address,
-                    id = peerId,
+                    id = nodeId,
                     tid = msg.tid,
                     code = GENERIC_ERROR,
                     message = ("A request was sent to " + call.request.address +
@@ -567,7 +567,7 @@ class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
 
             val err = Error(
                 address = msg.address,
-                id = peerId,
+                id = nodeId,
                 tid = msg.tid,
                 code = SERVER_ERROR,
                 message = ("received a response message whose transaction ID did not " +
@@ -692,8 +692,8 @@ internal fun InetSocketAddress.encoded(): ByteArray? {
 }
 
 
-suspend fun newNott(peerId: ByteArray, port: Int, bootstrap: List<InetSocketAddress>): Nott {
-    val nott = Nott(peerId, port)
+suspend fun newNott(nodeId: ByteArray, port: Int, bootstrap: List<InetSocketAddress>): Nott {
+    val nott = Nott(nodeId, port)
     nott.startup()
 
     bootstrap.forEach { address: InetSocketAddress ->
@@ -702,15 +702,15 @@ suspend fun newNott(peerId: ByteArray, port: Int, bootstrap: List<InetSocketAddr
     return nott
 }
 
-fun peerId(): ByteArray {
-    val peerId = ByteArray(SHA1_HASH_LENGTH)
-    peerId[0] = '-'.code.toByte()
-    peerId[1] = 'T'.code.toByte()
-    peerId[2] = 'H'.code.toByte()
-    peerId[3] = '0'.code.toByte()
-    peerId[4] = '8'.code.toByte()
-    peerId[5] = '1'.code.toByte()
-    peerId[6] = '5'.code.toByte()
-    peerId[7] = '-'.code.toByte()
-    return Random.nextBytes(peerId, 8)
+fun nodeId(): ByteArray {
+    val id = ByteArray(SHA1_HASH_LENGTH)
+    id[0] = '-'.code.toByte()
+    id[1] = 'T'.code.toByte()
+    id[2] = 'H'.code.toByte()
+    id[3] = '0'.code.toByte()
+    id[4] = '8'.code.toByte()
+    id[5] = '1'.code.toByte()
+    id[6] = '5'.code.toByte()
+    id[7] = '-'.code.toByte()
+    return Random.nextBytes(id, 8)
 }

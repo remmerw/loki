@@ -5,7 +5,7 @@ import io.github.remmerw.loki.core.ExchangedMetadata
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.loki.mdht.peerId
+import io.github.remmerw.loki.mdht.nodeId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
@@ -36,11 +36,11 @@ class ExchangedMetadataTest {
     }
 
     @Test
-    fun testPeerId() {
-        val peerId = peerId()
-        assertEquals(peerId.size, 20)
+    fun testId() {
+        val nodeId = nodeId()
+        assertEquals(nodeId.size, 20)
 
-        val name = peerId.decodeToString()
+        val name = nodeId.decodeToString()
         println(name)
         assertTrue(name.startsWith("-TH0815-"))
     }
@@ -56,13 +56,13 @@ class ExchangedMetadataTest {
                 totalSize = 100,
                 data = data
             )
-            val peer = createInetSocketAddress(
+            val inetSocketAddress = createInetSocketAddress(
                 Random.nextBytes(4), 999
             )
             val buffer = Buffer()
             handler.doEncode(metadata, buffer)
 
-            val cmp = handler.doDecode(peer, buffer)
+            val cmp = handler.doDecode(inetSocketAddress, buffer)
             assertEquals(cmp, metadata)
         }
         println("Time UTMetadata " + time.inWholeMilliseconds)

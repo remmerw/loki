@@ -4,7 +4,7 @@ import io.github.remmerw.loki.mdht.SHA1_HASH_LENGTH
 import io.github.remmerw.loki.mdht.createRandomKey
 import io.github.remmerw.loki.mdht.findNode
 import io.github.remmerw.loki.mdht.newNott
-import io.github.remmerw.loki.mdht.peerId
+import io.github.remmerw.loki.mdht.nodeId
 import io.github.remmerw.loki.mdht.requestPing
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.Dispatchers
@@ -19,20 +19,22 @@ class PingTest {
 
         val target = createRandomKey(SHA1_HASH_LENGTH) // random peer id
 
-        val mdht = newNott(peerId(), 6005, bootstrap())
+        val mdht = newNott(nodeId(), 6005, bootstrap())
         try {
             val addresses: MutableSet<InetSocketAddress> = mutableSetOf()
             withTimeoutOrNull(30 * 1000) {
                 val channel = findNode(mdht, target) {
                     5000
                 }
-                for (peer in channel) {
-                    addresses.add(peer)
+                for (address in channel) {
+                    addresses.add(address)
                 }
             }
             addresses.forEach { peer ->
-                println("Success " + requestPing(mdht, peer, target)
-                        + " ping to " +target.toHexString())
+                println(
+                    "Success " + requestPing(mdht, peer, target)
+                            + " ping to " + target.toHexString()
+                )
             }
         } finally {
             mdht.shutdown()

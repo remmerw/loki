@@ -38,7 +38,7 @@ fun CoroutineScope.findNode(
                     val tid = createRandomKey(TID_LENGTH)
                     val request = FindNodeRequest(
                         address = peer.address,
-                        id = nott.peerId,
+                        id = nott.nodeId,
                         tid = tid,
                         ro = nott.readOnlyState,
                         target = target

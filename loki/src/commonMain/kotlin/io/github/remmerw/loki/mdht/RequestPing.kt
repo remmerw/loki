@@ -21,7 +21,7 @@ suspend fun requestPing(
     val tid = createRandomKey(TID_LENGTH)
     val request = PingRequest(
         address = address,
-        id = nott.peerId,
+        id = nott.nodeId,
         tid = tid,
         ro = nott.readOnlyState,
     )

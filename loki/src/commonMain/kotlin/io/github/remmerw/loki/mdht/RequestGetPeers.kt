@@ -36,7 +36,7 @@ fun CoroutineScope.requestGetPeers(
                     val tid = createRandomKey(TID_LENGTH)
                     val request = GetPeersRequest(
                         address = peer.address,
-                        id = nott.peerId,
+                        id = nott.nodeId,
                         tid = tid,
                         ro = nott.readOnlyState,
                         infoHash = target

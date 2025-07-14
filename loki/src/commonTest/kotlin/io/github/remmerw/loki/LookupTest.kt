@@ -1,9 +1,7 @@
 package io.github.remmerw.loki
 
-import io.github.remmerw.loki.mdht.SHA1_HASH_LENGTH
-import io.github.remmerw.loki.mdht.createRandomKey
 import io.github.remmerw.loki.mdht.newNott
-import io.github.remmerw.loki.mdht.peerId
+import io.github.remmerw.loki.mdht.nodeId
 import io.github.remmerw.loki.mdht.requestGetPeers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -12,26 +10,7 @@ import kotlin.test.Test
 
 
 class LookupTest {
-    @Test
-    fun randomKey(): Unit = runBlocking(Dispatchers.IO) {
 
-        withTimeoutOrNull(60 * 1000) {
-            val key = createRandomKey(SHA1_HASH_LENGTH)
-            val mdht = newNott(peerId(), 6003, bootstrap())
-            try {
-                val channel = requestGetPeers(mdht, key) {
-                    5000
-                }
-
-                for (peer in channel) {
-                    println(peer.toString())
-                }
-            } finally {
-                mdht.shutdown()
-            }
-        }
-
-    }
 
     @Test
     fun realKey(): Unit = runBlocking(Dispatchers.IO) {
@@ -45,14 +24,14 @@ class LookupTest {
         withTimeoutOrNull(60 * 1000) {
             val key = magnetUri.torrentId.bytes
 
-            val mdht = newNott(peerId(), 6004, bootstrap())
+            val mdht = newNott(nodeId(), 6004, bootstrap())
             try {
                 val channel = requestGetPeers(mdht, key) {
                     5000
                 }
 
-                for (peer in channel) {
-                    println(peer.toString())
+                for (address in channel) {
+                    println("Read " + address.hostname)
                 }
             } finally {
                 mdht.shutdown()

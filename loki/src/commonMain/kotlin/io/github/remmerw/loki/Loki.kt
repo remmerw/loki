@@ -25,7 +25,7 @@ import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.loki.mdht.hostname
 import io.github.remmerw.loki.mdht.newNott
-import io.github.remmerw.loki.mdht.peerId
+import io.github.remmerw.loki.mdht.nodeId
 import io.github.remmerw.loki.mdht.requestGetPeers
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
@@ -66,7 +66,7 @@ suspend fun CoroutineScope.download(
     val dataStorage = DataStorage(path)
     val selectorManager = SelectorManager(Dispatchers.IO)
 
-    val peerId = peerId()
+    val nodeId = nodeId()
 
 
     val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
@@ -102,7 +102,7 @@ suspend fun CoroutineScope.download(
         )
     )
 
-    val mdht = newNott(peerId, port, bootstrap())
+    val mdht = newNott(nodeId, port, bootstrap())
     try {
         val addresses = requestGetPeers(mdht, torrentId.bytes) {
             val size = worker.purgedConnections()
@@ -119,7 +119,7 @@ suspend fun CoroutineScope.download(
             worker, selectorManager, addresses
         )
         val handshakes = performHandshake(
-            peerId, torrentId, handshakeHandlers, worker, connections
+            nodeId, torrentId, handshakeHandlers, worker, connections
         )
         processMessages(handshakes)
 

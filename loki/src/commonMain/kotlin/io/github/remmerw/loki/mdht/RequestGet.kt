@@ -37,7 +37,7 @@ fun CoroutineScope.requestGet(
 
                     val request = GetRequest(
                         address = peer.address,
-                        id = nott.peerId,
+                        id = nott.nodeId,
                         tid = tid,
                         ro = nott.readOnlyState,
                         target = key,
