@@ -17,7 +17,12 @@ suspend fun requestPing(
 
     val peerId = nott.peerId
     val tid = createRandomKey(TID_LENGTH)
-    val request = PingRequest(peer.address, peerId, tid)
+    val request = PingRequest(
+        address = peer.address,
+        id = peerId,
+        tid = tid,
+        ro = nott.readOnlyState,
+    )
     val call = Call(request, peer.id)
     inFlight.add(call)
     nott.doRequestCall(call)

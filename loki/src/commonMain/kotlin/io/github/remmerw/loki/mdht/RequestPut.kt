@@ -40,7 +40,13 @@ fun CoroutineScope.requestPut(
 
                 if (peer != null) {
                     val tid = createRandomKey(TID_LENGTH)
-                    val request = GetPeersRequest(peer.address, peerId, tid, target)
+                    val request = GetPeersRequest(
+                        address = peer.address,
+                        id = peerId,
+                        tid = tid,
+                        ro = nott.readOnlyState,
+                        infoHash = target
+                    )
                     val call = Call(request, peer.id)
                     closest.requestCall(call, peer)
                     inFlight.add(call)
@@ -78,9 +84,17 @@ fun CoroutineScope.requestPut(
 
                                 val tid = createRandomKey(TID_LENGTH)
                                 val request = PutRequest(
-                                    match.address,
-                                    peerId, tid, message.token, v,
-                                    cas, k, salt, seq, sig
+                                    address = match.address,
+                                    id = peerId,
+                                    tid = tid,
+                                    ro = nott.readOnlyState,
+                                    token = message.token,
+                                    v = v,
+                                    cas = cas,
+                                    k = k,
+                                    salt = salt,
+                                    seq = seq,
+                                    sig = sig
                                 )
                                 puts.put(match, request)
                             }

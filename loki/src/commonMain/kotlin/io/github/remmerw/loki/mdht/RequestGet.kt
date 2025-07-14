@@ -39,6 +39,7 @@ fun CoroutineScope.requestGet(
                         address = peer.address,
                         id = peerId,
                         tid = tid,
+                        ro = nott.readOnlyState,
                         target = key,
                         seq = seq
                     )

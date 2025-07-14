@@ -140,13 +140,14 @@ internal fun parseMessage(
 }
 
 private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>): Message? {
-    val root = map[Names.A] as BEMap
 
-    val args = root.toMap()
-
+    val ro = roGet(map[Names.RO])
     val tid = arrayGet(map[Names.T])
     checkNotNull(tid) { "missing transaction ID in request" }
     require(tid.isNotEmpty()) { "zero-length transaction ID in request" }
+
+    val root = map[Names.A] as BEMap
+    val args = root.toMap()
 
     val id = arrayGet(args[Names.ID])
     checkNotNull(id) { "missing id" }
@@ -155,7 +156,7 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
     val requestMethod = stringGet(map[Names.Q])
 
     return when (requestMethod) {
-        Names.PING -> PingRequest(address, id, tid)
+        Names.PING -> PingRequest(address, id, tid, ro)
         Names.FIND_NODE, Names.GET_PEERS, Names.GET -> {
             var hash = arrayGet(args[Names.TARGET])
             if (hash == null) {
@@ -174,11 +175,11 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
 
 
             return when (requestMethod) {
-                Names.FIND_NODE -> FindNodeRequest(address, id, tid, hash)
+                Names.FIND_NODE -> FindNodeRequest(address, id, tid, ro, hash)
 
-                Names.GET_PEERS -> GetPeersRequest(address, id, tid, hash)
+                Names.GET_PEERS -> GetPeersRequest(address, id, tid, ro, hash)
 
-                Names.GET -> GetRequest(address, id, tid, hash, null) // TODO [Low Priority]
+                Names.GET -> GetRequest(address, id, tid, ro, hash, null) // TODO [Low Priority]
 
                 else -> {
                     debug("not handled branch $requestMethod")
@@ -207,7 +208,7 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
 
 
             PutRequest(
-                address, id, tid, token, data, null, null,
+                address, id, tid, ro, token, data, null, null,
                 null, null, null
             ) // TODO [Low Priority]
         }
@@ -236,7 +237,10 @@ private fun parseRequest(address: InetSocketAddress, map: Map<String, BEObject>)
                         "tokens might not have been issued by get_peers response"
             }
             val name = arrayGet(args[Names.NAME])
-            AnnounceRequest(address, id, tid, infoHash, port.toInt(), token, name)
+            AnnounceRequest(
+                address, id, tid, ro,
+                infoHash, port.toInt(), token, name
+            )
 
         }
 
@@ -447,6 +451,16 @@ fun longGet(beObject: BEObject?): Long? {
         return beObject.toLong()
     }
     return null
+}
+
+fun roGet(beObject: BEObject?): Boolean {
+    if (beObject == null) {
+        return false
+    }
+    if (beObject is BEInteger) {
+        return beObject.toInt() == 1
+    }
+    return false
 }
 
 internal const val GENERIC_ERROR = 201

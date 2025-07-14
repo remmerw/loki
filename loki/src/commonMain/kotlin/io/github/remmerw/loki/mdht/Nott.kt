@@ -22,7 +22,7 @@ import kotlin.math.min
 import kotlin.random.Random
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
-class Nott(val peerId: ByteArray, val port: Int) {
+class Nott(val peerId: ByteArray, val port: Int, val readOnlyState: Boolean = true) {
 
     private val unsolicitedThrottle: MutableMap<InetSocketAddress, Long> =
         mutableMapOf() // runs in same thread
@@ -116,7 +116,6 @@ class Nott(val peerId: ByteArray, val port: Int) {
 
         sendMessage(rsp)
 
-        recieved(request, null)
     }
 
     internal suspend fun findNode(request: FindNodeRequest) {
@@ -139,7 +138,7 @@ class Nott(val peerId: ByteArray, val port: Int) {
 
         sendMessage(response)
 
-        recieved(request, null)
+
     }
 
 
@@ -179,7 +178,6 @@ class Nott(val peerId: ByteArray, val port: Int) {
 
         sendMessage(resp)
 
-        recieved(request, null)
     }
 
     internal suspend fun get(request: GetRequest) {
@@ -216,7 +214,7 @@ class Nott(val peerId: ByteArray, val port: Int) {
 
         sendMessage(resp)
 
-        recieved(request, null)
+
     }
 
     internal suspend fun put(request: PutRequest) {
@@ -256,7 +254,7 @@ class Nott(val peerId: ByteArray, val port: Int) {
         )
         sendMessage(rsp)
 
-        recieved(request, null)
+
     }
 
     internal suspend fun announce(request: AnnounceRequest) {
@@ -298,7 +296,6 @@ class Nott(val peerId: ByteArray, val port: Int) {
         )
         sendMessage(rsp)
 
-        recieved(request, null)
     }
 
 
@@ -315,6 +312,15 @@ class Nott(val peerId: ByteArray, val port: Int) {
     internal fun recieved(msg: Message, associatedCall: Call?) {
         val ip = msg.address
         val id = msg.id
+
+        if (msg is Request) {
+            if (msg.ro) {
+                // A node that receives DHT messages should inspect incoming queries for the 'ro'
+                // flag set to 1. If it is found, the node should not add the message sender
+                // to its routing table.
+                return
+            }
+        }
 
         /* Someday in the future the IP might be used in the implementation
         if (msg is Response) {
@@ -415,7 +421,7 @@ class Nott(val peerId: ByteArray, val port: Int) {
 
     suspend fun ping(address: InetSocketAddress, id: ByteArray?) {
         val mtid = createRandomKey(TID_LENGTH)
-        val pr = PingRequest(address, peerId, mtid)
+        val pr = PingRequest(address, peerId, mtid, readOnlyState)
         doRequestCall(Call(pr, id)) // expectedId can not be available (only address is known)
     }
 
@@ -454,14 +460,21 @@ class Nott(val peerId: ByteArray, val port: Int) {
 
         // just respond to incoming requests, no need to match them to pending requests
         if (msg is Request) {
-            when (msg) {
-                is PutRequest -> put(msg)
-                is GetRequest -> get(msg)
-                is AnnounceRequest -> announce(msg)
-                is FindNodeRequest -> findNode(msg)
-                is GetPeersRequest -> getPeers(msg)
-                is PingRequest -> ping(msg)
+
+            // if readOnlyState is true we are in "Read-Only State"
+            // It no longer responds to 'query' messages that it receives,
+            // that is messages containing a 'q' flag in the top-level dictionary.
+            if (!readOnlyState) {
+                when (msg) {
+                    is PutRequest -> put(msg)
+                    is GetRequest -> get(msg)
+                    is AnnounceRequest -> announce(msg)
+                    is FindNodeRequest -> findNode(msg)
+                    is GetPeersRequest -> getPeers(msg)
+                    is PingRequest -> ping(msg)
+                }
             }
+            recieved(msg, null)
             return
         }
 

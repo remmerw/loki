@@ -35,7 +35,13 @@ fun CoroutineScope.requestGetPeers(
                 val peer = closest.nextCandidate(inFlight)
                 if (peer != null) {
                     val tid = createRandomKey(TID_LENGTH)
-                    val request = GetPeersRequest(peer.address, peerId, tid, target)
+                    val request = GetPeersRequest(
+                        address = peer.address,
+                        id = peerId,
+                        tid = tid,
+                        ro = nott.readOnlyState,
+                        infoHash = target
+                    )
                     val call = Call(request, peer.id)
                     closest.requestCall(call, peer)
                     inFlight.add(call)

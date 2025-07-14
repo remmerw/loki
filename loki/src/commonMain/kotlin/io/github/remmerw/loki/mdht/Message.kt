@@ -24,7 +24,9 @@ internal interface NodesResponse : Response {
     val nodes6: List<Peer>
 }
 
-internal interface Request : Message
+internal interface Request : Message {
+    val ro: Boolean
+}
 
 
 @Suppress("ArrayInDataClass")
@@ -32,6 +34,7 @@ internal data class AnnounceRequest(
     override val address: InetSocketAddress,
     override val id: ByteArray,
     override val tid: ByteArray,
+    override val ro: Boolean,
     val infoHash: ByteArray,
     val port: Int,
     val token: ByteArray,
@@ -54,7 +57,7 @@ internal data class AnnounceRequest(
         base[Names.T] = tid.bencode()
         // message type
         base[Names.Y] = Names.Q.bencode()
-
+        if (ro) base[Names.RO] = 1.bencode()
         // message method
         base[Names.Q] = Names.ANNOUNCE_PEER.bencode()
 
@@ -118,6 +121,7 @@ internal data class FindNodeRequest(
     override val address: InetSocketAddress,
     override val id: ByteArray,
     override val tid: ByteArray,
+    override val ro: Boolean,
     val target: ByteArray
 ) :
     Request {
@@ -135,6 +139,7 @@ internal data class FindNodeRequest(
         base[Names.T] = tid.bencode()
         // message type
         base[Names.Y] = Names.Q.bencode()
+        if (ro) base[Names.RO] = 1.bencode()
         // message method
         base[Names.Q] = Names.FIND_NODE.bencode()
 
@@ -180,6 +185,7 @@ internal data class GetPeersRequest(
     override val address: InetSocketAddress,
     override val id: ByteArray,
     override val tid: ByteArray,
+    override val ro: Boolean,
     val infoHash: ByteArray
 ) :
     Request {
@@ -195,10 +201,9 @@ internal data class GetPeersRequest(
 
         // transaction ID
         base[Names.T] = tid.bencode()
-
         // message type
         base[Names.Y] = Names.Q.bencode()
-
+        if (ro) base[Names.RO] = 1.bencode()
         // message method
         base[Names.Q] = Names.GET_PEERS.bencode()
 
@@ -249,7 +254,8 @@ internal data class GetPeersResponse(
 internal data class PingRequest(
     override val address: InetSocketAddress,
     override val id: ByteArray,
-    override val tid: ByteArray
+    override val tid: ByteArray,
+    override val ro: Boolean,
 ) : Request {
 
     override fun encode(sink: Sink) {
@@ -258,10 +264,9 @@ internal data class PingRequest(
 
         // transaction ID
         base[Names.T] = tid.bencode()
-
         // message type
         base[Names.Y] = Names.Q.bencode()
-
+        if (ro) base[Names.RO] = 1.bencode()
         // message method
         base[Names.Q] = Names.PING.bencode()
 
@@ -300,6 +305,7 @@ internal data class PutRequest(
     override val address: InetSocketAddress,
     override val id: ByteArray,
     override val tid: ByteArray,
+    override val ro: Boolean,
     val token: ByteArray,
     val v: BEObject,
     val cas: Long?,
@@ -307,7 +313,6 @@ internal data class PutRequest(
     val salt: ByteArray?,
     val seq: Long?,
     val sig: ByteArray?
-
 ) :
     Request {
 
@@ -330,7 +335,7 @@ internal data class PutRequest(
         base[Names.T] = tid.bencode()
         // message type
         base[Names.Y] = Names.Q.bencode()
-
+        if (ro) base[Names.RO] = 1.bencode()
         // message method
         base[Names.Q] = Names.PUT.bencode()
 
@@ -369,6 +374,7 @@ internal data class GetRequest(
     override val address: InetSocketAddress,
     override val id: ByteArray,
     override val tid: ByteArray,
+    override val ro: Boolean,
     val target: ByteArray,
     val seq: Long?
 ) :
@@ -386,10 +392,9 @@ internal data class GetRequest(
 
         // transaction ID
         base[Names.T] = tid.bencode()
-
         // message type
         base[Names.Y] = Names.Q.bencode()
-
+        if (ro) base[Names.RO] = 1.bencode()
         // message method
         base[Names.Q] = Names.GET.bencode()
 

@@ -16,6 +16,7 @@ internal object Names { // todo maybe store bencode
     const val E: String = "e"
     const val V: String = "v"
     const val IP: String = "ip"
+    const val RO: String = "ro"
     const val NAME: String = "name"
     const val TARGET: String = "target"
     const val VALUES: String = "values"
