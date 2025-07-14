@@ -5,7 +5,7 @@ package io.github.remmerw.loki.mdht
 *  - in principle we're done as soon as there is no request candidates
 */
 internal class ClosestSet(
-    private val mdht: Mdht,
+    private val nott: Nott,
     private val target: ByteArray
 ) {
     private val closest: MutableSet<Peer> = mutableSetOf()
@@ -14,7 +14,7 @@ internal class ClosestSet(
 
 
     init {
-        val entries = mdht.closestPeers(target, 32)
+        val entries = nott.closestPeers(target, 32)
         candidates.addCandidates(null, entries)
     }
 
@@ -26,7 +26,7 @@ internal class ClosestSet(
 
     suspend fun requestCall(call: Call, peer: Peer) {
         candidates.addCall(call, peer)
-        mdht.doRequestCall(call)
+        nott.doRequestCall(call)
     }
 
     fun checkTimeoutOrFailure(call: Call): Boolean {
@@ -41,7 +41,7 @@ internal class ClosestSet(
                     val elapsed = sendTime.elapsedNow().inWholeMilliseconds
                     if (elapsed > 3000) { // 3 sec
                         candidates.increaseFailures(call)
-                        mdht.timeout(call)
+                        nott.timeout(call)
                     }
                 }
             }
@@ -59,11 +59,11 @@ internal class ClosestSet(
                 val returnedNodes: MutableSet<Peer> = mutableSetOf()
 
                 message.nodes6.filter { peer: Peer ->
-                    !mdht.isLocalId(peer.id)
+                    !nott.isLocalId(peer.id)
                 }.forEach { e: Peer -> returnedNodes.add(e) }
 
                 message.nodes.filter { peer: Peer ->
-                    !mdht.isLocalId(peer.id)
+                    !nott.isLocalId(peer.id)
                 }.forEach { e: Peer -> returnedNodes.add(e) }
 
                 addCandidates(match, returnedNodes)

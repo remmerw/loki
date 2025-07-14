@@ -12,16 +12,16 @@ import kotlinx.coroutines.ensureActive
 
 @OptIn(ExperimentalCoroutinesApi::class)
 fun CoroutineScope.requestAnnounce(
-    mdht: Mdht,
+    nott: Nott,
     target: ByteArray,
     port: Int,
     timeout: () -> Long
 ): ReceiveChannel<InetSocketAddress> = produce {
 
-    val peerId = mdht.peerId
+    val peerId = nott.peerId
     while (true) {
 
-        val closest = ClosestSet(mdht, target)
+        val closest = ClosestSet(nott, target)
 
         val inFlight: MutableSet<Call> = mutableSetOf()
 
@@ -46,7 +46,7 @@ fun CoroutineScope.requestAnnounce(
             announces.forEach { entry ->
                 val call = Call(entry.value, entry.key.id)
                 inFlight.add(call)
-                mdht.doRequestCall(call)
+                nott.doRequestCall(call)
             }
             announces.clear()
 

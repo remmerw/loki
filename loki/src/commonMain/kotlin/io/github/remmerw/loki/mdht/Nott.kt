@@ -22,7 +22,7 @@ import kotlin.math.min
 import kotlin.random.Random
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
-class Mdht(val peerId: ByteArray, val port: Int) {
+class Nott(val peerId: ByteArray, val port: Int) {
 
     private val unsolicitedThrottle: MutableMap<InetSocketAddress, Long> =
         mutableMapOf() // runs in same thread
@@ -676,14 +676,14 @@ internal fun InetSocketAddress.encoded(): ByteArray? {
 }
 
 
-suspend fun mdht(peerId: ByteArray, port: Int, bootstrap: List<InetSocketAddress>): Mdht {
-    val mdht = Mdht(peerId, port)
-    mdht.startup()
+suspend fun newNott(peerId: ByteArray, port: Int, bootstrap: List<InetSocketAddress>): Nott {
+    val nott = Nott(peerId, port)
+    nott.startup()
 
     bootstrap.forEach { address: InetSocketAddress ->
-        mdht.ping(address, null)
+        nott.ping(address, null)
     }
-    return mdht
+    return nott
 }
 
 fun peerId(): ByteArray {

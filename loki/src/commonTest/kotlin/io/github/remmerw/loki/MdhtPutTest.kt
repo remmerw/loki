@@ -4,7 +4,7 @@ package io.github.remmerw.loki
 import io.github.remmerw.borr.Ed25519Sign
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.loki.mdht.hostname
-import io.github.remmerw.loki.mdht.mdht
+import io.github.remmerw.loki.mdht.newNott
 import io.github.remmerw.loki.mdht.peerId
 import io.github.remmerw.loki.mdht.requestGet
 import io.github.remmerw.loki.mdht.requestPut
@@ -53,7 +53,7 @@ class MdhtPutTest {
 
 
         withTimeoutOrNull(60 * 1000) {
-            val mdht = mdht(peerId(), 7777, bootstrap())
+            val mdht = newNott(peerId(), 7777, bootstrap())
             try {
                 val channel = requestPut(
                     mdht, target, v, cas, k, salt, seq, sig
@@ -71,7 +71,7 @@ class MdhtPutTest {
 
 
         withTimeoutOrNull(30 * 1000) {
-            val mdht = mdht(peerId(), 8888, bootstrap())
+            val mdht = newNott(peerId(), 8888, bootstrap())
             try {
                 val channel = requestGet(mdht, target) {
                     5000

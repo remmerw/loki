@@ -14,18 +14,18 @@ import kotlinx.coroutines.ensureActive
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 fun CoroutineScope.findNode(
-    mdht: Mdht,
+    nott: Nott,
     target: ByteArray,
     timeout: () -> Long
 ): ReceiveChannel<Peer> = produce {
 
 
-    val peerId = mdht.peerId
+    val peerId = nott.peerId
 
     val peers: MutableSet<Peer> = mutableSetOf()
     while (true) {
 
-        val closest = ClosestSet(mdht, target)
+        val closest = ClosestSet(nott, target)
 
         val inFlight: MutableSet<Call> = mutableSetOf()
 

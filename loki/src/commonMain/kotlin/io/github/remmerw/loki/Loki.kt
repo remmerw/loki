@@ -24,7 +24,7 @@ import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.loki.mdht.hostname
-import io.github.remmerw.loki.mdht.mdht
+import io.github.remmerw.loki.mdht.newNott
 import io.github.remmerw.loki.mdht.peerId
 import io.github.remmerw.loki.mdht.requestGetPeers
 import io.ktor.network.selector.SelectorManager
@@ -102,7 +102,7 @@ suspend fun CoroutineScope.download(
         )
     )
 
-    val mdht = mdht(peerId, port, bootstrap())
+    val mdht = newNott(peerId, port, bootstrap())
     try {
         val addresses = requestGetPeers(mdht, torrentId.bytes) {
             val size = worker.purgedConnections()

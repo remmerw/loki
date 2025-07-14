@@ -2,7 +2,7 @@ package io.github.remmerw.loki
 
 import io.github.remmerw.loki.mdht.SHA1_HASH_LENGTH
 import io.github.remmerw.loki.mdht.createRandomKey
-import io.github.remmerw.loki.mdht.mdht
+import io.github.remmerw.loki.mdht.newNott
 import io.github.remmerw.loki.mdht.peerId
 import io.github.remmerw.loki.mdht.requestGetPeers
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +17,7 @@ class MdhtLookupTest {
 
         withTimeoutOrNull(60 * 1000) {
             val key = createRandomKey(SHA1_HASH_LENGTH)
-            val mdht = mdht(peerId(), 4567, bootstrap())
+            val mdht = newNott(peerId(), 4567, bootstrap())
             try {
                 val channel = requestGetPeers(mdht, key) {
                     5000
@@ -45,7 +45,7 @@ class MdhtLookupTest {
         withTimeoutOrNull(60 * 1000) {
             val key = magnetUri.torrentId.bytes
 
-            val mdht = mdht(peerId(), 4567, bootstrap())
+            val mdht = newNott(peerId(), 4567, bootstrap())
             try {
                 val channel = requestGetPeers(mdht, key) {
                     5000

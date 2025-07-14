@@ -15,16 +15,16 @@ data class Data(val data: BEObject, val seq: Long?, val k: ByteArray?, val sig: 
 
 @OptIn(ExperimentalCoroutinesApi::class)
 fun CoroutineScope.requestGet(
-    mdht: Mdht,
+    nott: Nott,
     key: ByteArray,
     seq: Long? = null,
     timeout: () -> Long
 ): ReceiveChannel<Data> = produce {
 
-    val peerId = mdht.peerId
+    val peerId = nott.peerId
     while (true) {
 
-        val closest = ClosestSet(mdht, key)
+        val closest = ClosestSet(nott, key)
         val inFlight: MutableSet<Call> = mutableSetOf()
         do {
             do {

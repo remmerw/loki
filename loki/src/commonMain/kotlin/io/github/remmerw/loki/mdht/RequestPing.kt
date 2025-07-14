@@ -7,7 +7,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
 suspend fun requestPing(
-    mdht: Mdht,
+    nott: Nott,
     peer: Peer
 ): Boolean {
 
@@ -15,12 +15,12 @@ suspend fun requestPing(
 
     val inFlight: MutableSet<Call> = mutableSetOf()
 
-    val peerId = mdht.peerId
+    val peerId = nott.peerId
     val tid = createRandomKey(TID_LENGTH)
     val request = PingRequest(peer.address, peerId, tid)
     val call = Call(request, peer.id)
     inFlight.add(call)
-    mdht.doRequestCall(call)
+    nott.doRequestCall(call)
 
     do {
         val removed: MutableList<Call> = mutableListOf()
@@ -37,7 +37,7 @@ suspend fun requestPing(
                     val elapsed = sendTime.elapsedNow().inWholeMilliseconds
                     if (elapsed > 3000) { // 3 sec
                         removed.add(call)
-                        mdht.timeout(call)
+                        nott.timeout(call)
                     }
                 }
             }

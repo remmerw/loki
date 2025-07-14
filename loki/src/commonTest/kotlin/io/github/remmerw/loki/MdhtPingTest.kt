@@ -4,7 +4,7 @@ import io.github.remmerw.loki.mdht.Peer
 import io.github.remmerw.loki.mdht.SHA1_HASH_LENGTH
 import io.github.remmerw.loki.mdht.createRandomKey
 import io.github.remmerw.loki.mdht.findNode
-import io.github.remmerw.loki.mdht.mdht
+import io.github.remmerw.loki.mdht.newNott
 import io.github.remmerw.loki.mdht.peerId
 import io.github.remmerw.loki.mdht.requestPing
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +19,7 @@ class MdhtPingTest {
 
         val target = createRandomKey(SHA1_HASH_LENGTH) // random peer id
 
-        val mdht = mdht(peerId(), 4567, bootstrap())
+        val mdht = newNott(peerId(), 4567, bootstrap())
         try {
             val peers: MutableSet<Peer> = mutableSetOf()
             withTimeoutOrNull(30 * 1000) {
