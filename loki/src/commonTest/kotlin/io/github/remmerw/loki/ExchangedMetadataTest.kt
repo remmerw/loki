@@ -5,7 +5,8 @@ import io.github.remmerw.loki.core.ExchangedMetadata
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.loki.mdht.nodeId
+import io.github.remmerw.nott.createInetSocketAddress
+import io.github.remmerw.nott.nodeId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer

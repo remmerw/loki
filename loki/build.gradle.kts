@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.remmerw"
-version = "0.3.0"
+version = "0.3.1"
 
 kotlin {
 
@@ -46,6 +46,7 @@ kotlin {
                 implementation(libs.ktor.network)
                 implementation("io.github.remmerw:grid:0.0.6")
                 implementation("io.github.remmerw:buri:0.0.1")
+                implementation("io.github.remmerw:nott:0.0.1")
 
             }
         }
@@ -53,7 +54,6 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
-                implementation("io.github.remmerw:borr:0.0.2")
             }
         }
 

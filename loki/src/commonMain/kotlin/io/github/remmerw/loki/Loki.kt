@@ -23,10 +23,10 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.loki.mdht.hostname
-import io.github.remmerw.loki.mdht.newNott
-import io.github.remmerw.loki.mdht.nodeId
-import io.github.remmerw.loki.mdht.requestGetPeers
+import io.github.remmerw.nott.bootstrap
+import io.github.remmerw.nott.newNott
+import io.github.remmerw.nott.nodeId
+import io.github.remmerw.nott.requestGetPeers
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
@@ -38,9 +38,6 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 
 
-fun createInetSocketAddress(address: ByteArray, port: Int): InetSocketAddress {
-    return InetSocketAddress(hostname(address), port)
-}
 
 data class State(val piecesTotal: Int, val piecesComplete: Int)
 
@@ -202,7 +199,7 @@ internal const val CHOKING_THRESHOLD: Long = 10000 // millis
 internal const val FIRST_BLOCK_ARRIVAL_TIMEOUT: Long = 10000 // 10 sec
 internal const val WAIT_BEFORE_REREQUESTING_AFTER_REJECT: Long = 10000 // 10 sec
 internal const val UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL: Long = 1000
-internal const val VERSION = "Thor 1.7.6"
+internal const val VERSION = "Loki 0.3.1"
 internal const val SCHEME: String = "magnet"
 internal const val INFO_HASH_PREFIX: String = "urn:btih:"
 
@@ -415,16 +412,6 @@ class MagnetUri private constructor(
             return Builder(torrentId)
         }
     }
-}
-
-
-fun bootstrap(): List<InetSocketAddress> {
-    return listOf(
-        InetSocketAddress("dht.transmissionbt.com", 6881),
-        InetSocketAddress("router.bittorrent.com", 6881),
-        InetSocketAddress("router.utorrent.com", 6881),
-        InetSocketAddress("dht.aelitis.com", 6881)
-    )
 }
 
 @Suppress("SameReturnValue")

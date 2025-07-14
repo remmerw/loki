@@ -6,6 +6,7 @@ import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
+import io.github.remmerw.nott.createInetSocketAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer

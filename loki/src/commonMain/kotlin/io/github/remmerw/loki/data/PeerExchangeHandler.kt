@@ -3,7 +3,7 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.decodeBencodeToMap
-import io.github.remmerw.loki.createInetSocketAddress
+import io.github.remmerw.nott.createInetSocketAddress
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 

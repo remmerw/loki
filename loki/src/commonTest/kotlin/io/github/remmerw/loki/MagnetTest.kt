@@ -7,8 +7,6 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlin.test.Test
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 class MagnetTest {
 
@@ -41,14 +39,5 @@ class MagnetTest {
         }
 
     }
-
-
-    @Test
-    fun bootstrapTest() {
-        val address = bootstrap()
-        assertNotNull(address)
-        assertTrue(address.isNotEmpty())
-    }
-
 
 }
