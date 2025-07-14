@@ -51,26 +51,26 @@ class Nott(val nodeId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         return routingTable.closestPeers(key, take)
     }
 
-    private suspend fun send(es: EnqueuedSend) {
+    private suspend fun send(enqueuedSend: EnqueuedSend) {
 
         try {
             val buffer = Buffer()
-            es.message.encode(buffer)
-            val address = es.message.address
+            enqueuedSend.message.encode(buffer)
+            val address = enqueuedSend.message.address
 
 
             val datagram = Datagram(buffer, address)
 
             socket!!.send(datagram)
 
-            es.associatedCall?.hasSend()
+            enqueuedSend.associatedCall?.hasSend()
 
         } catch (throwable: Throwable) {
             debug("Mdht", throwable)
 
-            if (es.associatedCall != null) {
-                es.associatedCall.injectStall()
-                timeout(es.associatedCall)
+            if (enqueuedSend.associatedCall != null) {
+                enqueuedSend.associatedCall.injectStall()
+                timeout(enqueuedSend.associatedCall)
             }
         }
     }
@@ -430,7 +430,7 @@ class Nott(val nodeId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
     }
 
 
-    suspend fun ping(address: InetSocketAddress, id: ByteArray?) {
+    internal suspend fun ping(address: InetSocketAddress, id: ByteArray?) {
         val tid = createRandomKey(TID_LENGTH)
         val pr = PingRequest(
             address = address,
@@ -441,7 +441,7 @@ class Nott(val nodeId: ByteArray, val port: Int, val readOnlyState: Boolean = tr
         doRequestCall(Call(pr, id)) // expectedId can not be available (only address is known)
     }
 
-    suspend fun handleDatagram(datagram: Datagram) {
+    private suspend fun handleDatagram(datagram: Datagram) {
         val inet = datagram.address as InetSocketAddress
         val source = datagram.packet
 
