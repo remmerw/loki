@@ -1,5 +1,5 @@
 [versions]
-agp = "8.11.0"
+agp = "8.11.1"
 atomicfu = "0.29.0"
 kotlin = "2.2.0"
 kotlinxIoCore = "0.8.0"
@@ -17,4 +17,4 @@ uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.33.0" }
+vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version = "0.34.0" }

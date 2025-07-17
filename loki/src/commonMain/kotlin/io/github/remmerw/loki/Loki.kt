@@ -38,7 +38,6 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 
 
-
 data class State(val piecesTotal: Int, val piecesComplete: Int)
 
 interface Storage {

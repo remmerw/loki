@@ -46,7 +46,7 @@ kotlin {
                 implementation(libs.ktor.network)
                 implementation("io.github.remmerw:grid:0.0.6")
                 implementation("io.github.remmerw:buri:0.0.1")
-                implementation("io.github.remmerw:nott:0.0.1")
+                implementation("io.github.remmerw:nott:0.0.2")
 
             }
         }
