@@ -44,9 +44,9 @@ kotlin {
                 implementation(libs.uri.kmp)
                 implementation(libs.atomicfu)
                 implementation(libs.ktor.network)
-                implementation("io.github.remmerw:grid:0.0.6")
+                implementation("io.github.remmerw:grid:0.0.7")
                 implementation("io.github.remmerw:buri:0.0.1")
-                implementation("io.github.remmerw:nott:0.0.2")
+                implementation("io.github.remmerw:nott:0.0.4")
 
             }
         }

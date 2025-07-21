@@ -327,12 +327,12 @@ internal class Connection internal constructor(
             try {
                 socket.close()
             } catch (throwable: Throwable) {
-                debug("SocketChannelHandler", throwable)
+                debug(throwable)
             }
             try {
                 worker.purgeConnection(this)
             } catch (throwable: Throwable) {
-                debug("SocketChannelHandler", throwable)
+                debug(throwable)
             }
         }
     }

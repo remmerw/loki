@@ -5,8 +5,7 @@ import io.github.remmerw.loki.core.ExchangedMetadata
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.nott.createInetSocketAddress
-import io.github.remmerw.nott.nodeId
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
@@ -37,16 +36,6 @@ class ExchangedMetadataTest {
     }
 
     @Test
-    fun testId() {
-        val nodeId = nodeId()
-        assertEquals(nodeId.size, 20)
-
-        val name = nodeId.decodeToString()
-        println(name)
-        assertTrue(name.startsWith("-TH0815-"))
-    }
-
-    @Test
     fun testUtMetadataMessageHandler() {
         val time = measureTime {
             val handler = UtMetadataHandler()
@@ -57,9 +46,7 @@ class ExchangedMetadataTest {
                 totalSize = 100,
                 data = data
             )
-            val inetSocketAddress = createInetSocketAddress(
-                Random.nextBytes(4), 999
-            )
+            val inetSocketAddress = InetSocketAddress("random", 999)
             val buffer = Buffer()
             handler.doEncode(metadata, buffer)
 

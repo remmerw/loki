@@ -3,9 +3,10 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.decodeBencodeToMap
-import io.github.remmerw.nott.createInetSocketAddress
+import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
+import java.net.InetAddress
 
 internal class PeerExchangeHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> =
@@ -106,7 +107,12 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
             val requiresEncryption = cryptoFlags != null && cryptoFlags[index].toInt() == 1
             if (!requiresEncryption) {
                 // only not required encryption peers are supported
-                result.add(createInetSocketAddress(address, port))
+                try {
+                    val inetAddress = InetAddress.getByAddress(address)
+                    result.add(InetSocketAddress(inetAddress.hostName, port))
+                } catch (throwable: Throwable) {
+                    debug(throwable)
+                }
             }
             index++
         }

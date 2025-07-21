@@ -159,25 +159,25 @@ suspend fun CoroutineScope.download(
         try {
             mdht.shutdown()
         } catch (throwable: Throwable) {
-            debug("Loki", throwable)
+            debug(throwable)
         }
 
         try {
             dataStorage.shutdown()
         } catch (throwable: Throwable) {
-            debug("Loki", throwable)
+            debug(throwable)
         }
 
         try {
             worker.shutdown()
         } catch (throwable: Throwable) {
-            debug("Loki", throwable)
+            debug(throwable)
         }
 
         try {
             selectorManager.close()
         } catch (throwable: Throwable) {
-            debug("Loki", throwable)
+            debug(throwable)
         }
 
 
@@ -427,9 +427,8 @@ internal fun debug(text: String) {
     }
 }
 
-internal fun debug(tag: String, throwable: Throwable) {
+internal fun debug(throwable: Throwable) {
     if (isError) {
-        println(tag + " " + throwable.message)
         throwable.printStackTrace()
     }
 }

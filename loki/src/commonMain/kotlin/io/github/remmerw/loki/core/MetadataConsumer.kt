@@ -129,7 +129,7 @@ internal class MetadataConsumer internal constructor(
                             )
                         )
                     } catch (throwable: Throwable) {
-                        debug("MetadataConsumer", throwable)
+                        debug(throwable)
                         metadata = null
                     }
 

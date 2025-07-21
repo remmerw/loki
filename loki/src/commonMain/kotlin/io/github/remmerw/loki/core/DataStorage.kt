@@ -235,7 +235,7 @@ internal data class DataStorage(val directory: Path) : Storage {
             try {
                 database.close()
             } catch (throwable: Throwable) {
-                debug("DataStorage", throwable)
+                debug(throwable)
             }
         }
         try {
@@ -248,7 +248,7 @@ internal data class DataStorage(val directory: Path) : Storage {
                 }
             }
         } catch (throwable: Throwable) {
-            debug("DataStorage", throwable)
+            debug(throwable)
         }
     }
 

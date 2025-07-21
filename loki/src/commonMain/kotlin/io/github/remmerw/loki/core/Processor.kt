@@ -8,6 +8,7 @@ import io.github.remmerw.loki.data.TorrentId
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
+import io.ktor.util.network.hostname
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -148,7 +149,7 @@ internal fun CoroutineScope.performConnection(
     dataStorage: DataStorage,
     worker: Worker,
     selectorManager: SelectorManager,
-    channel: ReceiveChannel<InetSocketAddress>
+    channel: ReceiveChannel<java.net.InetSocketAddress>
 ): ReceiveChannel<Connection> = produce {
 
     val semaphore = Semaphore(MAX_CONCURRENCY)
@@ -158,13 +159,14 @@ internal fun CoroutineScope.performConnection(
             semaphore.withPermit {
                 withTimeoutOrNull(3000) {
                     try {
+                        val isa = InetSocketAddress(address.hostname, address.port)
                         val socket = aSocket(selectorManager)
-                            .tcp().connect(address) {
+                            .tcp().connect(isa) {
                                 socketTimeout =
                                     30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
                             }
                         send(
-                            Connection(address, dataStorage, worker, socket, extendedProtocol)
+                            Connection(isa, dataStorage, worker, socket, extendedProtocol)
                         )
                     } catch (_: Throwable) {
 

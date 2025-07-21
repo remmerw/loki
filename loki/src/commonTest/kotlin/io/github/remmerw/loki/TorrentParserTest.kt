@@ -6,7 +6,7 @@ import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.nott.createInetSocketAddress
+import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
@@ -15,7 +15,6 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.io.readByteArray
-import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -89,9 +88,7 @@ class TorrentParserTest {
         )
         val handler = UtMetadataHandler()
 
-        val peer = createInetSocketAddress(
-            Random.nextBytes(4), 999
-        )
+        val peer = InetSocketAddress("random", 999)
 
         handler.doEncode(utMetadata, data)
         val result = handler.doDecode(peer, data)
