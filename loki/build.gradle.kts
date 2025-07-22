@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.remmerw"
-version = "0.3.1"
+version = "0.3.2"
 
 kotlin {
 
@@ -46,7 +46,7 @@ kotlin {
                 implementation(libs.ktor.network)
                 implementation("io.github.remmerw:grid:0.0.7")
                 implementation("io.github.remmerw:buri:0.0.1")
-                implementation("io.github.remmerw:nott:0.0.4")
+                implementation("io.github.remmerw:nott:0.0.5")
 
             }
         }

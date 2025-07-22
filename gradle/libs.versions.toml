@@ -1,18 +1,14 @@
 [versions]
 agp = "8.11.1"
-atomicfu = "0.29.0"
 kotlin = "2.2.0"
-kotlinxIoCore = "0.8.0"
-ktor = "3.2.1"
-uriKmp = "0.0.20"
 
 [libraries]
-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
+atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version = "0.29.0" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIoCore" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.8.0" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
-ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
-uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
+ktor-network = { module = "io.ktor:ktor-network", version = "3.2.2" }
+uri-kmp = { module = "com.eygraber:uri-kmp", version = "0.0.20" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
