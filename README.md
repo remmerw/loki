@@ -23,7 +23,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             ...
-            implementation("io.github.remmerw:loki:0.3.2")
+            implementation("io.github.remmerw:loki:0.3.3")
         }
         ...
     }
@@ -43,11 +43,10 @@ kotlin {
         
         // temp directory where to store intermediate files
         val cacheDir = SystemTemporaryDirectory 
-        val port = 7777 // port the DHT is working on
 
 
         val storage =
-            download(magnetUri, cacheDir, port) { torrentState: State ->
+            download(magnetUri, cacheDir) { torrentState: State ->
                 val completePieces = torrentState.piecesComplete
                 val totalPieces = torrentState.piecesTotal
 

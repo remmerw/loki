@@ -23,7 +23,6 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.nott.bootstrap
 import io.github.remmerw.nott.newNott
 import io.github.remmerw.nott.nodeId
 import io.github.remmerw.nott.requestGetPeers
@@ -53,7 +52,8 @@ interface Storage {
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class)
 suspend fun CoroutineScope.download(
     magnetUri: MagnetUri,
-    directory: Path, port: Int, progress: (State) -> Unit
+    directory: Path,
+    progress: (State) -> Unit
 ): Storage {
     val torrentId = magnetUri.torrentId
     val path = Path(directory, torrentId.bytes.toHexString())
@@ -63,7 +63,7 @@ suspend fun CoroutineScope.download(
     val selectorManager = SelectorManager(Dispatchers.IO)
 
     val nodeId = nodeId()
-
+    val nott = newNott(nodeId)
 
     val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
         PeerExchangeHandler(),
@@ -78,7 +78,7 @@ suspend fun CoroutineScope.download(
         ExtendedProtocolHandshakeHandler(
             dataStorage,
             extendedMessagesHandler,
-            port,
+            nott.port(),
             VERSION
         )
     )
@@ -98,9 +98,9 @@ suspend fun CoroutineScope.download(
         )
     )
 
-    val mdht = newNott(nodeId, port, bootstrap())
+
     try {
-        val addresses = requestGetPeers(mdht, torrentId.bytes) {
+        val addresses = requestGetPeers(nott, torrentId.bytes) {
             val size = worker.purgedConnections()
             if (size > 10) {
                 30000 // 30 sec
@@ -157,7 +157,7 @@ suspend fun CoroutineScope.download(
         debug("Loki finalize begin ...")
 
         try {
-            mdht.shutdown()
+            nott.shutdown()
         } catch (throwable: Throwable) {
             debug(throwable)
         }

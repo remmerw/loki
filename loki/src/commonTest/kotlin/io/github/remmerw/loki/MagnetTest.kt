@@ -20,11 +20,9 @@ class MagnetTest {
             val magnetUri = parseMagnetUri(uri)
             val cacheDir =
                 SystemTemporaryDirectory // temp directory where to store intermediate data
-            val port = 7777 // port the DHT is working on
-
 
             val storage =
-                download(magnetUri, cacheDir, port) { torrentState: State ->
+                download(magnetUri, cacheDir) { torrentState: State ->
                     val completePieces = torrentState.piecesComplete
                     val totalPieces = torrentState.piecesTotal
 
