@@ -90,10 +90,10 @@ internal class Connection internal constructor(
     }
 
     suspend fun reading() {
-        lastActive = TimeSource.Monotonic.markNow()
-
         while (!isClosed) {
             try {
+                lastActive = TimeSource.Monotonic.markNow()
+
                 val length = receiveChannel.readInt()
                 require(length >= 0) { "Invalid read token received" }
 
