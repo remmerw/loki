@@ -45,9 +45,9 @@ kotlin {
                 implementation(libs.atomicfu)
                 implementation(libs.ktor.network)
 
-                implementation("io.github.remmerw:grid:0.0.7")
-                implementation("io.github.remmerw:buri:0.0.1")
-                implementation("io.github.remmerw:nott:0.0.6")
+                implementation(libs.grid)
+                implementation(libs.buri)
+                implementation(libs.nott)
 
             }
         }
@@ -64,7 +64,7 @@ kotlin {
 
         androidInstrumentedTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation("androidx.test:runner:1.6.2")
+            implementation(libs.runner)
         }
     }
 }
