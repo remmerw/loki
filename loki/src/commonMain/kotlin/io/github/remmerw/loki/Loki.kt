@@ -46,6 +46,7 @@ interface Storage {
      * Delete the storage, all intermediate files will be deleted
      */
     fun delete()
+
     fun storageUnits(): List<StorageUnit>
 }
 

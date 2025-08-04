@@ -36,6 +36,7 @@ internal data class ExtendedHandshake(val data: Map<String, BEObject>) : Extende
         }
     }
 
+    @Suppress("unused")
     val port: BEInteger?
         /**
          * @return TCP port or null, if absent in message data
