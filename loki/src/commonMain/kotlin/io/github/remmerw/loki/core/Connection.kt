@@ -149,8 +149,7 @@ internal class Connection internal constructor(
                     posting(send, readBlock)
                 }
                 yield()
-            } catch (throwable: Throwable) {
-                debug("Connection.posting  " + throwable.message)
+            } catch (_: Throwable) {
                 break
             }
         }
@@ -233,7 +232,6 @@ internal class Connection internal constructor(
                 }
 
                 else -> {
-                    debug("not supported message " + message.type.name)
                     throw Exception("not supported message " + message.type.name)
                 }
             }
@@ -326,8 +324,7 @@ internal class Connection internal constructor(
         if (!closed.exchange(true)) {
             try {
                 socket.close()
-            } catch (throwable: Throwable) {
-                debug(throwable)
+            } catch (_: Throwable) {
             }
             try {
                 worker.purgeConnection(this)

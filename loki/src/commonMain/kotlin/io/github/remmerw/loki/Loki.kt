@@ -154,8 +154,6 @@ suspend fun CoroutineScope.download(
         return dataStorage
     } finally {
 
-        debug("Loki finalize begin ...")
-
         try {
             nott.shutdown()
         } catch (throwable: Throwable) {
@@ -179,10 +177,6 @@ suspend fun CoroutineScope.download(
         } catch (throwable: Throwable) {
             debug(throwable)
         }
-
-
-        debug("Loki finalize end")
-
     }
 
 }
