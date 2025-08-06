@@ -16,8 +16,6 @@ import io.github.remmerw.loki.core.RequestProducer
 import io.github.remmerw.loki.core.StorageUnit
 import io.github.remmerw.loki.core.Worker
 import io.github.remmerw.loki.core.performConnection
-import io.github.remmerw.loki.core.performHandshake
-import io.github.remmerw.loki.core.processMessages
 import io.github.remmerw.loki.data.ExtendedMessageHandler
 import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
@@ -111,14 +109,11 @@ suspend fun CoroutineScope.download(
                 5000 // 5 sec
             }
         }
-        val connections = performConnection(
-            extendedProtocol, dataStorage,
-            worker, selectorManager, addresses
+
+        performConnection(
+            selectorManager, nodeId, torrentId, extendedProtocol,
+            handshakeHandlers, dataStorage, worker, addresses
         )
-        val handshakes = performHandshake(
-            nodeId, torrentId, handshakeHandlers, worker, connections
-        )
-        processMessages(handshakes)
 
         if (!dataStorage.initializeDone()) {
             metadataConsumer.waitForTorrent()

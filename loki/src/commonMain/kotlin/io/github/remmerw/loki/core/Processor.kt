@@ -8,7 +8,6 @@ import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
-import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.util.network.hostname
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +24,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-internal const val MAX_CONCURRENCY: Int = 10
+internal const val MAX_CONCURRENCY: Int = 25
 
 private suspend fun performHandshake(
     connection: Connection,
@@ -90,81 +89,18 @@ internal suspend fun performHandshake(
     return false
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
-internal fun CoroutineScope.processMessages(
-    channel: ReceiveChannel<Connection>
-): ReceiveChannel<Any> = produce {
-
-    val semaphore = Semaphore(2 * MAX_CONCURRENCY)
-    channel.consumeEach { connection ->
-        semaphore.acquire()
-
-        launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    launch {
-                        connection.reading()
-                        coroutineContext.cancelChildren()
-                    }
-                    launch {
-                        connection.posting()
-                        coroutineContext.cancelChildren()
-                    }
-                }
-            } catch (throwable: Throwable) {
-                debug(throwable)
-            } finally {
-                semaphore.release()
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalCoroutinesApi::class)
-internal fun CoroutineScope.performHandshake(
-    peerId: ByteArray,
-    torrentId: TorrentId,
-    handshakeHandlers: Collection<HandshakeHandler>,
-    worker: Worker,
-    channel: ReceiveChannel<Connection>
-): ReceiveChannel<Connection> = produce {
-
-    val semaphore = Semaphore(MAX_CONCURRENCY)
-    channel.consumeEach { connection ->
-        semaphore.acquire()
-
-        launch {
-            try {
-                withTimeoutOrNull(3000) {
-                    if (performHandshake(
-                            connection,
-                            peerId,
-                            torrentId,
-                            handshakeHandlers,
-                            worker
-                        )
-                    ) {
-                        send(connection)
-                    }
-                }
-            } catch (throwable: Throwable) {
-                debug(throwable)
-            } finally {
-                semaphore.release()
-            }
-        }
-    }
-}
-
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.performConnection(
+    selectorManager: SelectorManager,
+    peerId: ByteArray,
+    torrentId: TorrentId,
     extendedProtocol: ExtendedProtocol,
+    handshakeHandlers: Collection<HandshakeHandler>,
     dataStorage: DataStorage,
     worker: Worker,
-    selectorManager: SelectorManager,
     channel: ReceiveChannel<java.net.InetSocketAddress>
-): ReceiveChannel<Connection> = produce {
+): ReceiveChannel<Any> = produce {
 
     val semaphore = Semaphore(MAX_CONCURRENCY)
     channel.consumeEach { address ->
@@ -172,21 +108,51 @@ internal fun CoroutineScope.performConnection(
 
         launch {
             try {
-                withTimeoutOrNull(3000) {
-                    var socket: Socket? = null
+                val isa = InetSocketAddress(address.hostname, address.port)
+                val socket = withTimeoutOrNull(3000) {
                     try {
-                        val isa = InetSocketAddress(address.hostname, address.port)
-                        socket = aSocket(selectorManager)
+                        return@withTimeoutOrNull aSocket(selectorManager)
                             .tcp().connect(isa) {
                                 socketTimeout =
                                     30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
                             }
-                        send(
-                            Connection(isa, dataStorage, worker, socket, extendedProtocol)
-                        )
                     } catch (_: Throwable) {
-                        socket?.close()
-                        // this is the normal case when address is unreachable or timeouted
+                    }
+                    return@withTimeoutOrNull null
+                }
+                if (socket != null) {
+                    val connection = Connection(
+                        isa, dataStorage,
+                        worker, socket, extendedProtocol
+                    )
+                    val handshake = withTimeoutOrNull(3000) {
+                        try {
+                            return@withTimeoutOrNull performHandshake(
+                                connection,
+                                peerId,
+                                torrentId,
+                                handshakeHandlers,
+                                worker
+                            )
+                        } catch (_: Throwable) {
+                        }
+                        return@withTimeoutOrNull null
+                    }
+                    if (handshake == true) {
+                        try {
+                            withContext(Dispatchers.IO) {
+                                launch {
+                                    connection.reading()
+                                    coroutineContext.cancelChildren()
+                                }
+                                launch {
+                                    connection.posting()
+                                    coroutineContext.cancelChildren()
+                                }
+                            }
+                        } catch (throwable: Throwable) {
+                            debug(throwable)
+                        }
                     }
                 }
             } catch (throwable: Throwable) {
@@ -195,7 +161,6 @@ internal fun CoroutineScope.performConnection(
                 semaphore.release()
             }
         }
-
     }
 }
 
