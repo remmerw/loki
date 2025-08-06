@@ -5,20 +5,22 @@ import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
 import io.github.remmerw.loki.data.PROTOCOL_NAME
 import io.github.remmerw.loki.data.TorrentId
+import io.github.remmerw.loki.debug
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
+import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.util.network.hostname
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -88,15 +90,6 @@ internal suspend fun performHandshake(
     return false
 }
 
-private fun process(connection: Connection): Unit = runBlocking(Dispatchers.IO) {
-    launch {
-        connection.reading()
-    }
-    launch {
-        connection.posting()
-    }
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.processMessages(
     channel: ReceiveChannel<Connection>
@@ -104,9 +97,24 @@ internal fun CoroutineScope.processMessages(
 
     val semaphore = Semaphore(2 * MAX_CONCURRENCY)
     channel.consumeEach { connection ->
+        semaphore.acquire()
+
         launch {
-            semaphore.withPermit {
-                process(connection)
+            try {
+                withContext(Dispatchers.IO) {
+                    launch {
+                        connection.reading()
+                        coroutineContext.cancelChildren()
+                    }
+                    launch {
+                        connection.posting()
+                        coroutineContext.cancelChildren()
+                    }
+                }
+            } catch (throwable: Throwable) {
+                debug(throwable)
+            } finally {
+                semaphore.release()
             }
         }
     }
@@ -123,8 +131,10 @@ internal fun CoroutineScope.performHandshake(
 
     val semaphore = Semaphore(MAX_CONCURRENCY)
     channel.consumeEach { connection ->
+        semaphore.acquire()
+
         launch {
-            semaphore.withPermit {
+            try {
                 withTimeoutOrNull(3000) {
                     if (performHandshake(
                             connection,
@@ -137,6 +147,10 @@ internal fun CoroutineScope.performHandshake(
                         send(connection)
                     }
                 }
+            } catch (throwable: Throwable) {
+                debug(throwable)
+            } finally {
+                semaphore.release()
             }
         }
     }
@@ -154,13 +168,15 @@ internal fun CoroutineScope.performConnection(
 
     val semaphore = Semaphore(MAX_CONCURRENCY)
     channel.consumeEach { address ->
+        semaphore.acquire()
 
         launch {
-            semaphore.withPermit {
+            try {
                 withTimeoutOrNull(3000) {
+                    var socket: Socket? = null
                     try {
                         val isa = InetSocketAddress(address.hostname, address.port)
-                        val socket = aSocket(selectorManager)
+                        socket = aSocket(selectorManager)
                             .tcp().connect(isa) {
                                 socketTimeout =
                                     30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
@@ -169,12 +185,17 @@ internal fun CoroutineScope.performConnection(
                             Connection(isa, dataStorage, worker, socket, extendedProtocol)
                         )
                     } catch (_: Throwable) {
-
+                        socket?.close()
                         // this is the normal case when address is unreachable or timeouted
                     }
                 }
+            } catch (throwable: Throwable) {
+                debug(throwable)
+            } finally {
+                semaphore.release()
             }
         }
+
     }
 }
 
