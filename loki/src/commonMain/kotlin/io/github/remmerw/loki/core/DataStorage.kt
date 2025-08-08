@@ -187,7 +187,7 @@ internal data class DataStorage(val directory: Path) : Storage {
 
     internal fun digestChunk(piece: Int, chunk: Chunk): Boolean {
         lock.withLock {
-            val bytes = ByteArray(chunk.chunkSize())
+            val bytes = ByteArray(chunk.chunkSize)
             database.readBytes(position(piece), bytes)
             val digest = sha1(bytes)
             val result = digest.contentEquals(chunk.checksum)

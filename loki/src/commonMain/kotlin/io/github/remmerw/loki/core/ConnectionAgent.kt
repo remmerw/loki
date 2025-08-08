@@ -29,9 +29,6 @@ internal open class ConnectionAgent {
     @Volatile
     var interestUpdate: Message? = null
 
-    //@Volatile
-    //var connectionWorker: ConnectionWorker? = null
-
     private val outboundMessages: MutableList<Message> = mutableListOf()
     private val completedReads: MutableList<Request> = mutableListOf()
 

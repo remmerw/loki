@@ -21,6 +21,7 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
+import io.github.remmerw.nott.Peer
 import io.github.remmerw.nott.newNott
 import io.github.remmerw.nott.nodeId
 import io.github.remmerw.nott.requestGetPeers
@@ -31,6 +32,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 
@@ -48,10 +51,36 @@ interface Storage {
     fun storageUnits(): List<StorageUnit>
 }
 
+
+interface PeerStore {
+    suspend fun peers(limit: Int): List<Peer>
+
+    suspend fun store(peer: Peer)
+}
+
+
+class MemoryPeers : PeerStore {
+    private val peers: MutableSet<Peer> = mutableSetOf()
+    private val mutex = Mutex()
+
+    override suspend fun peers(limit: Int): List<Peer> {
+        mutex.withLock {
+            return peers.take(limit).toList()
+        }
+    }
+
+    override suspend fun store(peer: Peer) {
+        mutex.withLock {
+            peers.add(peer)
+        }
+    }
+}
+
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class)
 suspend fun CoroutineScope.download(
     magnetUri: MagnetUri,
     directory: Path,
+    peerStore: PeerStore = MemoryPeers(),
     progress: (State) -> Unit
 ): Storage {
     val torrentId = magnetUri.torrentId
@@ -62,7 +91,7 @@ suspend fun CoroutineScope.download(
     val selectorManager = SelectorManager(Dispatchers.IO)
 
     val nodeId = nodeId()
-    val nott = newNott(nodeId)
+    val nott = newNott(nodeId, peers = peerStore.peers(25))
 
     val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
         PeerExchangeHandler(),
@@ -99,7 +128,7 @@ suspend fun CoroutineScope.download(
 
 
     try {
-        val addresses = requestGetPeers(nott, torrentId.bytes) {
+        val responses = requestGetPeers(nott, torrentId.bytes) {
             val size = worker.purgedConnections()
             if (size > 10) {
                 30000 // 30 sec
@@ -112,7 +141,7 @@ suspend fun CoroutineScope.download(
 
         performConnection(
             selectorManager, nodeId, torrentId, extendedProtocol,
-            handshakeHandlers, dataStorage, worker, addresses
+            handshakeHandlers, dataStorage, worker, peerStore, responses
         )
 
         if (!dataStorage.initializeDone()) {
@@ -402,6 +431,7 @@ class MagnetUri private constructor(
         }
     }
 }
+
 
 @Suppress("SameReturnValue")
 private val isError: Boolean

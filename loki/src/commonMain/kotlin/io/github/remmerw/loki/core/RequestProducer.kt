@@ -68,8 +68,8 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
             val pieceIndex = key.shr(32).toInt()
             val offset = key.toInt()
             val chunk = dataStorage.chunk(pieceIndex)
-            val chunkSize = chunk.chunkSize()
-            val blockSize = chunk.blockSize()
+            val chunkSize = chunk.chunkSize
+            val blockSize = chunk.blockSize
             val length = min(blockSize, (chunkSize - offset))
 
             messageConsumer.invoke(Cancel(pieceIndex, offset, length))
@@ -80,8 +80,8 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
     private fun buildRequests(connection: Connection, pieceIndex: Int): List<Request> {
         val requests: MutableList<Request> = mutableListOf()
         val chunk = dataStorage.chunk(pieceIndex)
-        val chunkSize = chunk.chunkSize()
-        val blockSize = chunk.blockSize()
+        val chunkSize = chunk.chunkSize
+        val blockSize = chunk.blockSize
 
         for (blockIndex in 0 until chunk.blockCount()) {
             if (!chunk.isPresent(blockIndex)) {

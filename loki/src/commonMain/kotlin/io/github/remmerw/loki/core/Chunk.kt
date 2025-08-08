@@ -2,8 +2,8 @@ package io.github.remmerw.loki.core
 
 @Suppress("ArrayInDataClass")
 internal data class Chunk(
-    private val chunkSize: Int,
-    private val blockSize: Int,
+    val chunkSize: Int,
+    val blockSize: Int,
     val checksum: ByteArray
 ) {
     private val blockSet = createBlockSet(chunkSize, blockSize)
@@ -14,14 +14,6 @@ internal data class Chunk(
 
     fun blockCount(): Int {
         return blockSet.blockCount
-    }
-
-    fun chunkSize(): Int {
-        return chunkSize
-    }
-
-    fun blockSize(): Int {
-        return blockSize
     }
 
     fun isPresent(blockIndex: Int): Boolean {

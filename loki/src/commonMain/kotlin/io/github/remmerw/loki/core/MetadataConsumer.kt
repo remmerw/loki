@@ -121,7 +121,7 @@ internal class MetadataConsumer internal constructor(
 
                     var fetchedTorrent: Torrent? = null
                     try {
-                        val meta = metadata!!.metadata()
+                        val meta = metadata!!.metadata
                         fetchedTorrent = buildTorrent(
                             meta.readBytes(
                                 0,
@@ -135,7 +135,7 @@ internal class MetadataConsumer internal constructor(
 
                     if (fetchedTorrent != null) {
 
-                        dataStorage.metadata(metadata!!.metadata())
+                        dataStorage.metadata(metadata!!.metadata)
                         dataStorage.initialize(fetchedTorrent)
 
                         done = true

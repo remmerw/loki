@@ -1,11 +1,13 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.loki.PeerStore
 import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
 import io.github.remmerw.loki.data.PROTOCOL_NAME
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
+import io.github.remmerw.nott.PeerResponse
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
@@ -99,66 +101,73 @@ internal fun CoroutineScope.performConnection(
     handshakeHandlers: Collection<HandshakeHandler>,
     dataStorage: DataStorage,
     worker: Worker,
-    channel: ReceiveChannel<java.net.InetSocketAddress>
+    peerStore: PeerStore,
+    channel: ReceiveChannel<PeerResponse>
 ): ReceiveChannel<Any> = produce {
 
     val semaphore = Semaphore(MAX_CONCURRENCY)
-    channel.consumeEach { address ->
-        semaphore.acquire()
-
-        launch {
-            try {
-                val isa = InetSocketAddress(address.hostname, address.port)
-                val socket = withTimeoutOrNull(3000) {
-                    try {
-                        return@withTimeoutOrNull aSocket(selectorManager)
-                            .tcp().connect(isa) {
-                                socketTimeout =
-                                    30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
-                            }
-                    } catch (_: Throwable) {
-                    }
-                    return@withTimeoutOrNull null
-                }
-                if (socket != null) {
-                    val connection = Connection(
-                        isa, dataStorage,
-                        worker, socket, extendedProtocol
-                    )
-                    val handshake = withTimeoutOrNull(3000) {
+    channel.consumeEach { response ->
+        try {
+            peerStore.store(response.peer)
+        } catch (throwable: Throwable) {
+            debug(throwable)
+        }
+        response.addresses.forEach { address ->
+            semaphore.acquire()
+            launch {
+                try {
+                    val isa = InetSocketAddress(address.hostname, address.port)
+                    val socket = withTimeoutOrNull(3000) {
                         try {
-                            return@withTimeoutOrNull performHandshake(
-                                connection,
-                                peerId,
-                                torrentId,
-                                handshakeHandlers,
-                                worker
-                            )
+                            return@withTimeoutOrNull aSocket(selectorManager)
+                                .tcp().connect(isa) {
+                                    socketTimeout =
+                                        30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
+                                }
                         } catch (_: Throwable) {
                         }
                         return@withTimeoutOrNull null
                     }
-                    if (handshake == true) {
-                        try {
-                            withContext(Dispatchers.IO) {
-                                launch {
-                                    connection.reading()
-                                    coroutineContext.cancelChildren()
-                                }
-                                launch {
-                                    connection.posting()
-                                    coroutineContext.cancelChildren()
-                                }
+                    if (socket != null) {
+                        val connection = Connection(
+                            isa, dataStorage,
+                            worker, socket, extendedProtocol
+                        )
+                        val handshake = withTimeoutOrNull(3000) {
+                            try {
+                                return@withTimeoutOrNull performHandshake(
+                                    connection,
+                                    peerId,
+                                    torrentId,
+                                    handshakeHandlers,
+                                    worker
+                                )
+                            } catch (_: Throwable) {
                             }
-                        } catch (throwable: Throwable) {
-                            debug(throwable)
+                            return@withTimeoutOrNull null
+                        }
+                        if (handshake == true) {
+                            try {
+                                withContext(Dispatchers.IO) {
+                                    launch {
+                                        connection.reading()
+                                        coroutineContext.cancelChildren()
+                                    }
+                                    launch {
+                                        connection.posting()
+                                        coroutineContext.cancelChildren()
+                                    }
+                                }
+                            } catch (throwable: Throwable) {
+                                debug(throwable)
+                            }
                         }
                     }
+                } catch (throwable: Throwable) {
+                    debug(throwable)
+                } finally {
+                    semaphore.release()
                 }
-            } catch (throwable: Throwable) {
-                debug(throwable)
-            } finally {
-                semaphore.release()
             }
         }
     }

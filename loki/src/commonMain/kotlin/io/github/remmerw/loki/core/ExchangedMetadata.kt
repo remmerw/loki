@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.grid.Memory
 import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.ktor.util.sha1
@@ -15,16 +14,13 @@ internal data class ExchangedMetadata(
     val totalSize: Int
 ) {
     private val lock = reentrantLock()
-    private val metadata = allocateMemory(totalSize)
+    val metadata = allocateMemory(totalSize)
     private val metadataBlocks: BlockSet = createBlockSet(totalSize, BLOCK_SIZE)
 
     fun isBlockPresent(blockIndex: Int): Boolean {
         return metadataBlocks.isPresent(blockIndex)
     }
 
-    fun metadata(): Memory {
-        return metadata
-    }
 
     fun setBlock(blockIndex: Int, block: ByteArray) {
         lock.withLock {
