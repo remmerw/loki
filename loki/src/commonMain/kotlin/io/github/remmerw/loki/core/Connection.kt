@@ -278,10 +278,11 @@ internal class Connection internal constructor(
         bitfield: ByteArray
     ) {
         val piecesTotal = dataStorage.piecesTotal()
-        val peerDataBitfield = DataBitfield(
+        val dataBitfield = DataBitfield(
             piecesTotal, Bitmask.decode(bitfield, piecesTotal)
         )
-        dataStorage.pieceStatistics()!!.addBitfield(this, peerDataBitfield)  // todo
+        setDataBitfield(dataBitfield)
+        dataStorage.pieceStatistics()!!.addBitfield(dataBitfield)
     }
 
 

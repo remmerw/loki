@@ -7,13 +7,9 @@ internal data class PieceStatistics(private val piecesTotal: Int) {
     private val pieces: IntArray = IntArray(piecesTotal)
     private val lock = reentrantLock()
 
-    /**
-     * Add connection's bitfield.
-     * For each piece, that the peer has, total count will be incremented by 1.
-     */
-    fun addBitfield(connection: Connection, dataBitfield: DataBitfield) {
+
+    fun addBitfield(dataBitfield: DataBitfield) {
         validateBitfieldLength(dataBitfield)
-        connection.setDataBitfield(dataBitfield)
         lock.withLock {
             for (i in pieces.indices) {
                 if (dataBitfield.pieceStatus(i) == DataBitfield.PieceStatus.COMPLETE_VERIFIED) {

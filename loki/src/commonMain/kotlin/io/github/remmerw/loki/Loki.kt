@@ -434,7 +434,7 @@ private val isError: Boolean
 
 @Suppress("SameReturnValue")
 private val isDebug: Boolean
-    get() = true // todo set false
+    get() = false
 
 internal fun debug(text: String) {
     if (isDebug) {

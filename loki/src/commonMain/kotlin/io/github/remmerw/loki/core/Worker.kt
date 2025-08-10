@@ -82,14 +82,16 @@ internal class Worker(
         require(piecesTotal > 0) { "Pieces total not yet defined" }
         bitfields.forEach { (connection: Connection, bitfieldBytes: ByteArray) ->
             if (!connection.hasDataBitfield()) { // the else case should never happen
-                pieceStatistics.addBitfield(
-                    connection,
-                    DataBitfield(piecesTotal, Bitmask.decode(bitfieldBytes, piecesTotal))
+                val dataBitfield = DataBitfield(
+                    piecesTotal,
+                    Bitmask.decode(bitfieldBytes, piecesTotal)
                 )
+                connection.setDataBitfield(dataBitfield)
+                pieceStatistics.addBitfield(dataBitfield)
             }
         }
         lock.withLock {
-            haves.forEach { (connection: Connection, pieces: MutableSet<Int>) ->
+            haves.forEach { connection: Connection, pieces: MutableSet<Int> ->
                 pieces.forEach { piece: Int -> pieceStatistics.addPiece(connection, piece) }
             }
         }
