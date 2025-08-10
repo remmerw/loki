@@ -2,25 +2,24 @@ package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.MAX_OUTSTANDING_REQUESTS
 import io.github.remmerw.loki.data.Cancel
-import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.Request
 import kotlin.math.min
 
 internal class RequestProducer(private val dataStorage: DataStorage) : Produces {
 
 
-    override fun produce(connection: Connection, messageConsumer: (Message) -> Unit) {
+    override fun produce(connection: Connection) {
 
         if (dataStorage.initializeDone()) {
             val assignment = connection.assignment
             if (assignment == null) {
-                resetConnection(connection, messageConsumer)
+                resetConnection(connection)
                 return
             }
 
             val assignedPieces = assignment.pieces
             if (assignedPieces.isEmpty()) {
-                resetConnection(connection, messageConsumer)
+                resetConnection(connection)
                 return
             } else {
                 var finishedPieces: MutableList<Int>? = null
@@ -50,7 +49,7 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
                 val request = connection.firstRequest()
                 if (request == null) break
                 val key = key(request.piece, request.offset)
-                messageConsumer.invoke(request)
+                connection.postMessage(request)
                 connection.pendingRequestsAdd(key)
             }
         }
@@ -58,8 +57,7 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
 
 
     private fun resetConnection(
-        connection: Connection,
-        messageConsumer: (Message) -> Unit
+        connection: Connection
     ) {
         connection.clearRequests()
         connection.clearPieces()
@@ -72,7 +70,7 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
             val blockSize = chunk.blockSize
             val length = min(blockSize, (chunkSize - offset))
 
-            messageConsumer.invoke(Cancel(pieceIndex, offset, length))
+            connection.postMessage(Cancel(pieceIndex, offset, length))
         }
         connection.pendingRequestsClear()
     }

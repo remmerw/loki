@@ -7,7 +7,6 @@ import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.decodeBencodeToMap
 import io.github.remmerw.loki.BLOCK_SIZE
-import io.github.remmerw.loki.data.Message
 import kotlinx.io.Buffer
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -22,7 +21,7 @@ internal interface Consumers : Agent {
 }
 
 internal interface Produces : Agent {
-    fun produce(connection: Connection, messageConsumer: (Message) -> Unit)
+    fun produce(connection: Connection)
 }
 
 

@@ -154,7 +154,7 @@ internal class MetadataConsumer internal constructor(
     }
 
 
-    override fun produce(connection: Connection, messageConsumer: (Message) -> Unit) {
+    override fun produce(connection: Connection) {
         // stop here if metadata has already been fetched
         if (done) {
             return
@@ -178,7 +178,7 @@ internal class MetadataConsumer internal constructor(
                         connection.requestedFirst = TimeSource.Monotonic.markNow()
                         // start with the first piece of metadata
                         if (doConsume) {
-                            messageConsumer.invoke(UtMetadata(MetaType.REQUEST, 0))
+                            connection.postMessage(UtMetadata(MetaType.REQUEST, 0))
                         }
                     }
                 } else if (!connection.requestedAllPeers) {
@@ -186,7 +186,7 @@ internal class MetadataConsumer internal constructor(
                     // starting with block #1 because by now we should have already received block #0
                     for (i in 1 until metadata!!.blockCount) {
                         if (doConsume) {
-                            messageConsumer.invoke(UtMetadata(MetaType.REQUEST, i))
+                            connection.postMessage(UtMetadata(MetaType.REQUEST, i))
                         }
                     }
                 }

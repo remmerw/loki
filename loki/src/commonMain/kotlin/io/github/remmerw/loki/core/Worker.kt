@@ -45,10 +45,9 @@ internal class Worker(
             if (agent is Produces) {
                 prods.add(object : MessageProducer {
                     override fun produce(
-                        connection: Connection,
-                        messageConsumer: (Message) -> Unit
+                        connection: Connection
                     ) {
-                        agent.produce(connection, messageConsumer)
+                        agent.produce(connection)
                     }
                 })
             }
@@ -68,9 +67,9 @@ internal class Worker(
         }
     }
 
-    fun produce(connection: Connection, messageConsumer: (Message) -> Unit) {
+    fun produce(connection: Connection) {
         producers.forEach { producer: MessageProducer ->
-            producer.produce(connection, messageConsumer)
+            producer.produce(connection)
         }
     }
 
@@ -103,9 +102,7 @@ internal class Worker(
     }
 
     fun addConnection(connection: Connection) {
-
         check(connections.put(connection.address(), connection) == null)
-
     }
 
 
@@ -124,7 +121,7 @@ internal class Worker(
     }
 
 
-    fun produce(connection: Connection): Message? {
+    fun producedMessage(connection: Connection): Message? {
 
         val bitfield = dataStorage.dataBitfield()
 
@@ -143,8 +140,6 @@ internal class Worker(
         } else {
             return connection.nextMessage()
         }
-
-
     }
 
 

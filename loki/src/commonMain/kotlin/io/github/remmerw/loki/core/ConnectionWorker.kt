@@ -44,7 +44,7 @@ internal open class ConnectionWorker(
     }
 
 
-    private fun postMessage(message: Message) {
+    fun postMessage(message: Message) {
         if (isUrgent(message)) {
             outgoingMessages.addFirst(message)
         } else {
@@ -96,7 +96,7 @@ internal open class ConnectionWorker(
 
     fun getMessage(): Message? {
         if (outgoingMessages.isEmpty()) {
-            worker.produce(this as Connection) { message: Message -> postMessage(message) }
+            worker.produce(this as Connection)
             handleConnection()
         }
         return postProcessOutgoingMessage(outgoingMessages.removeFirstOrNull())

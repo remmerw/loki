@@ -86,10 +86,10 @@ internal class PieceAgent(
     }
 
 
-    override fun produce(connection: Connection, messageConsumer: (Message) -> Unit) {
+    override fun produce(connection: Connection) {
         if (dataStorage.initializeDone()) {
             completedPieces.forEach { index ->
-                messageConsumer.invoke(Have(index))
+                connection.postMessage(Have(index))
             }
         }
     }

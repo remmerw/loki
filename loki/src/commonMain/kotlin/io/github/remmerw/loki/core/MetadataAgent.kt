@@ -66,11 +66,11 @@ internal class MetadataAgent(
     }
 
 
-    override fun produce(connection: Connection, messageConsumer: (Message) -> Unit) {
+    override fun produce(connection: Connection) {
         if (dataStorage.initializeDone()) {
             val msg = connection.firstOutboundMessage()
             if (msg != null) {
-                messageConsumer.invoke(msg)
+                connection.postMessage(msg)
             }
         }
     }

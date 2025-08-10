@@ -41,7 +41,7 @@ internal class PeerRequestAgent(
     }
 
 
-    override fun produce(connection: Connection, messageConsumer: (Message) -> Unit) {
+    override fun produce(connection: Connection) {
         if (dataStorage.initializeDone()) {
             do {
                 val request = connection.firstCompleteRequest()
@@ -50,7 +50,7 @@ internal class PeerRequestAgent(
                     val length = request.length
                     val offset = request.offset
                     val piece = request.piece
-                    messageConsumer.invoke(Piece(piece, offset, length))
+                    connection.postMessage(Piece(piece, offset, length))
                 }
             } while (request != null)
         }

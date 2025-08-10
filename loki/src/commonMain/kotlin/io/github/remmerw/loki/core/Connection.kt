@@ -146,7 +146,7 @@ internal class Connection internal constructor(
         val readBlock = ByteArray(BLOCK_SIZE)
         while (!isClosed) {
             try {
-                val send = worker.produce(this)
+                val send = worker.producedMessage(this)
                 if (send != null) {
                     posting(send, readBlock)
                 }
