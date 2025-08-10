@@ -11,7 +11,4 @@ internal data class Cancel(
                     + "), offset (" + offset + "), length (" + length + ")")
         }
     }
-
-    override val type: Type
-        get() = Type.Cancel
 }

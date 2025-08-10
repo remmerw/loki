@@ -91,7 +91,12 @@ internal open class ConnectionState : ConnectionAgent() {
         pendingRequests.clear()
     }
 
-    fun pendingRequestsRemove(key: Long): Boolean {
+    private fun pendingRequestsRemove(key: Long): Boolean {
         return pendingRequests.remove(key)
+    }
+
+    protected fun checkBlockIsExpected(piece: Int, offset: Int): Boolean {
+        val key = key(piece, offset)
+        return pendingRequestsRemove(key)
     }
 }

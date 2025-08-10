@@ -58,8 +58,4 @@ internal data class Handshake(
         bytes[byteIndex] = (currentByte.toInt() or bitMask).toByte()
     }
 
-    override val type: Type
-        get() = Type.Handshake
-
-
 }

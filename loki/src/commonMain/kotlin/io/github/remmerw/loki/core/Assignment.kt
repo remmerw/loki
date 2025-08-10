@@ -38,8 +38,8 @@ internal class Assignment internal constructor(
         }
     }
 
-    fun isAssigned(pieceIndex: Int): Boolean {
-        return pieces.contains(pieceIndex)
+    fun isAssigned(piece: Int): Boolean {
+        return pieces.contains(piece)
     }
 
     val status: Status

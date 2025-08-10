@@ -12,7 +12,4 @@ internal data class Request(
         }
 
     }
-
-    override val type: Type
-        get() = Type.Request
 }

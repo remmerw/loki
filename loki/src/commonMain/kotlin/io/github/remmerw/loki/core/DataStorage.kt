@@ -5,6 +5,7 @@ import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.grid.randomAccessFile
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
+import io.ktor.util.collections.ConcurrentSet
 import io.ktor.util.sha1
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
@@ -22,6 +23,7 @@ internal data class DataStorage(val directory: Path) : Storage {
     private val bitmaskDatabase = Path(directory, "bitmask.db")
     private val torrentDatabase = Path(directory, "torrent.db")
     private val database = randomAccessFile(Path(directory, "database.db"))
+    private val completedPieces: MutableSet<Int> = ConcurrentSet()
     private val lock = reentrantLock()
 
     init {
@@ -57,6 +59,14 @@ internal data class DataStorage(val directory: Path) : Storage {
     @Volatile
     private var pieceStatistics: PieceStatistics? = null
 
+
+    fun completePiece(piece: Int) {
+        completedPieces.add(piece)
+    }
+
+    fun completePieces(): Set<Int> {
+        return completedPieces
+    }
 
     fun initializeDone(): Boolean {
         return initializeDone

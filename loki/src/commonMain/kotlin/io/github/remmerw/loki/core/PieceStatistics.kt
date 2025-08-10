@@ -66,7 +66,7 @@ internal data class PieceStatistics(private val piecesTotal: Int) {
      * Update peer's bitfield by indicating that the peer has a given piece.
      * Total count of the specified piece will be incremented by 1.
      */
-    fun addPiece(connection: Connection, pieceIndex: Int) {
+    fun addPiece(connection: Connection, piece: Int) {
         lock.withLock {
             var bitfield = connection.dataBitfield()
             if (bitfield == null) {
@@ -74,16 +74,16 @@ internal data class PieceStatistics(private val piecesTotal: Int) {
                 connection.setDataBitfield(bitfield)
             }
 
-            markPieceVerified(bitfield, pieceIndex)
+            markPieceVerified(bitfield, piece)
         }
     }
 
 
-    private fun markPieceVerified(dataBitfield: DataBitfield, pieceIndex: Int) {
+    private fun markPieceVerified(dataBitfield: DataBitfield, piece: Int) {
         lock.withLock {
-            if (!dataBitfield.isVerified(pieceIndex)) {
-                dataBitfield.markVerified(pieceIndex)
-                pieces[pieceIndex]++
+            if (!dataBitfield.isVerified(piece)) {
+                dataBitfield.markVerified(piece)
+                pieces[piece]++
             }
         }
     }

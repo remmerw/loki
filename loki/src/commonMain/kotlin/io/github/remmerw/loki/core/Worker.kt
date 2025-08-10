@@ -2,12 +2,15 @@ package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.PEER_INACTIVITY_THRESHOLD
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
+import io.github.remmerw.loki.data.ExtendedMessage
 import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.Type
 import io.github.remmerw.loki.data.interested
 import io.github.remmerw.loki.data.notInterested
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.util.collections.ConcurrentMap
+import kotlinx.atomicfu.locks.reentrantLock
+import kotlinx.atomicfu.locks.withLock
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -21,6 +24,9 @@ internal class Worker(
     agents: List<Agent>
 ) {
     private val connections: MutableMap<InetSocketAddress, Connection> = ConcurrentMap()
+    private val bitfields: MutableMap<Connection, ByteArray> = ConcurrentMap()
+    private val haves: MutableMap<Connection, MutableSet<Int>> = mutableMapOf()
+    private val lock = reentrantLock()
 
     @Volatile
     private var lastUpdatedAssignments: ValueTimeMark = TimeSource.Monotonic.markNow()
@@ -56,14 +62,49 @@ internal class Worker(
         producers = prods.toSet()
     }
 
+    fun consumeBitfield(bitfield: ByteArray, connection: Connection) {
+        bitfields[connection] = bitfield
+    }
+
+    fun consumeHave(piece: Int, connection: Connection) {
+        lock.withLock {
+            val peerHaves = haves.getOrPut(connection) { mutableSetOf() }
+            peerHaves.add(piece)
+        }
+    }
+
+    // process bitfields and haves that we received while fetching metadata
+    fun processMessages() {
+
+        val pieceStatistics = dataStorage.pieceStatistics()!!
+        val piecesTotal = dataStorage.piecesTotal()
+
+        require(piecesTotal > 0) { "Pieces total not yet defined" }
+        bitfields.forEach { (connection: Connection, bitfieldBytes: ByteArray) ->
+            if (!connection.hasDataBitfield()) { // the else case should never happen
+                pieceStatistics.addBitfield(
+                    connection,
+                    DataBitfield(piecesTotal, Bitmask.decode(bitfieldBytes, piecesTotal))
+                )
+            }
+        }
+        lock.withLock {
+            haves.forEach { (connection: Connection, pieces: MutableSet<Int>) ->
+                pieces.forEach { piece: Int -> pieceStatistics.addPiece(connection, piece) }
+            }
+        }
+    }
+
 
     fun consume(message: Message, connection: Connection) {
-        val consumers: Collection<MessageConsumer>? = consumers[message.type]
-        consumers?.forEach { consumer: MessageConsumer ->
-            consumer.consume(
-                message,
-                connection
-            )
+        if (message is ExtendedMessage) {
+            val consumers: Collection<MessageConsumer>? = consumers[message.type]
+            consumers?.forEach { consumer: MessageConsumer ->
+                consumer.consume(
+                    message,
+                    connection
+                )
+            }
         }
     }
 

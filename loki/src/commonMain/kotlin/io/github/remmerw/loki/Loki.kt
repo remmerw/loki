@@ -1,16 +1,14 @@
 package io.github.remmerw.loki
 
 import com.eygraber.uri.Uri
-import io.github.remmerw.loki.core.BitfieldCollectingConsumer
 import io.github.remmerw.loki.core.BitfieldConnectionHandler
-import io.github.remmerw.loki.core.BitfieldConsumer
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.ExtendedHandshakeConsumer
 import io.github.remmerw.loki.core.ExtendedProtocolHandshakeHandler
 import io.github.remmerw.loki.core.MetadataAgent
 import io.github.remmerw.loki.core.MetadataConsumer
-import io.github.remmerw.loki.core.PeerRequestAgent
-import io.github.remmerw.loki.core.PieceAgent
+import io.github.remmerw.loki.core.PeerRequestProducer
+import io.github.remmerw.loki.core.PieceProducer
 import io.github.remmerw.loki.core.RequestProducer
 import io.github.remmerw.loki.core.StorageUnit
 import io.github.remmerw.loki.core.Worker
@@ -111,16 +109,15 @@ suspend fun CoroutineScope.download(
     )
 
     val metadataConsumer = MetadataConsumer(dataStorage, torrentId)
-    // need to also receive Bitfields and Haves (without validation for the number of pieces...)
-    val bitfieldConsumer = BitfieldCollectingConsumer(dataStorage)
-
 
     val worker = Worker(
         dataStorage, listOf(
-            BitfieldConsumer(dataStorage), ExtendedHandshakeConsumer(),
-            MetadataAgent(dataStorage), RequestProducer(dataStorage),
-            PeerRequestAgent(dataStorage), PieceAgent(dataStorage),
-            metadataConsumer, bitfieldConsumer
+            ExtendedHandshakeConsumer(),
+            MetadataAgent(dataStorage),
+            RequestProducer(dataStorage),
+            PeerRequestProducer(dataStorage),
+            PieceProducer(dataStorage),
+            metadataConsumer
         )
     )
 
@@ -148,7 +145,7 @@ suspend fun CoroutineScope.download(
 
 
         // process bitfields and haves that we received while fetching metadata
-        bitfieldConsumer.processMessages()
+        worker.processMessages()
 
 
         val dataBitfield = dataStorage.dataBitfield()!! // must be defined
@@ -437,7 +434,7 @@ private val isError: Boolean
 
 @Suppress("SameReturnValue")
 private val isDebug: Boolean
-    get() = true
+    get() = true // todo set false
 
 internal fun debug(text: String) {
     if (isDebug) {

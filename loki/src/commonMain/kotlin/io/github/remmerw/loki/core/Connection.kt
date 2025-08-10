@@ -274,6 +274,60 @@ internal class Connection internal constructor(
         }
     }
 
+    private fun consumeBitfield(
+        bitfield: ByteArray
+    ) {
+        val piecesTotal = dataStorage.piecesTotal()
+        val peerDataBitfield = DataBitfield(
+            piecesTotal, Bitmask.decode(bitfield, piecesTotal)
+        )
+        dataStorage.pieceStatistics()!!.addBitfield(this, peerDataBitfield)  // todo
+    }
+
+
+    private fun consumePiece(piece: Int, offset: Int, length: Int) {
+        if (!dataStorage.initializeDone()) {
+            return
+        }
+
+        // check that this block was requested in the first place
+        if (!checkBlockIsExpected(piece, offset)) {
+            return
+        }
+
+        // discard blocks for pieces that have already been verified
+        if (dataStorage.isComplete(piece)) {
+            return
+        }
+
+        val assignment = this.assignment
+        if (assignment != null) {
+            if (assignment.isAssigned(piece)) {
+                assignment.check()
+            }
+        }
+
+        val chunk = dataStorage.chunk(piece)
+
+        if (chunk.isComplete) {
+            return
+        }
+
+        val data = this.writeBlock()
+        dataStorage.writeBlock(piece, offset, data, length)
+        chunk.markAvailable(offset, length)
+
+        if (chunk.isComplete) {
+            if (dataStorage.digestChunk(piece, chunk)) {
+                dataStorage.completePiece(piece)
+            } else {
+                // chunk was shit (for testing now - close connection)
+                debug("Received shit chunk, close connection -> " + this.address())
+                this.close()
+            }
+        }
+    }
+
 
     private suspend fun decode(channel: ByteReadChannel, length: Int): Message? {
 
@@ -282,32 +336,53 @@ internal class Connection internal constructor(
 
         return when (messageType) {
             PIECE_ID -> {
-                val pieceIndex = channel.readInt()
+                val piece = channel.readInt()
                 size = size - Int.SIZE_BYTES
-                val blockOffset = channel.readInt()
+                val offset = channel.readInt()
                 size = size - Int.SIZE_BYTES
                 val data = writeBlock()
                 channel.readFully(data, 0, size)
-                return Piece(pieceIndex, blockOffset, size)
+                consumePiece(piece, offset, size)
+                return null
             }
 
             HAVE_ID -> {
-                val pieceIndex = channel.readInt()
-                return Have(pieceIndex)
+                val piece = channel.readInt()
+
+                if (dataStorage.initializeDone()) {
+                    dataStorage.pieceStatistics()!!.addPiece(this, piece)
+                } else {
+                    worker.consumeHave(piece, this)
+                }
+                return null
             }
 
             REQUEST_ID -> {
-                val pieceIndex = channel.readInt()
-                val blockOffset = channel.readInt()
-                val blockLength = channel.readInt()
+                val piece = channel.readInt()
+                val offset = channel.readInt()
+                val length = channel.readInt()
 
-                return Request(pieceIndex, blockOffset, blockLength)
+
+                if (dataStorage.initializeDone()) {
+                    if (!choking) {
+                        if (dataStorage.isVerified(piece)) {
+                            addRequest(Request(piece, offset, length))
+                        }
+                    }
+                }
+                return null
             }
 
             BITFIELD_ID -> {
                 val data = ByteArray(size)
                 channel.readFully(data)
-                return Bitfield(data)
+
+                if (dataStorage.initializeDone()) {
+                    consumeBitfield(data)
+                } else {
+                    worker.consumeBitfield(data, this)
+                }
+                return null
             }
 
             CANCEL_ID -> {
@@ -340,7 +415,8 @@ internal class Connection internal constructor(
 
             PORT_ID -> {
                 val port = channel.readShort().toInt() and 0x0000FFFF
-                return Port(port)
+                debug("Port not yet used $port")
+                return null
             }
 
             EXTENDED_MESSAGE_ID -> {

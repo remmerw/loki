@@ -9,8 +9,4 @@ internal data class Piece(
     init {
         require(!(piece < 0 || offset < 0 || length < 0)) { "Invalid arguments" }
     }
-
-    override val type: Type
-        get() = Type.Piece
-
 }
