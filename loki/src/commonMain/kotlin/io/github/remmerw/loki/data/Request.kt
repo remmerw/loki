@@ -1,9 +1,5 @@
 package io.github.remmerw.loki.data
 
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.writeByte
-import io.ktor.utils.io.writeInt
-
 internal data class Request(
     val piece: Int,
     val offset: Int,
@@ -19,14 +15,4 @@ internal data class Request(
 
     override val type: Type
         get() = Type.Request
-
-
-    suspend fun encode(channel: ByteWriteChannel) {
-        val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
-        channel.writeInt(size)
-        channel.writeByte(REQUEST_ID)
-        channel.writeInt(piece)
-        channel.writeInt(offset)
-        channel.writeInt(length)
-    }
 }

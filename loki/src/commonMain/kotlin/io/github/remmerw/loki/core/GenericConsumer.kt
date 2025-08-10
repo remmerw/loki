@@ -87,7 +87,7 @@ internal class GenericConsumer(private val dataStorage: DataStorage) : Consumers
                     connection: Connection
                 ) {
                     if (dataStorage.initializeDone()) {
-                        connection.onCancel(message as Cancel)
+                        connection.cancelRequest(message as Cancel)
                     }
                 }
             })

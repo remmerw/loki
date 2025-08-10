@@ -16,6 +16,7 @@ import io.github.remmerw.loki.data.Handshake
 import io.github.remmerw.loki.data.Have
 import io.github.remmerw.loki.data.INTERESTED_ID
 import io.github.remmerw.loki.data.Interested
+import io.github.remmerw.loki.data.KEEPALIVE
 import io.github.remmerw.loki.data.KeepAlive
 import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.NOT_INTERESTED_ID
@@ -52,6 +53,7 @@ import io.ktor.utils.io.writeBuffer
 import io.ktor.utils.io.writeByte
 import io.ktor.utils.io.writeByteArray
 import io.ktor.utils.io.writeInt
+import io.ktor.utils.io.writeShort
 import kotlinx.coroutines.yield
 import kotlinx.io.Buffer
 import kotlin.concurrent.Volatile
@@ -98,10 +100,10 @@ internal class Connection internal constructor(
                 require(length >= 0) { "Invalid read token received" }
 
                 if (length == 0) {
-                    worker.consume(this, keepAlive()) // keep has length 0
+                    accept(keepAlive()) // keep has length 0
                 } else {
                     val message = decode(receiveChannel, length)
-                    worker.consume(this, message)
+                    accept(message)
                 }
                 yield()
             } catch (throwable: Throwable) {
@@ -162,11 +164,16 @@ internal class Connection internal constructor(
         try {
             when (message) {
                 is Handshake -> {
-                    message.encode(sendChannel)
+                    val data = message.name.encodeToByteArray()
+                    sendChannel.writeByte(data.size.toByte())
+                    sendChannel.writeByteArray(data)
+                    sendChannel.writeByteArray(message.reserved)
+                    sendChannel.writeByteArray(message.torrentId.bytes)
+                    sendChannel.writeByteArray(message.peerId)
                 }
 
                 is KeepAlive -> {
-                    message.encode(sendChannel)
+                    sendChannel.writeByteArray(KEEPALIVE)
                 }
 
                 is Piece -> {
@@ -187,39 +194,66 @@ internal class Connection internal constructor(
                 }
 
                 is Have -> {
-                    message.encode(sendChannel)
+                    val size = Byte.SIZE_BYTES + Int.SIZE_BYTES
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(HAVE_ID)
+                    sendChannel.writeInt(message.piece)
                 }
 
                 is Request -> {
-                    message.encode(sendChannel)
+                    val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(REQUEST_ID)
+                    sendChannel.writeInt(message.piece)
+                    sendChannel.writeInt(message.offset)
+                    sendChannel.writeInt(message.length)
                 }
 
                 is Bitfield -> {
-                    message.encode(sendChannel)
+                    val size = Byte.SIZE_BYTES + message.bitfield.size
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(BITFIELD_ID)
+                    sendChannel.writeByteArray(message.bitfield)
                 }
 
                 is Cancel -> {
-                    message.encode(sendChannel)
+                    val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(CANCEL_ID)
+                    sendChannel.writeInt(message.piece)
+                    sendChannel.writeInt(message.offset)
+                    sendChannel.writeInt(message.length)
                 }
 
                 is Choke -> {
-                    message.encode(sendChannel)
+                    val size = Byte.SIZE_BYTES
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(CHOKE_ID)
                 }
 
                 is Unchoke -> {
-                    message.encode(sendChannel)
+                    val size = Byte.SIZE_BYTES
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(UNCHOKE_ID)
                 }
 
                 is Interested -> {
-                    message.encode(sendChannel)
+                    val size = Byte.SIZE_BYTES
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(INTERESTED_ID)
                 }
 
                 is NotInterested -> {
-                    message.encode(sendChannel)
+                    val size = Byte.SIZE_BYTES
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(NOT_INTERESTED_ID)
                 }
 
                 is Port -> {
-                    message.encode(sendChannel)
+                    val size = Byte.SIZE_BYTES + Short.SIZE_BYTES
+                    sendChannel.writeInt(size)
+                    sendChannel.writeByte(PORT_ID)
+                    sendChannel.writeShort(message.port.toShort())
                 }
 
                 is ExtendedMessage -> {
@@ -232,7 +266,7 @@ internal class Connection internal constructor(
                 }
 
                 else -> {
-                    throw Exception("not supported message " + message.type.name)
+                    throw Exception("not supported message $message")
                 }
             }
             sendChannel.flush()

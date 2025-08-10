@@ -1,10 +1,14 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.CHOKING_THRESHOLD
+import io.github.remmerw.loki.data.Cancel
+import io.github.remmerw.loki.data.Choke
 import io.github.remmerw.loki.data.Have
+import io.github.remmerw.loki.data.Interested
 import io.github.remmerw.loki.data.Message
+import io.github.remmerw.loki.data.NotInterested
 import io.github.remmerw.loki.data.Piece
-import io.github.remmerw.loki.data.Type
+import io.github.remmerw.loki.data.Unchoke
 import io.github.remmerw.loki.data.choke
 import io.github.remmerw.loki.data.unchoke
 import kotlinx.atomicfu.locks.reentrantLock
@@ -31,10 +35,9 @@ internal open class ConnectionWorker(
         }
 
         message = getMessage()
-        if (message != null && Type.Have == message.type) {
-            val have = message as Have
+        if (message != null && message is Have) {
             worker.connections().forEach { connection: Connection ->
-                connection.appendHave(have)
+                connection.appendHave(message)
             }
         }
         return message
@@ -43,46 +46,35 @@ internal open class ConnectionWorker(
 
     private fun postMessage(message: Message) {
         if (isUrgent(message)) {
-            addUrgent(message)
+            outgoingMessages.addFirst(message)
         } else {
-            add(message)
+            outgoingMessages.add(message)
         }
     }
-
-    private fun add(message: Message) {
-        outgoingMessages.add(message)
-    }
-
-    private fun addUrgent(message: Message) {
-        outgoingMessages.addFirst(message)
-    }
-
 
     private fun postProcessOutgoingMessage(message: Message?): Message? {
         if (message == null) {
             return null
         }
 
-        val messageType = message.type
 
-        if (Type.Piece == messageType) {
-            val piece = message as Piece
+        if (message is Piece) {
             // check that peer hadn't sent cancel while we were preparing the requested block
-            if (isCancelled(piece)) {
+            if (isCancelled(message)) {
                 // dispose of message
                 return null
             }
         }
-        if (Type.Interested == messageType) {
+        if (message is Interested) {
             isInterested = true
         }
-        if (Type.NotInterested == messageType) {
+        if (message is NotInterested) {
             isInterested = false
         }
-        if (Type.Choke == messageType) {
+        if (message is Choke) {
             shouldChoke = true
         }
-        if (Type.Unchoke == messageType) {
+        if (message is Unchoke) {
             shouldChoke = false
         }
 
@@ -96,19 +88,16 @@ internal open class ConnectionWorker(
         return isCanceled(key(pieceIndex, offset))
     }
 
-    private fun updateConnection() {
-        handleConnection { message: Message -> postMessage(message) }
-    }
 
     fun accept(message: Message) {
         worker.consume(message, this as Connection)
-        updateConnection()
+        handleConnection()
     }
 
     fun getMessage(): Message? {
         if (outgoingMessages.isEmpty()) {
-            worker.produce(this as Connection) { message: Message -> this.postMessage(message) }
-            updateConnection()
+            worker.produce(this as Connection) { message: Message -> postMessage(message) }
+            handleConnection()
         }
         return postProcessOutgoingMessage(outgoingMessages.removeFirstOrNull())
     }
@@ -116,7 +105,7 @@ internal open class ConnectionWorker(
     /**
      * Inspects connection state and yields choke/unchoke messages when appropriate.
      */
-    private fun handleConnection(messageConsumer: (Message) -> Unit) {
+    private fun handleConnection() {
         var shouldChokeCheck = shouldChoke
         val chokingCheck = choking
 
@@ -136,20 +125,19 @@ internal open class ConnectionWorker(
                     // choke immediately
                     choking = true
                     shouldChoke = null
-                    messageConsumer.invoke(choke())
+                    postMessage(choke())
                     lastChoked = TimeSource.Monotonic.markNow()
                 } else if (mightUnchoke()) {
                     choking = false
                     shouldChoke = null
-                    messageConsumer.invoke(unchoke())
+                    postMessage(unchoke())
                 }
             }
         }
     }
 
     private fun isUrgent(message: Message): Boolean {
-        val messageType = message.type
-        return Type.Choke == messageType || Type.Unchoke == messageType || Type.Cancel == messageType
+        return message is Choke || message is Unchoke || message is Cancel
     }
 
     private fun mightUnchoke(): Boolean {

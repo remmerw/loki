@@ -8,7 +8,7 @@ import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 
 internal open class ConnectionState : ConnectionAgent() {
-    private val cancelledPeerRequests: MutableSet<Long> = ConcurrentSet()
+    private val cancelledRequests: MutableSet<Long> = ConcurrentSet()
     private val pendingRequests: MutableSet<Long> = ConcurrentSet()
     private val pieces: MutableSet<Int> = ConcurrentSet()
     private val requests: ArrayDeque<Request> = ArrayDeque() // no concurrency
@@ -59,12 +59,8 @@ internal open class ConnectionState : ConnectionAgent() {
         this.requests.addAll(requests)
     }
 
-
-    /**
-     * Signal that remote peer has cancelled a previously issued block request.
-     */
-    fun onCancel(cancel: Cancel) {
-        cancelledPeerRequests.add(
+    fun cancelRequest(cancel: Cancel) {
+        cancelledRequests.add(
             key(
                 cancel.piece, cancel.offset
             )
@@ -72,7 +68,7 @@ internal open class ConnectionState : ConnectionAgent() {
     }
 
     fun isCanceled(key: Long): Boolean {
-        return cancelledPeerRequests.remove(key)
+        return cancelledRequests.remove(key)
     }
 
 

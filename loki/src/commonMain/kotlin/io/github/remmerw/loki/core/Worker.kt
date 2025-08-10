@@ -124,10 +124,6 @@ internal class Worker(
     }
 
 
-    fun consume(connection: Connection, message: Message) {
-        connection.accept(message)
-    }
-
     fun produce(connection: Connection): Message? {
 
         val bitfield = dataStorage.dataBitfield()
