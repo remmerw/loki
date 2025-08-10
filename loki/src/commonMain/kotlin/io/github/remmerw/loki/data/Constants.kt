@@ -1,12 +1,6 @@
 package io.github.remmerw.loki.data
 
 
-private val keepAlive = KeepAlive()
-
-internal fun keepAlive(): KeepAlive {
-    return keepAlive
-}
-
 private val choke = Choke()
 
 internal fun choke(): Choke {

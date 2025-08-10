@@ -7,7 +7,6 @@ import io.github.remmerw.loki.core.BitfieldConsumer
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.ExtendedHandshakeConsumer
 import io.github.remmerw.loki.core.ExtendedProtocolHandshakeHandler
-import io.github.remmerw.loki.core.GenericConsumer
 import io.github.remmerw.loki.core.MetadataAgent
 import io.github.remmerw.loki.core.MetadataConsumer
 import io.github.remmerw.loki.core.PeerRequestAgent
@@ -118,7 +117,6 @@ suspend fun CoroutineScope.download(
 
     val worker = Worker(
         dataStorage, listOf(
-            GenericConsumer(dataStorage),
             BitfieldConsumer(dataStorage), ExtendedHandshakeConsumer(),
             MetadataAgent(dataStorage), RequestProducer(dataStorage),
             PeerRequestAgent(dataStorage), PieceAgent(dataStorage),

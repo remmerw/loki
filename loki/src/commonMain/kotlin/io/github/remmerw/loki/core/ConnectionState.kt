@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.data.Cancel
 import io.github.remmerw.loki.data.Request
 import io.ktor.util.collections.ConcurrentSet
 import kotlin.concurrent.Volatile
@@ -59,10 +58,10 @@ internal open class ConnectionState : ConnectionAgent() {
         this.requests.addAll(requests)
     }
 
-    fun cancelRequest(cancel: Cancel) {
+    fun cancelRequest(piece: Int, offset: Int) {
         cancelledRequests.add(
             key(
-                cancel.piece, cancel.offset
+                piece, offset
             )
         )
     }

@@ -89,11 +89,6 @@ internal open class ConnectionWorker(
     }
 
 
-    fun accept(message: Message) {
-        worker.consume(message, this as Connection)
-        handleConnection()
-    }
-
     fun getMessage(): Message? {
         if (outgoingMessages.isEmpty()) {
             worker.produce(this as Connection)
@@ -105,7 +100,7 @@ internal open class ConnectionWorker(
     /**
      * Inspects connection state and yields choke/unchoke messages when appropriate.
      */
-    private fun handleConnection() {
+    protected fun handleConnection() {
         var shouldChokeCheck = shouldChoke
         val chokingCheck = choking
 

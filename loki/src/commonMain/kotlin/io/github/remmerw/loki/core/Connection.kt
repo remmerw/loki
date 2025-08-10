@@ -32,11 +32,6 @@ import io.github.remmerw.loki.data.TORRENT_ID_LENGTH
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UNCHOKE_ID
 import io.github.remmerw.loki.data.Unchoke
-import io.github.remmerw.loki.data.choke
-import io.github.remmerw.loki.data.interested
-import io.github.remmerw.loki.data.keepAlive
-import io.github.remmerw.loki.data.notInterested
-import io.github.remmerw.loki.data.unchoke
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.Socket
@@ -99,11 +94,14 @@ internal class Connection internal constructor(
                 val length = receiveChannel.readInt()
                 require(length >= 0) { "Invalid read token received" }
 
-                if (length == 0) {
-                    accept(keepAlive()) // keep has length 0
+                if (length == 0) {  // keep has length 0
+                    handleConnection()
                 } else {
                     val message = decode(receiveChannel, length)
-                    accept(message)
+                    if (message != null) {
+                        worker.consume(message, this)
+                    }
+                    handleConnection()
                 }
                 yield()
             } catch (throwable: Throwable) {
@@ -277,7 +275,7 @@ internal class Connection internal constructor(
     }
 
 
-    private suspend fun decode(channel: ByteReadChannel, length: Int): Message {
+    private suspend fun decode(channel: ByteReadChannel, length: Int): Message? {
 
         val messageType = channel.readByte()
         var size = length - Byte.SIZE_BYTES
@@ -315,24 +313,29 @@ internal class Connection internal constructor(
             CANCEL_ID -> {
                 val pieceIndex = channel.readInt()
                 val blockOffset = channel.readInt()
-                val blockLength = channel.readInt()
-                return Cancel(pieceIndex, blockOffset, blockLength)
+                channel.readInt()
+                this.cancelRequest(pieceIndex, blockOffset)
+                return null
             }
 
             CHOKE_ID -> {
-                return choke()
+                this.isPeerChoking = true
+                return null
             }
 
             UNCHOKE_ID -> {
-                return unchoke()
+                this.isPeerChoking = false
+                return null
             }
 
             INTERESTED_ID -> {
-                return interested()
+                this.isPeerInterested = true
+                return null
             }
 
             NOT_INTERESTED_ID -> {
-                return notInterested()
+                this.isPeerInterested = false
+                return null
             }
 
             PORT_ID -> {
