@@ -1,8 +1,10 @@
 package io.github.remmerw.loki.data
 
 import io.github.remmerw.buri.BEInteger
+import io.github.remmerw.buri.BEMap
 import io.github.remmerw.buri.BEObject
-import io.github.remmerw.buri.decodeBencodeToMap
+import io.github.remmerw.buri.BEReader
+import io.github.remmerw.buri.decodeBencode
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
@@ -18,8 +20,8 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
         return utMetadata.encode(buffer)
     }
 
-    override fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
-        return decodeMetadata(buffer)
+    override fun doDecode(address: InetSocketAddress, reader: BEReader): ExtendedMessage {
+        return decodeMetadata(reader)
     }
 
     override fun localTypeId(): Byte {
@@ -31,9 +33,9 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
     }
 
 
-    private fun decodeMetadata(buffer: Buffer): ExtendedMessage {
+    private fun decodeMetadata(reader: BEReader): ExtendedMessage {
 
-        val map = decodeBencodeToMap(buffer)
+        val map = (reader.decodeBencode() as BEMap).toMap()
         val messageType = getMessageType(map)
         val pieceIndex = getPieceIndex(map)
         val totalSize = getTotalSize(map)
@@ -43,7 +45,7 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
             }
 
             MetaType.DATA -> {
-                UtMetadata(MetaType.DATA, pieceIndex, totalSize, buffer.readByteArray())
+                UtMetadata(MetaType.DATA, pieceIndex, totalSize, readByteArray(reader))
             }
 
             MetaType.REJECT -> {
@@ -53,6 +55,13 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
 
     }
 
+    private fun readByteArray(reader: BEReader): ByteArray {
+        val buffer = Buffer()
+        while (!reader.exhausted()) {
+            buffer.writeByte(reader.read())
+        }
+        return buffer.readByteArray()
+    }
 
     private fun getMessageType(map: Map<String, BEObject>): MetaType {
         val type = map["msg_type"] as BEInteger?

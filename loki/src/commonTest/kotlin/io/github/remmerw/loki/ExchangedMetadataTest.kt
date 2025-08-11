@@ -1,5 +1,6 @@
 package io.github.remmerw.loki
 
+import io.github.remmerw.buri.BEReader
 import io.github.remmerw.loki.core.Bitmask
 import io.github.remmerw.loki.core.ExchangedMetadata
 import io.github.remmerw.loki.data.MetaType
@@ -9,6 +10,7 @@ import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
+import kotlinx.io.readByteArray
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -49,8 +51,9 @@ class ExchangedMetadataTest {
             val inetSocketAddress = InetSocketAddress("random", 999)
             val buffer = Buffer()
             handler.doEncode(metadata, buffer)
-
-            val cmp = handler.doDecode(inetSocketAddress, buffer)
+            val bytes = buffer.readByteArray()
+            val reader = BEReader(bytes, bytes.size)
+            val cmp = handler.doDecode(inetSocketAddress, reader)
             assertEquals(cmp, metadata)
         }
         println("Time UTMetadata " + time.inWholeMilliseconds)

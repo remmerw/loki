@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.data
 
+import io.github.remmerw.buri.BEReader
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 
@@ -47,8 +48,8 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
     }
 
 
-    fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
-        val typeId = buffer.readByte()
+    fun doDecode(address: InetSocketAddress, reader: BEReader): ExtendedMessage {
+        val typeId = reader.read()
         val handler: MessageHandler?
         if (typeId == EXTENDED_HANDSHAKE_TYPE_ID) {
             handler = extendedHandshakeHandler
@@ -56,8 +57,7 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
             val extendedType = getTypeNameForId(typeId)
             handler = handlersByTypeName[extendedType]
         }
-
-        return checkNotNull(handler).doDecode(address, buffer)
+        return checkNotNull(handler).doDecode(address, reader)
     }
 
     fun doEncode(address: InetSocketAddress, message: ExtendedMessage, buffer: Buffer) {

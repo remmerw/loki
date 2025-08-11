@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.buri.BEReader
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.data.BITFIELD_ID
 import io.github.remmerw.loki.data.Bitfield
@@ -38,7 +39,6 @@ import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.readBuffer
 import io.ktor.utils.io.readByte
 import io.ktor.utils.io.readByteArray
 import io.ktor.utils.io.readFully
@@ -421,9 +421,10 @@ internal class Connection internal constructor(
             }
 
             EXTENDED_MESSAGE_ID -> {
-                val buffer = channel.readBuffer(size)
-                require(size == buffer.size.toInt()) { "Invalid number of data received" }
-                extendedProtocol.doDecode(address(), buffer)
+                val data = channel.readByteArray(size)
+                require(size == data.size) { "Invalid number of data received" }
+                val reader = BEReader(data, data.size)
+                extendedProtocol.doDecode(address(), reader)
             }
 
             else -> {

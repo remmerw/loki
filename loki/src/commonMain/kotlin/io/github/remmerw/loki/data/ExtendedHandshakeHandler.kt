@@ -3,7 +3,8 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.buri.BEInteger
 import io.github.remmerw.buri.BEMap
 import io.github.remmerw.buri.BEObject
-import io.github.remmerw.buri.decodeBencodeToMap
+import io.github.remmerw.buri.BEReader
+import io.github.remmerw.buri.decodeBencode
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 
@@ -39,8 +40,8 @@ internal class ExtendedHandshakeHandler : MessageHandler {
         return mapping?.toMap() ?: emptyMap()
     }
 
-    override fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
-        val map = decodeBencodeToMap(buffer)
+    override fun doDecode(address: InetSocketAddress, reader: BEReader): ExtendedMessage {
+        val map = (reader.decodeBencode() as BEMap).toMap()
         processTypeMapping(address, map["m"])
 
         return ExtendedHandshake(map)

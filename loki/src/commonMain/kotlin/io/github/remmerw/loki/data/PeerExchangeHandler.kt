@@ -1,8 +1,10 @@
 package io.github.remmerw.loki.data
 
+import io.github.remmerw.buri.BEMap
 import io.github.remmerw.buri.BEObject
+import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.BEString
-import io.github.remmerw.buri.decodeBencodeToMap
+import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.loki.debug
 import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
@@ -12,8 +14,8 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> =
         setOf(Type.PeerExchange)
 
-    override fun doDecode(address: InetSocketAddress, buffer: Buffer): ExtendedMessage {
-        val map = decodeBencodeToMap(buffer)
+    override fun doDecode(address: InetSocketAddress, reader: BEReader): ExtendedMessage {
+        val map = (reader.decodeBencode() as BEMap).toMap()
         val added: MutableSet<InetSocketAddress> = mutableSetOf()
         extractPeers(map, "added", "added.f", 4, added) // ipv4
         extractPeers(map, "added6", "added6.f", 16, added) // ipv6
