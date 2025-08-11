@@ -18,7 +18,7 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.nott.Peer
+import io.github.remmerw.nott.defaultBootstrap
 import io.github.remmerw.nott.newNott
 import io.github.remmerw.nott.nodeId
 import io.github.remmerw.nott.requestGetPeers
@@ -49,26 +49,26 @@ interface Storage {
 }
 
 
-interface PeerStore {
-    suspend fun peers(limit: Int): List<Peer>
+interface Store {
+    suspend fun addresses(limit: Int): List<java.net.InetSocketAddress>
 
-    suspend fun store(peer: Peer)
+    suspend fun store(address: java.net.InetSocketAddress)
 }
 
 
-class MemoryPeers : PeerStore {
-    private val peers: MutableSet<Peer> = mutableSetOf()
+class MemoryStore : Store {
+    private val peers: MutableSet<java.net.InetSocketAddress> = mutableSetOf()
     private val mutex = Mutex()
 
-    override suspend fun peers(limit: Int): List<Peer> {
+    override suspend fun addresses(limit: Int): List<java.net.InetSocketAddress> {
         mutex.withLock {
             return peers.take(limit).toList()
         }
     }
 
-    override suspend fun store(peer: Peer) {
+    override suspend fun store(address: java.net.InetSocketAddress) {
         mutex.withLock {
-            peers.add(peer)
+            peers.add(address)
         }
     }
 }
@@ -77,7 +77,7 @@ class MemoryPeers : PeerStore {
 suspend fun CoroutineScope.download(
     magnetUri: MagnetUri,
     directory: Path,
-    peerStore: PeerStore = MemoryPeers(),
+    store: Store = MemoryStore(),
     progress: (State) -> Unit
 ): Storage {
     val torrentId = magnetUri.torrentId
@@ -88,7 +88,10 @@ suspend fun CoroutineScope.download(
     val selectorManager = SelectorManager(Dispatchers.IO)
 
     val nodeId = nodeId()
-    val nott = newNott(nodeId, peers = peerStore.peers(25))
+    val bootstrap = mutableSetOf<java.net.InetSocketAddress>()
+    bootstrap.addAll(defaultBootstrap())
+    bootstrap.addAll(store.addresses(25))
+    val nott = newNott(nodeId, bootstrap = bootstrap)
 
     val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
         PeerExchangeHandler(),
@@ -136,7 +139,7 @@ suspend fun CoroutineScope.download(
 
         performConnection(
             selectorManager, nodeId, torrentId, extendedProtocol,
-            handshakeHandlers, dataStorage, worker, peerStore, responses
+            handshakeHandlers, dataStorage, worker, store, responses
         )
 
         if (!dataStorage.initializeDone()) {

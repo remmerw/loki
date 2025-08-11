@@ -90,18 +90,12 @@ internal class Assignments(private val dataStorage: DataStorage) {
     }
 
     private fun hasInterestingPieces(connection: Connection): Boolean {
-        val pieceStatistics = dataStorage.pieceStatistics()
-        if (pieceStatistics == null) {
-            return false
-        }
+        dataStorage.pieceStatistics() ?: return false
         val peerBitfield = connection.dataBitfield() ?: return false
+        val bitfield = dataStorage.dataBitfield() ?: return false
+
         val peerBitmask = peerBitfield.clonedBitmask()
-        val bitfield = dataStorage.dataBitfield()
-        if (bitfield == null) {
-            return false
-        }
-        val localBitfield = bitfield.clonedBitmask()
-        peerBitmask.andNot(localBitfield)
+        peerBitmask.andNot(bitfield.bitmask)
         return peerBitmask.cardinality() > 0
     }
 }

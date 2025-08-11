@@ -6,7 +6,7 @@ import kotlin.concurrent.Volatile
 
 internal data class DataBitfield(
     val piecesTotal: Int,
-    private val bitmask: Bitmask
+    val bitmask: Bitmask
 ) {
     private val lock = reentrantLock()
 

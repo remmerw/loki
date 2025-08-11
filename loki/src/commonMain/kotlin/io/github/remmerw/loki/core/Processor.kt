@@ -1,6 +1,6 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.PeerStore
+import io.github.remmerw.loki.Store
 import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
@@ -101,14 +101,14 @@ internal fun CoroutineScope.performConnection(
     handshakeHandlers: Collection<HandshakeHandler>,
     dataStorage: DataStorage,
     worker: Worker,
-    peerStore: PeerStore,
+    store: Store,
     channel: ReceiveChannel<PeerResponse>
 ): ReceiveChannel<Any> = produce {
 
     val semaphore = Semaphore(MAX_CONCURRENCY)
     channel.consumeEach { response ->
         try {
-            peerStore.store(response.peer)
+            store.store(response.peer)
         } catch (throwable: Throwable) {
             debug(throwable)
         }
