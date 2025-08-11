@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.loki.Store
 import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
 import io.github.remmerw.loki.data.Handshake
@@ -8,6 +7,7 @@ import io.github.remmerw.loki.data.PROTOCOL_NAME
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
 import io.github.remmerw.nott.PeerResponse
+import io.github.remmerw.nott.Store
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket

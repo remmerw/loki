@@ -18,6 +18,8 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
+import io.github.remmerw.nott.MemoryStore
+import io.github.remmerw.nott.Store
 import io.github.remmerw.nott.defaultBootstrap
 import io.github.remmerw.nott.newNott
 import io.github.remmerw.nott.nodeId
@@ -29,8 +31,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 
@@ -48,30 +48,6 @@ interface Storage {
     fun storageUnits(): List<StorageUnit>
 }
 
-
-interface Store {
-    suspend fun addresses(limit: Int): List<java.net.InetSocketAddress>
-
-    suspend fun store(address: java.net.InetSocketAddress)
-}
-
-
-class MemoryStore : Store {
-    private val peers: MutableSet<java.net.InetSocketAddress> = mutableSetOf()
-    private val mutex = Mutex()
-
-    override suspend fun addresses(limit: Int): List<java.net.InetSocketAddress> {
-        mutex.withLock {
-            return peers.take(limit).toList()
-        }
-    }
-
-    override suspend fun store(address: java.net.InetSocketAddress) {
-        mutex.withLock {
-            peers.add(address)
-        }
-    }
-}
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class)
 suspend fun CoroutineScope.download(
