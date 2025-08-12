@@ -13,6 +13,7 @@ import io.github.remmerw.loki.core.RequestProducer
 import io.github.remmerw.loki.core.StorageUnit
 import io.github.remmerw.loki.core.Worker
 import io.github.remmerw.loki.core.performConnection
+import io.github.remmerw.loki.core.performRequester
 import io.github.remmerw.loki.data.ExtendedMessageHandler
 import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
@@ -33,6 +34,8 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 
 data class State(val piecesTotal: Int, val piecesComplete: Int)
@@ -49,7 +52,7 @@ interface Storage {
 }
 
 
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class, ExperimentalAtomicApi::class)
 suspend fun CoroutineScope.download(
     magnetUri: MagnetUri,
     directory: Path,
@@ -102,20 +105,29 @@ suspend fun CoroutineScope.download(
 
 
     try {
+        val counter = AtomicInt(0)
         val responses = requestGetPeers(nott, torrentId.bytes) {
-            val size = worker.purgedConnections()
-            if (size > 10) {
+            val size = counter.load()
+            if (size > 100) {
+                300000 // 300 sec
+            } else if (size > 60) {
+                120000 // 120 sec
+            } else if (size > 30) {
+                60000 // 60 sec
+            } else if (size > 20) {
                 30000 // 30 sec
-            } else if (size > 5) {
+            } else if (size > 10) {
                 15000 // 15 sec
             } else {
                 5000 // 5 sec
             }
         }
 
+        val addresses = performRequester(store, counter, responses)
+
         performConnection(
             selectorManager, nodeId, torrentId, extendedProtocol,
-            handshakeHandlers, dataStorage, worker, store, responses
+            handshakeHandlers, dataStorage, worker, addresses
         )
 
         if (!dataStorage.initializeDone()) {

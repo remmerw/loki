@@ -23,6 +23,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -92,6 +95,30 @@ internal suspend fun performHandshake(
 }
 
 
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
+internal fun CoroutineScope.performRequester(
+    store: Store,
+    counter: AtomicInt,
+    channel: ReceiveChannel<PeerResponse>
+): ReceiveChannel<InetSocketAddress> = produce {
+
+    channel.consumeEach { response ->
+        try {
+            store.store(response.peer)
+        } catch (throwable: Throwable) {
+            debug(throwable)
+        }
+        response.addresses.forEach { address ->
+            counter.incrementAndFetch()
+            try {
+                send(InetSocketAddress(address.hostname, address.port))
+            } catch (throwable:Throwable) {
+                debug(throwable)
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.performConnection(
     selectorManager: SelectorManager,
@@ -101,26 +128,20 @@ internal fun CoroutineScope.performConnection(
     handshakeHandlers: Collection<HandshakeHandler>,
     dataStorage: DataStorage,
     worker: Worker,
-    store: Store,
-    channel: ReceiveChannel<PeerResponse>
+    channel: ReceiveChannel<InetSocketAddress>
 ): ReceiveChannel<Any> = produce {
 
     val semaphore = Semaphore(MAX_CONCURRENCY)
-    channel.consumeEach { response ->
-        try {
-            store.store(response.peer)
-        } catch (throwable: Throwable) {
-            debug(throwable)
-        }
-        response.addresses.forEach { address ->
+    channel.consumeEach { address ->
+
             semaphore.acquire()
             launch {
                 try {
-                    val isa = InetSocketAddress(address.hostname, address.port)
+
                     val socket = withTimeoutOrNull(3000) {
                         try {
                             return@withTimeoutOrNull aSocket(selectorManager)
-                                .tcp().connect(isa) {
+                                .tcp().connect(address) {
                                     socketTimeout =
                                         30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
                                 }
@@ -130,7 +151,7 @@ internal fun CoroutineScope.performConnection(
                     }
                     if (socket != null) {
                         val connection = Connection(
-                            isa, dataStorage,
+                            address, dataStorage,
                             worker, socket, extendedProtocol
                         )
                         val handshake = withTimeoutOrNull(3000) {
@@ -169,7 +190,7 @@ internal fun CoroutineScope.performConnection(
                     semaphore.release()
                 }
             }
-        }
+
     }
 }
 
