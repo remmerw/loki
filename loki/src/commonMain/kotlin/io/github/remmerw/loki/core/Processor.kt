@@ -26,10 +26,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
-internal const val MAX_CONCURRENCY: Int = 25
+internal const val MAX_CONCURRENCY: Int = 32
 
 private suspend fun performHandshake(
     connection: Connection,
@@ -109,11 +107,20 @@ internal fun CoroutineScope.performRequester(
             debug(throwable)
         }
         response.addresses.forEach { address ->
-            counter.incrementAndFetch()
-            try {
-                send(InetSocketAddress(address.hostname, address.port))
-            } catch (throwable:Throwable) {
-                debug(throwable)
+
+            launch {
+                try {
+                    if (address.address.isReachable(3000)) {
+                        counter.incrementAndFetch()
+                        send(
+                            InetSocketAddress(
+                                address.hostname, address.port
+                            )
+                        )
+                    }
+                } catch (throwable: Throwable) {
+                    debug(throwable)
+                }
             }
         }
     }
@@ -134,39 +141,29 @@ internal fun CoroutineScope.performConnection(
     val semaphore = Semaphore(MAX_CONCURRENCY)
     channel.consumeEach { address ->
 
-            semaphore.acquire()
-            launch {
-                try {
+        semaphore.acquire()
+        launch {
 
-                    val socket = withTimeoutOrNull(3000) {
-                        try {
-                            return@withTimeoutOrNull aSocket(selectorManager)
-                                .tcp().connect(address) {
-                                    socketTimeout =
-                                        30.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
-                                }
-                        } catch (_: Throwable) {
-                        }
-                        return@withTimeoutOrNull null
-                    }
-                    if (socket != null) {
+            try {
+                aSocket(selectorManager)
+                    .tcp().connect(address) {
+                        socketTimeout = 10000
+                    }.use { socket ->
+
                         val connection = Connection(
                             address, dataStorage,
                             worker, socket, extendedProtocol
                         )
                         val handshake = withTimeoutOrNull(3000) {
-                            try {
-                                return@withTimeoutOrNull performHandshake(
-                                    connection,
-                                    peerId,
-                                    torrentId,
-                                    handshakeHandlers,
-                                    worker
-                                )
-                            } catch (_: Throwable) {
-                            }
-                            return@withTimeoutOrNull null
+                            performHandshake(
+                                connection,
+                                peerId,
+                                torrentId,
+                                handshakeHandlers,
+                                worker
+                            )
                         }
+
                         if (handshake == true) {
                             try {
                                 withContext(Dispatchers.IO) {
@@ -179,18 +176,17 @@ internal fun CoroutineScope.performConnection(
                                         coroutineContext.cancelChildren()
                                     }
                                 }
-                            } catch (throwable: Throwable) {
-                                debug(throwable)
+                            } finally {
+                                worker.purgedConnections()
                             }
                         }
                     }
-                } catch (throwable: Throwable) {
-                    debug(throwable)
-                } finally {
-                    semaphore.release()
-                }
+            } catch (throwable: Throwable) {
+                debug("Processor.performConnection " + throwable.message)
+            } finally {
+                semaphore.release()
             }
-
+        }
     }
 }
 

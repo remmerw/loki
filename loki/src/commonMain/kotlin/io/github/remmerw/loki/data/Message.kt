@@ -1,4 +1,4 @@
 package io.github.remmerw.loki.data
 
 
-interface Message
+sealed interface Message

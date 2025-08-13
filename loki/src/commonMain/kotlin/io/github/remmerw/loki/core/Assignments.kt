@@ -1,29 +1,25 @@
 package io.github.remmerw.loki.core
 
-import io.ktor.util.collections.ConcurrentSet
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.decrementAndFetch
 import kotlin.concurrent.atomics.incrementAndFetch
 
 internal class Assignments(private val dataStorage: DataStorage) {
-    private val assignedPieces: MutableSet<Int> = ConcurrentSet()
+    private val assignedPieces: MutableSet<Int> = ConcurrentHashMap.newKeySet()
 
     @OptIn(ExperimentalAtomicApi::class)
     private val assignments: AtomicInt = AtomicInt(0)
 
+    @OptIn(ExperimentalAtomicApi::class)
     fun remove(connection: Connection) {
         val assignment = connection.assignment
         if (assignment != null) {
-            remove(connection, assignment)
+            connection.assignment = null
+            assignments.decrementAndFetch()
+            assignedPieces.removeAll(assignment.pieces)
         }
-    }
-
-    @OptIn(ExperimentalAtomicApi::class)
-    private fun remove(connection: Connection, assignment: Assignment) {
-        connection.assignment = null
-        assignments.decrementAndFetch()
-        assignedPieces.removeAll(assignment.pieces)
     }
 
     @OptIn(ExperimentalAtomicApi::class)

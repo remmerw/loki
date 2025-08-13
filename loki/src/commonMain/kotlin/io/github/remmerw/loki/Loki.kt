@@ -110,7 +110,7 @@ suspend fun CoroutineScope.download(
             val size = counter.load()
             if (size > 100) {
                 300000 // 300 sec
-            } else if (size > 60) {
+            } else if (size > 50) {
                 120000 // 120 sec
             } else if (size > 30) {
                 60000 // 60 sec
@@ -198,7 +198,7 @@ internal const val BLOCK_SIZE: Int = 16 * 1024 // 16 KB
 internal const val META_EXCHANGE_MAX_SIZE: Int = 2 * 1024 * 1024 // 2 MB
 internal const val MAX_OUTSTANDING_REQUESTS: Int = 250
 internal const val MAX_PIECE_RECEIVING_TIME: Long = 5000 // 5 sec
-internal const val PEER_INACTIVITY_THRESHOLD: Long = 3 * 60 * 1000 // 3 min
+internal const val PEER_INACTIVITY_THRESHOLD: Long = 60 * 1000 // 60 sec
 internal const val CHOKING_THRESHOLD: Long = 10000 // millis
 internal const val FIRST_BLOCK_ARRIVAL_TIMEOUT: Long = 10000 // 10 sec
 internal const val WAIT_BEFORE_REREQUESTING_AFTER_REJECT: Long = 10000 // 10 sec

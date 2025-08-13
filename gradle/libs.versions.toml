@@ -1,22 +1,19 @@
 [versions]
 agp = "8.12.0"
-buri = "0.0.2"
-grid = "0.0.7"
 kotlin = "2.2.0"
-nott = "0.1.2"
 runner = "1.7.0"
 
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version = "0.29.0" }
-buri = { module = "io.github.remmerw:buri", version.ref = "buri" }
-grid = { module = "io.github.remmerw:grid", version.ref = "grid" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.8.0" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 ktor-network = { module = "io.ktor:ktor-network", version = "3.2.3" }
-nott = { module = "io.github.remmerw:nott", version.ref = "nott" }
 runner = { module = "androidx.test:runner", version.ref = "runner" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version = "0.0.20" }
+nott = { module = "io.github.remmerw:nott", version ="0.1.5" }
+buri = { module = "io.github.remmerw:buri", version = "0.0.2" }
+grid = { module = "io.github.remmerw:grid", version = "0.0.7" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }

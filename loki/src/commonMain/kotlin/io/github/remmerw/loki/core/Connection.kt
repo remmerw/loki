@@ -105,7 +105,7 @@ internal class Connection internal constructor(
                 }
                 yield()
             } catch (throwable: Throwable) {
-                println("Connection.reading " + throwable.message)
+                debug("Connection.reading " + throwable.message)
                 close()
                 break
             }
@@ -157,7 +157,6 @@ internal class Connection internal constructor(
 
     @OptIn(ExperimentalAtomicApi::class)
     suspend fun posting(message: Message, readBlock: ByteArray) {
-        lastActive = TimeSource.Monotonic.markNow()
 
         try {
             when (message) {
@@ -261,10 +260,6 @@ internal class Connection internal constructor(
                     val size = buffer.size
                     sendChannel.writeInt(size.toInt())
                     sendChannel.writeBuffer(buffer)
-                }
-
-                else -> {
-                    throw Exception("not supported message $message")
                 }
             }
             sendChannel.flush()
