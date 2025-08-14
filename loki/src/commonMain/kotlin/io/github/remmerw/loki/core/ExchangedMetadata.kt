@@ -2,9 +2,9 @@ package io.github.remmerw.loki.core
 
 import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.BLOCK_SIZE
-import io.ktor.util.sha1
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
+import org.kotlincrypto.hash.sha1.SHA1
 
 
 /**
@@ -41,7 +41,7 @@ internal data class ExchangedMetadata(
     fun digest(): ByteArray {
         lock.withLock {
             check(metadataBlocks.isComplete) { "Metadata is not complete" }
-            return sha1(metadata.readBytes(0, metadata.size()))
+            return SHA1().digest(metadata.readBytes(0, metadata.size()))
         }
     }
 

@@ -7,10 +7,10 @@ import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.Type
 import io.github.remmerw.loki.data.interested
 import io.github.remmerw.loki.data.notInterested
-import io.ktor.network.sockets.InetSocketAddress
-import io.ktor.util.collections.ConcurrentMap
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
+import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -23,8 +23,8 @@ internal class Worker(
     private val dataStorage: DataStorage,
     agents: List<Agent>
 ) {
-    private val connections: MutableMap<InetSocketAddress, Connection> = ConcurrentMap()
-    private val bitfields: MutableMap<Connection, ByteArray> = ConcurrentMap()
+    private val connections: MutableMap<InetSocketAddress, Connection> = ConcurrentHashMap()
+    private val bitfields: MutableMap<Connection, ByteArray> = ConcurrentHashMap()
     private val haves: MutableMap<Connection, MutableSet<Int>> = mutableMapOf()
     private val lock = reentrantLock()
 

@@ -1,8 +1,8 @@
 package io.github.remmerw.loki.data
 
 import io.github.remmerw.buri.BEReader
-import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
+import java.net.InetSocketAddress
 
 interface MessageHandler {
     /**

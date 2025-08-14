@@ -6,9 +6,9 @@ import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.loki.debug
-import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import java.net.InetAddress
+import java.net.InetSocketAddress
 
 internal class PeerExchangeHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> =

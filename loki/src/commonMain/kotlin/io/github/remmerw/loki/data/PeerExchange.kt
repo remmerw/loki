@@ -3,10 +3,10 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.bencode
-import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.writeUShort
+import java.net.InetSocketAddress
 
 internal class PeerExchange(
     val added: Collection<InetSocketAddress>,
@@ -42,13 +42,13 @@ internal class PeerExchange(
     private fun filterByAddressLength(
         peers: Collection<InetSocketAddress>, addressLength: Int
     ): Collection<InetSocketAddress> {
-        return peers.filter { peer -> peer.resolveAddress()!!.size == addressLength }
+        return peers.filter { peer -> peer.address.address.size == addressLength }
     }
 
     private fun encodePeers(peers: Collection<InetSocketAddress>): BEString {
         val bos = Buffer()
         for (peer in peers) {
-            bos.write(peer.resolveAddress()!!)
+            bos.write(peer.address.address)
             bos.writeUShort(peer.port.toUShort())
         }
         return bos.readByteArray().bencode()

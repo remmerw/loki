@@ -34,23 +34,16 @@ import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UNCHOKE_ID
 import io.github.remmerw.loki.data.Unchoke
 import io.github.remmerw.loki.debug
-import io.ktor.network.sockets.InetSocketAddress
-import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.readByte
-import io.ktor.utils.io.readByteArray
-import io.ktor.utils.io.readFully
-import io.ktor.utils.io.readInt
-import io.ktor.utils.io.readShort
-import io.ktor.utils.io.writeBuffer
-import io.ktor.utils.io.writeByte
-import io.ktor.utils.io.writeByteArray
-import io.ktor.utils.io.writeInt
-import io.ktor.utils.io.writeShort
 import kotlinx.coroutines.yield
 import kotlinx.io.Buffer
+import kotlinx.io.Source
+import kotlinx.io.asSink
+import kotlinx.io.asSource
+import kotlinx.io.buffered
+import kotlinx.io.readByteArray
+import kotlinx.io.readTo
+import java.net.InetSocketAddress
+import java.net.Socket
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -69,8 +62,8 @@ internal class Connection internal constructor(
 
     @OptIn(ExperimentalAtomicApi::class)
     private val closed = AtomicBoolean(false)
-    private val receiveChannel = socket.openReadChannel()
-    private val sendChannel = socket.openWriteChannel(autoFlush = false)
+    private val receiveChannel = socket.inputStream.asSource().buffered()
+    private val sendChannel = socket.outputStream.asSink().buffered()
     private var writeBlock: ByteArray? = null
 
 
@@ -112,7 +105,7 @@ internal class Connection internal constructor(
         }
     }
 
-    suspend fun receiveHandshake(): Handshake? {
+    fun receiveHandshake(): Handshake? {
         try {
             val sizeName = receiveChannel.readByte()
             require(sizeName.toInt() > 0) { "Invalid size name received" }
@@ -156,21 +149,21 @@ internal class Connection internal constructor(
     }
 
     @OptIn(ExperimentalAtomicApi::class)
-    suspend fun posting(message: Message, readBlock: ByteArray) {
+    fun posting(message: Message, readBlock: ByteArray) {
 
         try {
             when (message) {
                 is Handshake -> {
                     val data = message.name.encodeToByteArray()
                     sendChannel.writeByte(data.size.toByte())
-                    sendChannel.writeByteArray(data)
-                    sendChannel.writeByteArray(message.reserved)
-                    sendChannel.writeByteArray(message.torrentId.bytes)
-                    sendChannel.writeByteArray(message.peerId)
+                    sendChannel.write(data)
+                    sendChannel.write(message.reserved)
+                    sendChannel.write(message.torrentId.bytes)
+                    sendChannel.write(message.peerId)
                 }
 
                 is KeepAlive -> {
-                    sendChannel.writeByteArray(KEEPALIVE)
+                    sendChannel.write(KEEPALIVE)
                 }
 
                 is Piece -> {
@@ -186,7 +179,7 @@ internal class Connection internal constructor(
                         message.piece, message.offset,
                         readBlock, message.length
                     )
-                    sendChannel.writeByteArray(readBlock)
+                    sendChannel.write(readBlock)
 
                 }
 
@@ -210,7 +203,7 @@ internal class Connection internal constructor(
                     val size = Byte.SIZE_BYTES + message.bitfield.size
                     sendChannel.writeInt(size)
                     sendChannel.writeByte(BITFIELD_ID)
-                    sendChannel.writeByteArray(message.bitfield)
+                    sendChannel.write(message.bitfield)
                 }
 
                 is Cancel -> {
@@ -259,7 +252,7 @@ internal class Connection internal constructor(
                     extendedProtocol.doEncode(address(), message, buffer)
                     val size = buffer.size
                     sendChannel.writeInt(size.toInt())
-                    sendChannel.writeBuffer(buffer)
+                    sendChannel.write(buffer, size)
                 }
             }
             sendChannel.flush()
@@ -325,7 +318,7 @@ internal class Connection internal constructor(
     }
 
 
-    private suspend fun decode(channel: ByteReadChannel, length: Int): Message? {
+    private fun decode(channel: Source, length: Int): Message? {
 
         val messageType = channel.readByte()
         var size = length - Byte.SIZE_BYTES
@@ -337,7 +330,7 @@ internal class Connection internal constructor(
                 val offset = channel.readInt()
                 size = size - Int.SIZE_BYTES
                 val data = writeBlock()
-                channel.readFully(data, 0, size)
+                channel.readTo(data, 0, size)
                 consumePiece(piece, offset, size)
                 return null
             }
@@ -370,8 +363,7 @@ internal class Connection internal constructor(
             }
 
             BITFIELD_ID -> {
-                val data = ByteArray(size)
-                channel.readFully(data)
+                val data = channel.readByteArray(size)
 
                 if (dataStorage.initializeDone()) {
                     consumeBitfield(data)
@@ -432,6 +424,14 @@ internal class Connection internal constructor(
     fun close() {
 
         if (!closed.exchange(true)) {
+            try {
+                receiveChannel.close()
+            } catch (_: Throwable) {
+            }
+            try {
+                sendChannel.close()
+            } catch (_: Throwable) {
+            }
             try {
                 socket.close()
             } catch (_: Throwable) {

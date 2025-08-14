@@ -5,8 +5,8 @@ import io.github.remmerw.buri.BEMap
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.decodeBencode
-import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.io.Buffer
+import java.net.InetSocketAddress
 
 internal class ExtendedHandshakeHandler : MessageHandler {
     override fun supportedTypes(): Collection<Type> = setOf(Type.ExtendedHandshake)

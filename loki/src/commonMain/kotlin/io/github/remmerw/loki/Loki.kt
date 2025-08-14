@@ -25,15 +25,13 @@ import io.github.remmerw.nott.defaultBootstrap
 import io.github.remmerw.nott.newNott
 import io.github.remmerw.nott.nodeId
 import io.github.remmerw.nott.requestGetPeers
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import java.net.InetSocketAddress
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -64,10 +62,9 @@ suspend fun CoroutineScope.download(
     SystemFileSystem.createDirectories(path)
 
     val dataStorage = DataStorage(path)
-    val selectorManager = SelectorManager(Dispatchers.IO)
 
     val nodeId = nodeId()
-    val bootstrap = mutableSetOf<java.net.InetSocketAddress>()
+    val bootstrap = mutableSetOf<InetSocketAddress>()
     bootstrap.addAll(defaultBootstrap())
     bootstrap.addAll(store.addresses(25))
     val nott = newNott(nodeId, bootstrap = bootstrap)
@@ -126,7 +123,7 @@ suspend fun CoroutineScope.download(
         val addresses = performRequester(store, counter, responses)
 
         performConnection(
-            selectorManager, nodeId, torrentId, extendedProtocol,
+            nodeId, torrentId, extendedProtocol,
             handshakeHandlers, dataStorage, worker, addresses
         )
 
@@ -164,15 +161,8 @@ suspend fun CoroutineScope.download(
         }
         return dataStorage
     } finally {
-
         try {
             nott.shutdown()
-        } catch (throwable: Throwable) {
-            debug(throwable)
-        }
-
-        try {
-            dataStorage.shutdown()
         } catch (throwable: Throwable) {
             debug(throwable)
         }
@@ -184,7 +174,7 @@ suspend fun CoroutineScope.download(
         }
 
         try {
-            selectorManager.close()
+            dataStorage.shutdown()
         } catch (throwable: Throwable) {
             debug(throwable)
         }
@@ -425,7 +415,7 @@ private val isError: Boolean
 
 @Suppress("SameReturnValue")
 private val isDebug: Boolean
-    get() = false
+    get() = true
 
 internal fun debug(text: String) {
     if (isDebug) {

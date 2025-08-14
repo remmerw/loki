@@ -1,15 +1,15 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.data.Request
-import io.ktor.util.collections.ConcurrentSet
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 
 internal open class ConnectionState : ConnectionAgent() {
-    private val cancelledRequests: MutableSet<Long> = ConcurrentSet()
-    private val pendingRequests: MutableSet<Long> = ConcurrentSet()
-    private val pieces: MutableSet<Int> = ConcurrentSet()
+    private val cancelledRequests: MutableSet<Long> = ConcurrentHashMap.newKeySet()
+    private val pendingRequests: MutableSet<Long> = ConcurrentHashMap.newKeySet()
+    private val pieces: MutableSet<Int> = ConcurrentHashMap.newKeySet()
     private val requests: ArrayDeque<Request> = ArrayDeque() // no concurrency
 
 

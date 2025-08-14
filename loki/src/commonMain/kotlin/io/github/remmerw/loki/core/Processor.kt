@@ -8,10 +8,6 @@ import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
 import io.github.remmerw.nott.PeerResponse
 import io.github.remmerw.nott.Store
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.InetSocketAddress
-import io.ktor.network.sockets.aSocket
-import io.ktor.util.network.hostname
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,8 +17,11 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.net.InetSocketAddress
+import java.net.Socket
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
@@ -112,11 +111,7 @@ internal fun CoroutineScope.performRequester(
                 try {
                     if (address.address.isReachable(3000)) {
                         counter.incrementAndFetch()
-                        send(
-                            InetSocketAddress(
-                                address.hostname, address.port
-                            )
-                        )
+                        send(address)
                     }
                 } catch (throwable: Throwable) {
                     debug(throwable)
@@ -128,7 +123,6 @@ internal fun CoroutineScope.performRequester(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.performConnection(
-    selectorManager: SelectorManager,
     peerId: ByteArray,
     torrentId: TorrentId,
     extendedProtocol: ExtendedProtocol,
@@ -141,14 +135,12 @@ internal fun CoroutineScope.performConnection(
     val semaphore = Semaphore(MAX_CONCURRENCY)
     channel.consumeEach { address ->
 
-        semaphore.acquire()
         launch {
-
-            try {
-                aSocket(selectorManager)
-                    .tcp().connect(address) {
-                        socketTimeout = 10000
-                    }.use { socket ->
+            semaphore.withPermit {
+                try {
+                    Socket().use { socket ->
+                        socket.soTimeout = 10000
+                        socket.connect(address)
 
                         val connection = Connection(
                             address, dataStorage,
@@ -181,10 +173,9 @@ internal fun CoroutineScope.performConnection(
                             }
                         }
                     }
-            } catch (throwable: Throwable) {
-                debug("Processor.performConnection " + throwable.message)
-            } finally {
-                semaphore.release()
+                } catch (throwable: Throwable) {
+                    debug("Processor.performConnection " + throwable.message)
+                }
             }
         }
     }

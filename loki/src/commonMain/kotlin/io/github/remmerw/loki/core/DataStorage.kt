@@ -5,8 +5,6 @@ import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.grid.randomAccessFile
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
-import io.ktor.util.collections.ConcurrentSet
-import io.ktor.util.sha1
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 import kotlinx.io.Buffer
@@ -14,6 +12,8 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
+import org.kotlincrypto.hash.sha1.SHA1
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
 
 internal data class DataStorage(val directory: Path) : Storage {
@@ -23,7 +23,7 @@ internal data class DataStorage(val directory: Path) : Storage {
     private val bitmaskDatabase = Path(directory, "bitmask.db")
     private val torrentDatabase = Path(directory, "torrent.db")
     private val database = randomAccessFile(Path(directory, "database.db"))
-    private val completedPieces: MutableSet<Int> = ConcurrentSet()
+    private val completedPieces: MutableSet<Int> = ConcurrentHashMap.newKeySet()
     private val lock = reentrantLock()
 
     init {
@@ -199,7 +199,7 @@ internal data class DataStorage(val directory: Path) : Storage {
         lock.withLock {
             val bytes = ByteArray(chunk.chunkSize)
             database.readBytes(position(piece), bytes)
-            val digest = sha1(bytes)
+            val digest = SHA1().digest(bytes)
             val result = digest.contentEquals(chunk.checksum)
             if (result) {
                 dataBitfield!!.markVerified(piece)
