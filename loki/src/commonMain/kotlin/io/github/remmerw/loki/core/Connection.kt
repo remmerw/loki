@@ -85,7 +85,7 @@ internal class Connection internal constructor(
                 lastActive = TimeSource.Monotonic.markNow()
 
                 val length = receiveChannel.readInt()
-                require(length >= 0) { "Invalid read token received" }
+                require(length >= 0) { "Invalid read length received" }
 
                 if (length == 0) {  // keep has length 0
                     handleConnection()

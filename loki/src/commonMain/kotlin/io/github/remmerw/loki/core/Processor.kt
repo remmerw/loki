@@ -15,6 +15,7 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -137,6 +138,8 @@ internal fun CoroutineScope.performConnection(
 
         launch {
             semaphore.withPermit {
+                ensureActive()
+
                 try {
                     Socket().use { socket ->
                         socket.soTimeout = 10000
