@@ -24,6 +24,7 @@ import io.github.remmerw.loki.data.NOT_INTERESTED_ID
 import io.github.remmerw.loki.data.NotInterested
 import io.github.remmerw.loki.data.PIECE_ID
 import io.github.remmerw.loki.data.PORT_ID
+import io.github.remmerw.loki.data.PROTOCOL_NAME
 import io.github.remmerw.loki.data.Piece
 import io.github.remmerw.loki.data.Port
 import io.github.remmerw.loki.data.REQUEST_ID
@@ -56,7 +57,7 @@ internal class Connection internal constructor(
     private val worker: Worker,
     private val socket: Socket,
     private val extendedProtocol: ExtendedProtocol
-) : ConnectionWorker(worker) {
+) : ConnectionWorker(worker), AutoCloseable {
     @Volatile
     var lastActive: ValueTimeMark = TimeSource.Monotonic.markNow()
 
@@ -105,27 +106,24 @@ internal class Connection internal constructor(
         }
     }
 
-    fun receiveHandshake(): Handshake? {
-        try {
-            val sizeName = receiveChannel.readByte()
-            require(sizeName.toInt() > 0) { "Invalid size name received" }
-            val name = receiveChannel.readByteArray(sizeName.toInt())
-            require(sizeName.toInt() == name.size) { "Invalid size name received" }
-            val reserved = receiveChannel.readByteArray(HANDSHAKE_RESERVED_LENGTH)
-            require(HANDSHAKE_RESERVED_LENGTH == reserved.size) { "Invalid reserved received" }
-            val infoHash = receiveChannel.readByteArray(TORRENT_ID_LENGTH)
-            require(TORRENT_ID_LENGTH == infoHash.size) { "Invalid infoHash received" }
-            val peerId = receiveChannel.readByteArray(SHA1_HASH_LENGTH)
-            require(SHA1_HASH_LENGTH == peerId.size) { "Invalid peerId received" }
+    fun receiveHandshake(): Handshake {
 
-            return Handshake(
-                name.decodeToString(),
-                reserved, TorrentId(infoHash), peerId
-            )
-        } catch (_: Throwable) {
-            close()
-        }
-        return null
+        val sizeName = receiveChannel.readByte()
+        require(sizeName.toInt() > 0) { "Invalid size name received" }
+        val name = receiveChannel.readByteArray(sizeName.toInt())
+        require(sizeName.toInt() == name.size) { "Invalid size name received" }
+        val reserved = receiveChannel.readByteArray(HANDSHAKE_RESERVED_LENGTH)
+        require(HANDSHAKE_RESERVED_LENGTH == reserved.size) { "Invalid reserved received" }
+        val infoHash = receiveChannel.readByteArray(TORRENT_ID_LENGTH)
+        require(TORRENT_ID_LENGTH == infoHash.size) { "Invalid infoHash received" }
+        val peerId = receiveChannel.readByteArray(SHA1_HASH_LENGTH)
+        require(SHA1_HASH_LENGTH == peerId.size) { "Invalid peerId received" }
+
+        return Handshake(
+            name.decodeToString(),
+            reserved, TorrentId(infoHash), peerId
+        )
+
     }
 
 
@@ -151,115 +149,111 @@ internal class Connection internal constructor(
     @OptIn(ExperimentalAtomicApi::class)
     fun posting(message: Message, readBlock: ByteArray) {
 
-        try {
-            when (message) {
-                is Handshake -> {
-                    val data = message.name.encodeToByteArray()
-                    sendChannel.writeByte(data.size.toByte())
-                    sendChannel.write(data)
-                    sendChannel.write(message.reserved)
-                    sendChannel.write(message.torrentId.bytes)
-                    sendChannel.write(message.peerId)
-                }
-
-                is KeepAlive -> {
-                    sendChannel.write(KEEPALIVE)
-                }
-
-                is Piece -> {
-
-                    val size =
-                        Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + message.length
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(PIECE_ID)
-                    sendChannel.writeInt(message.piece)
-                    sendChannel.writeInt(message.offset)
-
-                    dataStorage.readBlock(
-                        message.piece, message.offset,
-                        readBlock, message.length
-                    )
-                    sendChannel.write(readBlock)
-
-                }
-
-                is Have -> {
-                    val size = Byte.SIZE_BYTES + Int.SIZE_BYTES
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(HAVE_ID)
-                    sendChannel.writeInt(message.piece)
-                }
-
-                is Request -> {
-                    val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(REQUEST_ID)
-                    sendChannel.writeInt(message.piece)
-                    sendChannel.writeInt(message.offset)
-                    sendChannel.writeInt(message.length)
-                }
-
-                is Bitfield -> {
-                    val size = Byte.SIZE_BYTES + message.bitfield.size
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(BITFIELD_ID)
-                    sendChannel.write(message.bitfield)
-                }
-
-                is Cancel -> {
-                    val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(CANCEL_ID)
-                    sendChannel.writeInt(message.piece)
-                    sendChannel.writeInt(message.offset)
-                    sendChannel.writeInt(message.length)
-                }
-
-                is Choke -> {
-                    val size = Byte.SIZE_BYTES
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(CHOKE_ID)
-                }
-
-                is Unchoke -> {
-                    val size = Byte.SIZE_BYTES
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(UNCHOKE_ID)
-                }
-
-                is Interested -> {
-                    val size = Byte.SIZE_BYTES
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(INTERESTED_ID)
-                }
-
-                is NotInterested -> {
-                    val size = Byte.SIZE_BYTES
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(NOT_INTERESTED_ID)
-                }
-
-                is Port -> {
-                    val size = Byte.SIZE_BYTES + Short.SIZE_BYTES
-                    sendChannel.writeInt(size)
-                    sendChannel.writeByte(PORT_ID)
-                    sendChannel.writeShort(message.port.toShort())
-                }
-
-                is ExtendedMessage -> {
-
-                    val buffer = Buffer()
-                    extendedProtocol.doEncode(address(), message, buffer)
-                    val size = buffer.size
-                    sendChannel.writeInt(size.toInt())
-                    sendChannel.write(buffer, size)
-                }
+        when (message) {
+            is Handshake -> {
+                val data = message.name.encodeToByteArray()
+                sendChannel.writeByte(data.size.toByte())
+                sendChannel.write(data)
+                sendChannel.write(message.reserved)
+                sendChannel.write(message.torrentId.bytes)
+                sendChannel.write(message.peerId)
             }
-            sendChannel.flush()
-        } catch (throwable: Throwable) {
-            close()
-            throw throwable
+
+            is KeepAlive -> {
+                sendChannel.write(KEEPALIVE)
+            }
+
+            is Piece -> {
+
+                val size =
+                    Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + message.length
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(PIECE_ID)
+                sendChannel.writeInt(message.piece)
+                sendChannel.writeInt(message.offset)
+
+                dataStorage.readBlock(
+                    message.piece, message.offset,
+                    readBlock, message.length
+                )
+                sendChannel.write(readBlock)
+
+            }
+
+            is Have -> {
+                val size = Byte.SIZE_BYTES + Int.SIZE_BYTES
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(HAVE_ID)
+                sendChannel.writeInt(message.piece)
+            }
+
+            is Request -> {
+                val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(REQUEST_ID)
+                sendChannel.writeInt(message.piece)
+                sendChannel.writeInt(message.offset)
+                sendChannel.writeInt(message.length)
+            }
+
+            is Bitfield -> {
+                val size = Byte.SIZE_BYTES + message.bitfield.size
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(BITFIELD_ID)
+                sendChannel.write(message.bitfield)
+            }
+
+            is Cancel -> {
+                val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(CANCEL_ID)
+                sendChannel.writeInt(message.piece)
+                sendChannel.writeInt(message.offset)
+                sendChannel.writeInt(message.length)
+            }
+
+            is Choke -> {
+                val size = Byte.SIZE_BYTES
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(CHOKE_ID)
+            }
+
+            is Unchoke -> {
+                val size = Byte.SIZE_BYTES
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(UNCHOKE_ID)
+            }
+
+            is Interested -> {
+                val size = Byte.SIZE_BYTES
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(INTERESTED_ID)
+            }
+
+            is NotInterested -> {
+                val size = Byte.SIZE_BYTES
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(NOT_INTERESTED_ID)
+            }
+
+            is Port -> {
+                val size = Byte.SIZE_BYTES + Short.SIZE_BYTES
+                sendChannel.writeInt(size)
+                sendChannel.writeByte(PORT_ID)
+                sendChannel.writeShort(message.port.toShort())
+            }
+
+            is ExtendedMessage -> {
+
+                val buffer = Buffer()
+                extendedProtocol.doEncode(address(), message, buffer)
+                val size = buffer.size
+                sendChannel.writeInt(size.toInt())
+                sendChannel.write(buffer, size)
+            }
         }
+        sendChannel.flush()
+
     }
 
     private fun consumeBitfield(
@@ -420,8 +414,34 @@ internal class Connection internal constructor(
         }
     }
 
+    suspend fun performHandshake(
+        peerId: ByteArray,
+        torrentId: TorrentId,
+        handshakeHandlers: Collection<HandshakeHandler>
+    ) {
+
+        val handshake = Handshake(
+            PROTOCOL_NAME,
+            ByteArray(HANDSHAKE_RESERVED_LENGTH), torrentId, peerId
+        )
+        handshakeHandlers.forEach { handler: HandshakeHandler ->
+            handler.processOutgoingHandshake(handshake)
+        }
+
+        posting(handshake, byteArrayOf())
+
+        val peerHandshake = receiveHandshake()
+
+        require(torrentId == peerHandshake.torrentId) { "Invalid torrent ID" }
+        handshakeHandlers.forEach { handler: HandshakeHandler ->
+            handler.processIncomingHandshake(this)
+        }
+        worker.addConnection(this)
+
+    }
+
     @OptIn(ExperimentalAtomicApi::class)
-    fun close() {
+    override fun close() {
 
         if (!closed.exchange(true)) {
             try {

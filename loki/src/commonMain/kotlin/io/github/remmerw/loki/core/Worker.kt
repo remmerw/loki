@@ -139,11 +139,6 @@ internal class Worker(
 
     }
 
-
-    fun getConnection(peer: InetSocketAddress): Connection? {
-        return connections[peer]
-    }
-
     fun addConnection(connection: Connection) {
         check(connections.put(connection.address(), connection) == null)
     }

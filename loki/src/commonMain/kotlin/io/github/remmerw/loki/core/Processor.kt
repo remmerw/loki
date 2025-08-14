@@ -1,9 +1,6 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.data.ExtendedProtocol
-import io.github.remmerw.loki.data.HANDSHAKE_RESERVED_LENGTH
-import io.github.remmerw.loki.data.Handshake
-import io.github.remmerw.loki.data.PROTOCOL_NAME
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
 import io.github.remmerw.nott.PeerResponse
@@ -15,12 +12,11 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withTimeout
 import java.net.InetSocketAddress
 import java.net.Socket
 import kotlin.concurrent.atomics.AtomicInt
@@ -28,69 +24,6 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
 
 internal const val MAX_CONCURRENCY: Int = 32
-
-private suspend fun performHandshake(
-    connection: Connection,
-    peerId: ByteArray,
-    torrentId: TorrentId,
-    handshakeHandlers: Collection<HandshakeHandler>
-): Boolean {
-    try {
-        val handshake = Handshake(
-            PROTOCOL_NAME,
-            ByteArray(HANDSHAKE_RESERVED_LENGTH), torrentId, peerId
-        )
-        handshakeHandlers.forEach { handler: HandshakeHandler ->
-            handler.processOutgoingHandshake(handshake)
-        }
-
-        connection.posting(handshake, byteArrayOf())
-
-        val peerHandshake = connection.receiveHandshake()
-
-        if (peerHandshake is Handshake) {
-            if (torrentId == peerHandshake.torrentId) {
-                handshakeHandlers.forEach { handler: HandshakeHandler ->
-                    handler.processIncomingHandshake(connection)
-                }
-                return true
-            }
-        }
-        connection.close()
-        return false
-    } catch (_: Exception) {
-        connection.close()
-        return false
-    }
-}
-
-internal suspend fun performHandshake(
-    connection: Connection,
-    peerId: ByteArray,
-    torrentId: TorrentId,
-    handshakeHandlers: Collection<HandshakeHandler>,
-    worker: Worker
-): Boolean {
-
-    val existing = worker.getConnection(connection.address())
-    if (existing != null) {
-        return false
-    }
-
-    val success = performHandshake(connection, peerId, torrentId, handshakeHandlers)
-    if (success) {
-        val existing = worker.getConnection(connection.address())
-        if (existing != null) {
-            connection.close()
-            return false
-        } else {
-            worker.addConnection(connection)
-            return true
-        }
-    }
-
-    return false
-}
 
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
@@ -138,28 +71,25 @@ internal fun CoroutineScope.performConnection(
 
         launch {
             semaphore.withPermit {
-                ensureActive()
 
                 try {
                     Socket().use { socket ->
                         socket.soTimeout = 10000
-                        socket.connect(address)
+                        socket.connect(address, 3000)
 
-                        val connection = Connection(
+                        Connection(
                             address, dataStorage,
                             worker, socket, extendedProtocol
-                        )
-                        val handshake = withTimeoutOrNull(3000) {
-                            performHandshake(
-                                connection,
-                                peerId,
-                                torrentId,
-                                handshakeHandlers,
-                                worker
-                            )
-                        }
+                        ).use { connection ->
 
-                        if (handshake == true) {
+                            withTimeout(3000) {
+                                connection.performHandshake(
+                                    peerId,
+                                    torrentId,
+                                    handshakeHandlers
+                                )
+                            }
+
                             try {
                                 withContext(Dispatchers.IO) {
                                     launch {
