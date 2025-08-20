@@ -12,9 +12,6 @@ import kotlinx.atomicfu.locks.withLock
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
-import kotlin.concurrent.atomics.AtomicInt
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
@@ -120,23 +117,17 @@ internal class Worker(
         return connections.values.toList()
     }
 
-    @OptIn(ExperimentalAtomicApi::class)
-    fun purgedConnections(): Int {
+    fun purgedConnections() {
 
-        val purgedConnections = AtomicInt(0)
         val removing: MutableList<Connection> = mutableListOf()
         connections.values.forEach { connection: Connection ->
             if (connection.lastActive.elapsedNow().inWholeMilliseconds
                 >= PEER_INACTIVITY_THRESHOLD
             ) {
                 removing.add(connection)
-            } else {
-                purgedConnections.incrementAndFetch()
             }
         }
         removing.forEach { connection -> connection.close() }
-        return purgedConnections.load()
-
     }
 
     fun addConnection(connection: Connection) {

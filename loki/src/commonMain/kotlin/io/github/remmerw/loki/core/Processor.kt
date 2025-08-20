@@ -90,19 +90,16 @@ internal fun CoroutineScope.performConnection(
                                 )
                             }
 
-                            try {
-                                withContext(Dispatchers.IO) {
-                                    launch {
-                                        connection.reading()
-                                        coroutineContext.cancelChildren()
-                                    }
-                                    launch {
-                                        connection.posting()
-                                        coroutineContext.cancelChildren()
-                                    }
+
+                            withContext(Dispatchers.IO) {
+                                launch {
+                                    connection.reading()
+                                    coroutineContext.cancelChildren()
                                 }
-                            } finally {
-                                worker.purgedConnections()
+                                launch {
+                                    connection.posting()
+                                    coroutineContext.cancelChildren()
+                                }
                             }
                         }
                     }

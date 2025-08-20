@@ -29,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import java.net.InetSocketAddress
@@ -138,6 +139,14 @@ suspend fun CoroutineScope.download(
 
         val dataBitfield = dataStorage.dataBitfield()!! // must be defined
 
+        launch {
+            while (true) {
+                delay(PEER_INACTIVITY_THRESHOLD)
+
+                worker.purgedConnections()
+            }
+        }
+
         while (true) {
             if (dataBitfield.piecesRemaining() == 0) {
 
@@ -188,7 +197,7 @@ internal const val BLOCK_SIZE: Int = 16 * 1024 // 16 KB
 internal const val META_EXCHANGE_MAX_SIZE: Int = 2 * 1024 * 1024 // 2 MB
 internal const val MAX_OUTSTANDING_REQUESTS: Int = 250
 internal const val MAX_PIECE_RECEIVING_TIME: Long = 5000 // 5 sec
-internal const val PEER_INACTIVITY_THRESHOLD: Long = 60 * 1000 // 60 sec
+internal const val PEER_INACTIVITY_THRESHOLD: Long = 30 * 1000 // 30 sec
 internal const val CHOKING_THRESHOLD: Long = 10000 // millis
 internal const val FIRST_BLOCK_ARRIVAL_TIMEOUT: Long = 10000 // 10 sec
 internal const val WAIT_BEFORE_REREQUESTING_AFTER_REJECT: Long = 10000 // 10 sec
