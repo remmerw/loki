@@ -10,6 +10,7 @@ internal open class ConnectionState : ConnectionAgent() {
     private val cancelledRequests: MutableSet<Long> = ConcurrentHashMap.newKeySet()
     private val pendingRequests: MutableSet<Long> = ConcurrentHashMap.newKeySet()
     private val pieces: MutableSet<Int> = ConcurrentHashMap.newKeySet()
+    private val haves: MutableSet<Int> = ConcurrentHashMap.newKeySet()
     private val requests: ArrayDeque<Request> = ArrayDeque() // no concurrency
 
 
@@ -39,6 +40,10 @@ internal open class ConnectionState : ConnectionAgent() {
 
     fun addPiece(piece: Int): Boolean {
         return pieces.add(piece)
+    }
+
+    fun addHave(piece: Int): Boolean {
+        return haves.add(piece)
     }
 
     fun clearPieces() {

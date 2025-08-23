@@ -94,6 +94,7 @@ internal open class ConnectionWorker(
             worker.produce(this as Connection)
             handleConnection()
         }
+
         return postProcessOutgoingMessage(outgoingMessages.removeFirstOrNull())
     }
 

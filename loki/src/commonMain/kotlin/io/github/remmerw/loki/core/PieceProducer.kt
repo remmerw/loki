@@ -10,7 +10,10 @@ internal class PieceProducer(
     override fun produce(connection: Connection) {
         if (dataStorage.initializeDone()) {
             dataStorage.completePieces().forEach { index ->
-                connection.postMessage(Have(index))
+                if (connection.addHave(index)) {
+                    connection.postMessage(Have(index))
+                    return
+                }
             }
         }
     }
