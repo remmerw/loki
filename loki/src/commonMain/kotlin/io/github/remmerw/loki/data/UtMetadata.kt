@@ -9,7 +9,7 @@ internal data class UtMetadata(
     val metaType: MetaType,
     val pieceIndex: Int,
     val totalSize: Int,
-    val data: ByteArray // todo this should be optimized
+    val data: ByteArray
 ) : ExtendedMessage {
 
     override val type: Type
