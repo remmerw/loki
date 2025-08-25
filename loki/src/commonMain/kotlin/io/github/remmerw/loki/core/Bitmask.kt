@@ -37,19 +37,6 @@ internal class Bitmask(bits: Int) {
     }
 
 
-    /**
-     * Returns a new byte array containing all the bits in this bit set.
-     *
-     *
-     * More precisely, if
-     * <br></br>`byte[] bytes = s.toByteArray();`
-     * <br></br>then `bytes.length == (s.length()+7)/8` and
-     * <br></br>`s.get(n) == ((bytes[n/8] & (1<<(n%8))) != 0)`
-     * <br></br>for all `n < 8 * bytes.length`.
-     *
-     * @return a byte array containing a little-endian representation
-     * of all the bits in this bit set
-     */
     fun encode(piecesTotal: Int): ByteArray {
         val len = getBitmaskLength(piecesTotal)
 
@@ -360,6 +347,15 @@ internal class Bitmask(bits: Int) {
                 if (isSet(bytes, i)) {
                     bitmask.set(i)
                 }
+            }
+            return bitmask
+        }
+
+        fun decode(bytes: ByteArray): Bitmask {
+            val size = bytes.size
+            val bitmask = Bitmask(size)
+            for (i in 0 until size) {
+                if (bytes[i] == 1.toByte()) bitmask.set(i)
             }
             return bitmask
         }

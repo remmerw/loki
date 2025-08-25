@@ -7,7 +7,6 @@ import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
-import kotlinx.io.Buffer
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -16,15 +15,16 @@ import org.kotlincrypto.hash.sha1.SHA1
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
 
-internal data class DataStorage(val directory: Path) : Storage {
+internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
 
     private val validPieces: MutableSet<Int> = mutableSetOf()
     private var pieceFiles: MutableMap<Int, List<TorrentFile>> = mutableMapOf()
-    private val bitmaskDatabase = Path(directory, "bitmask.db")
+    private val bitmaskDatabase = randomAccessFile(Path(directory, "bitmask.db"))
     private val torrentDatabase = Path(directory, "torrent.db")
     private val database = randomAccessFile(Path(directory, "database.db"))
     private val completedPieces: MutableSet<Int> = ConcurrentHashMap.newKeySet()
-    private val lock = reentrantLock()
+    private val databaseLock = reentrantLock()
+    private val bitmaskLock = reentrantLock()
 
     init {
         require(
@@ -193,16 +193,19 @@ internal data class DataStorage(val directory: Path) : Storage {
 
     internal fun markVerified(piece: Int) {
         dataBitfield!!.markVerified(piece)
+        bitmaskLock.withLock {
+            bitmaskDatabase.writeBoolean(piece.toLong(), true)
+        }
     }
 
     internal fun digestChunk(piece: Int, chunk: Chunk): Boolean {
-        lock.withLock {
+        databaseLock.withLock {
             val bytes = ByteArray(chunk.chunkSize)
             database.readBytes(position(piece), bytes)
             val digest = SHA1().digest(bytes)
             val result = digest.contentEquals(chunk.checksum)
             if (result) {
-                dataBitfield!!.markVerified(piece)
+                markVerified(piece)
                 return true
             } else {
                 chunk.reset()
@@ -220,57 +223,43 @@ internal data class DataStorage(val directory: Path) : Storage {
     }
 
     internal fun verifiedPieces(totalPieces: Int) {
+        bitmaskLock.withLock {
+            val bytes = ByteArray(totalPieces)
+            val size = bitmaskDatabase.read(0, bytes)
 
-        var mask: Bitmask? = null
-        if (SystemFileSystem.exists(bitmaskDatabase)) {
-            val size = SystemFileSystem.metadataOrNull(bitmaskDatabase)!!.size
-            SystemFileSystem.source(bitmaskDatabase).use { source ->
-                val buffer = Buffer()
-                buffer.write(source, size)
+            debug("Bitmask size $size total $totalPieces")
+            val mask = Bitmask.decode(bytes)
 
-                mask = Bitmask.decode(buffer.readByteArray(), totalPieces)
-            }
+            dataBitfield = DataBitfield(totalPieces, mask)
         }
-
-        if (mask == null) {
-            mask = Bitmask(totalPieces)
-        }
-
-        dataBitfield = DataBitfield(totalPieces, mask)
-
     }
 
-    fun shutdown() {
-        lock.withLock {
+    override fun close() {
+        databaseLock.withLock {
             try {
                 database.close()
             } catch (throwable: Throwable) {
                 debug(throwable)
             }
         }
-        try {
-            if (dataBitfield != null) {
-                val buffer = Buffer()
-                buffer.write(dataBitfield!!.encode())
-
-                SystemFileSystem.sink(bitmaskDatabase, false).use { sink ->
-                    sink.write(buffer, buffer.size)
-                }
+        bitmaskLock.withLock {
+            try {
+                bitmaskDatabase.close()
+            } catch (throwable: Throwable) {
+                debug(throwable)
             }
-        } catch (throwable: Throwable) {
-            debug(throwable)
         }
     }
 
 
     internal fun readBlock(piece: Int, offset: Int, bytes: ByteArray, length: Int) {
-        return lock.withLock {
+        return databaseLock.withLock {
             database.readBytes(position(piece, offset), bytes, 0, length)
         }
     }
 
     internal fun writeBlock(piece: Int, offset: Int, data: ByteArray, length: Int) {
-        return lock.withLock {
+        return databaseLock.withLock {
             database.writeBytes(position(piece, offset), data, 0, length)
         }
     }

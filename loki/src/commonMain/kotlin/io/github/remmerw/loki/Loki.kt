@@ -62,133 +62,127 @@ suspend fun CoroutineScope.download(
     val path = Path(directory, torrentId.bytes.toHexString())
     SystemFileSystem.createDirectories(path)
 
-    val dataStorage = DataStorage(path)
+    DataStorage(path).use { dataStorage ->
 
-    val nodeId = nodeId()
-    val bootstrap = mutableSetOf<InetSocketAddress>()
-    bootstrap.addAll(defaultBootstrap())
-    bootstrap.addAll(store.addresses(25))
-    val nott = newNott(nodeId, bootstrap = bootstrap)
+        val nodeId = nodeId()
+        val bootstrap = mutableSetOf<InetSocketAddress>()
+        bootstrap.addAll(defaultBootstrap())
+        bootstrap.addAll(store.addresses(25))
+        val nott = newNott(nodeId, bootstrap = bootstrap)
 
-    val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
-        PeerExchangeHandler(),
-        UtMetadataHandler()
-    )
-
-    val extendedProtocol = ExtendedProtocol(extendedMessagesHandler)
-
-    // add default handshake handlers to the beginning of the connection handling chain
-    val handshakeHandlers = setOf(
-        BitfieldConnectionHandler(dataStorage),
-        ExtendedProtocolHandshakeHandler(
-            dataStorage,
-            extendedMessagesHandler,
-            nott.port(),
-            VERSION
+        val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
+            PeerExchangeHandler(),
+            UtMetadataHandler()
         )
-    )
 
-    val metadataConsumer = MetadataConsumer(dataStorage, torrentId)
+        val extendedProtocol = ExtendedProtocol(extendedMessagesHandler)
 
-    val worker = Worker(
-        dataStorage, listOf(
-            ExtendedHandshakeConsumer(),
-            MetadataAgent(dataStorage),
-            RequestProducer(dataStorage),
-            PeerRequestProducer(dataStorage),
-            PieceProducer(dataStorage),
-            metadataConsumer
+        // add default handshake handlers to the beginning of the connection handling chain
+        val handshakeHandlers = setOf(
+            BitfieldConnectionHandler(dataStorage),
+            ExtendedProtocolHandshakeHandler(
+                dataStorage,
+                extendedMessagesHandler,
+                nott.port(),
+                VERSION
+            )
         )
-    )
+
+        val metadataConsumer = MetadataConsumer(dataStorage, torrentId)
+
+        val worker = Worker(
+            dataStorage, listOf(
+                ExtendedHandshakeConsumer(),
+                MetadataAgent(dataStorage),
+                RequestProducer(dataStorage),
+                PeerRequestProducer(dataStorage),
+                PieceProducer(dataStorage),
+                metadataConsumer
+            )
+        )
 
 
-    try {
-        val counter = AtomicInt(0)
-        val responses = requestGetPeers(nott, torrentId.bytes) {
-            val size = counter.load()
-            if (size > 100) {
-                300000 // 300 sec
-            } else if (size > 50) {
-                120000 // 120 sec
-            } else if (size > 30) {
-                60000 // 60 sec
-            } else if (size > 20) {
-                30000 // 30 sec
-            } else if (size > 10) {
-                15000 // 15 sec
-            } else {
-                5000 // 5 sec
+        try {
+            val counter = AtomicInt(0)
+            val responses = requestGetPeers(nott, torrentId.bytes) {
+                val size = counter.load()
+                if (size > 100) {
+                    300000 // 300 sec
+                } else if (size > 50) {
+                    120000 // 120 sec
+                } else if (size > 30) {
+                    60000 // 60 sec
+                } else if (size > 20) {
+                    30000 // 30 sec
+                } else if (size > 10) {
+                    15000 // 15 sec
+                } else {
+                    5000 // 5 sec
+                }
             }
-        }
 
-        val addresses = performRequester(store, counter, responses)
+            val addresses = performRequester(store, counter, responses)
 
-        performConnection(
-            nodeId, torrentId, extendedProtocol,
-            handshakeHandlers, dataStorage, worker, addresses
-        )
+            performConnection(
+                nodeId, torrentId, extendedProtocol,
+                handshakeHandlers, dataStorage, worker, addresses
+            )
 
-        if (!dataStorage.initializeDone()) {
-            metadataConsumer.waitForTorrent()
-        }
-
-
-        // process bitfields and haves that we received while fetching metadata
-        worker.processMessages()
+            if (!dataStorage.initializeDone()) {
+                metadataConsumer.waitForTorrent()
+            }
 
 
-        val dataBitfield = dataStorage.dataBitfield()!! // must be defined
+            // process bitfields and haves that we received while fetching metadata
+            worker.processMessages()
 
-        launch {
+
+            val dataBitfield = dataStorage.dataBitfield()!! // must be defined
+
+            launch {
+                while (true) {
+                    delay(PEER_INACTIVITY_THRESHOLD)
+
+                    worker.purgedConnections()
+                }
+            }
+
             while (true) {
-                delay(PEER_INACTIVITY_THRESHOLD)
+                if (dataBitfield.piecesRemaining() == 0) {
 
-                worker.purgedConnections()
-            }
-        }
-
-        while (true) {
-            if (dataBitfield.piecesRemaining() == 0) {
-
-                progress.invoke(
-                    State(
-                        dataBitfield.piecesTotal,
-                        dataBitfield.piecesComplete()
+                    progress.invoke(
+                        State(
+                            dataBitfield.piecesTotal,
+                            dataBitfield.piecesComplete()
+                        )
                     )
-                )
-                coroutineContext.cancelChildren()
-                break
-            } else {
-                progress.invoke(
-                    State(
-                        dataBitfield.piecesTotal,
-                        dataBitfield.piecesComplete()
+                    coroutineContext.cancelChildren()
+                    break
+                } else {
+                    progress.invoke(
+                        State(
+                            dataBitfield.piecesTotal,
+                            dataBitfield.piecesComplete()
+                        )
                     )
-                )
-                delay(1000)
+                    delay(1000)
+                }
             }
-        }
-        return dataStorage
-    } finally {
-        try {
-            nott.shutdown()
-        } catch (throwable: Throwable) {
-            debug(throwable)
-        }
+            return dataStorage
+        } finally {
+            try {
+                nott.shutdown()
+            } catch (throwable: Throwable) {
+                debug(throwable)
+            }
 
-        try {
-            worker.shutdown()
-        } catch (throwable: Throwable) {
-            debug(throwable)
-        }
-
-        try {
-            dataStorage.shutdown()
-        } catch (throwable: Throwable) {
-            debug(throwable)
+            try {
+                worker.shutdown()
+            } catch (throwable: Throwable) {
+                debug(throwable)
+            }
         }
     }
-
 }
 
 
