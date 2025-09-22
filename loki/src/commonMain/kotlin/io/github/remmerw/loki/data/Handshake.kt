@@ -16,7 +16,7 @@ package io.github.remmerw.loki.data
  */
 @Suppress("ArrayInDataClass")
 internal data class Handshake(
-    val name: String,
+    val name: ByteArray,
     val reserved: ByteArray,
     val torrentId: TorrentId,
     val peerId: ByteArray

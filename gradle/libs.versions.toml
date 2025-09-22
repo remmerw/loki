@@ -1,6 +1,6 @@
 [versions]
 agp = "8.13.0"
-kotlin = "2.2.10"
+kotlin = "2.2.20"
 
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version = "0.29.0" }
@@ -13,7 +13,7 @@ sha1 = { module = "org.kotlincrypto.hash:sha1", version = "0.7.1"  }
 uri-kmp = { module = "com.eygraber:uri-kmp", version = "0.0.20" }
 nott = { module = "io.github.remmerw:nott", version ="0.1.5" }
 buri = { module = "io.github.remmerw:buri", version = "0.0.2" }
-grid = { module = "io.github.remmerw:grid", version = "0.0.9" }
+grid = { module = "io.github.remmerw:grid", version = "0.1.2" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }

@@ -57,7 +57,7 @@ internal const val EXTENDED_MESSAGE_ID: Byte = 20
 
 internal const val EXTENDED_HANDSHAKE_TYPE_ID: Byte = 0
 
-internal const val PROTOCOL_NAME = "BitTorrent protocol"
+internal val PROTOCOL_NAME = "BitTorrent protocol".encodeToByteArray()
 
 internal val KEEPALIVE = byteArrayOf(0, 0, 0, 0)
 

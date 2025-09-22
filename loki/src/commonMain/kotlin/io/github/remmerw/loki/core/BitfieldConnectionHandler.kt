@@ -17,7 +17,7 @@ internal data class BitfieldConnectionHandler(
                     Bitfield(
                         bitfield.encode()
                     )
-                connection.posting(bitfieldMessage, byteArrayOf())
+                connection.posting(bitfieldMessage)
             }
         }
     }

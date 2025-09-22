@@ -1,6 +1,8 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.buri.BEReader
+import io.github.remmerw.grid.ByteArrayPool
+import io.github.remmerw.grid.PooledByteArray
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.data.BITFIELD_ID
 import io.github.remmerw.loki.data.Bitfield
@@ -65,14 +67,14 @@ internal class Connection internal constructor(
     private val closed = AtomicBoolean(false)
     private val receiveChannel = socket.inputStream.asSource().buffered()
     private val sendChannel = socket.outputStream.asSink().buffered()
-    private var writeBlock: ByteArray? = null
+    private var writeBlock: PooledByteArray? = null
 
 
     fun writeBlock(): ByteArray {
         if (writeBlock == null) {
-            writeBlock = ByteArray(BLOCK_SIZE)
+            writeBlock = ByteArrayPool.getInstance(BLOCK_SIZE).get()
         }
-        return writeBlock!!
+        return writeBlock!!.byteArray
     }
 
 
@@ -119,10 +121,7 @@ internal class Connection internal constructor(
         val peerId = receiveChannel.readByteArray(SHA1_HASH_LENGTH)
         require(SHA1_HASH_LENGTH == peerId.size) { "Invalid peerId received" }
 
-        return Handshake(
-            name.decodeToString(),
-            reserved, TorrentId(infoHash), peerId
-        )
+        return Handshake(name, reserved, TorrentId(infoHash), peerId)
 
     }
 
@@ -132,12 +131,11 @@ internal class Connection internal constructor(
         get() = closed.load()
 
     suspend fun posting() {
-        val readBlock = ByteArray(BLOCK_SIZE)
         while (!isClosed) {
             try {
                 val send = worker.producedMessage(this)
                 if (send != null) {
-                    posting(send, readBlock)
+                    posting(send)
                 }
                 yield()
             } catch (_: Throwable) {
@@ -147,11 +145,11 @@ internal class Connection internal constructor(
     }
 
     @OptIn(ExperimentalAtomicApi::class)
-    fun posting(message: Message, readBlock: ByteArray) {
+    fun posting(message: Message) {
 
         when (message) {
             is Handshake -> {
-                val data = message.name.encodeToByteArray()
+                val data = message.name
                 sendChannel.writeByte(data.size.toByte())
                 sendChannel.write(data)
                 sendChannel.write(message.reserved)
@@ -172,11 +170,14 @@ internal class Connection internal constructor(
                 sendChannel.writeInt(message.piece)
                 sendChannel.writeInt(message.offset)
 
-                dataStorage.readBlock(
-                    message.piece, message.offset,
-                    readBlock, message.length
-                )
-                sendChannel.write(readBlock)
+                ByteArrayPool.getInstance(BLOCK_SIZE).get().use { pooledByteArray ->
+                    val readBlock = pooledByteArray.byteArray
+                    dataStorage.readBlock(
+                        message.piece, message.offset,
+                        readBlock, message.length
+                    )
+                    sendChannel.write(readBlock)
+                }
 
             }
 
@@ -428,7 +429,7 @@ internal class Connection internal constructor(
             handler.processOutgoingHandshake(handshake)
         }
 
-        posting(handshake, byteArrayOf())
+        posting(handshake)
 
         val peerHandshake = receiveHandshake()
 
@@ -444,6 +445,10 @@ internal class Connection internal constructor(
     override fun close() {
 
         if (!closed.exchange(true)) {
+            try {
+                writeBlock?.close()
+            } catch (_: Throwable) {
+            }
             try {
                 receiveChannel.close()
             } catch (_: Throwable) {
