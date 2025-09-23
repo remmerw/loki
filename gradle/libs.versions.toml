@@ -11,8 +11,8 @@ kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", versio
 runner = { module = "androidx.test:runner", version = "1.7.0" }
 sha1 = { module = "org.kotlincrypto.hash:sha1", version = "0.7.1"  }
 uri-kmp = { module = "com.eygraber:uri-kmp", version = "0.0.20" }
-nott = { module = "io.github.remmerw:nott", version ="0.1.5" }
-buri = { module = "io.github.remmerw:buri", version = "0.0.2" }
+nott = { module = "io.github.remmerw:nott", version ="0.1.6" }
+buri = { module = "io.github.remmerw:buri", version = "0.0.3" }
 grid = { module = "io.github.remmerw:grid", version = "0.1.2" }
 
 [plugins]
