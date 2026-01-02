@@ -321,9 +321,9 @@ internal class Connection internal constructor(
         return when (messageType) {
             PIECE_ID -> {
                 val piece = channel.readInt()
-                size = size - Int.SIZE_BYTES
+                size -= Int.SIZE_BYTES
                 val offset = channel.readInt()
-                size = size - Int.SIZE_BYTES
+                size -= Int.SIZE_BYTES
                 val data = writeBlock()
                 channel.readTo(data, 0, size)
                 consumePiece(piece, offset, size)

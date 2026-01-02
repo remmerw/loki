@@ -52,10 +52,10 @@ internal data class UtMetadata(
 
         val map = mutableMapOf<String, BEObject>()
 
-        map.put("msg_type", metaType.id.bencode())
-        map.put("piece", pieceIndex.bencode())
+        map["msg_type"] = metaType.id.bencode()
+        map["piece"] = pieceIndex.bencode()
         if (totalSize > 0) {
-            map.put("total_size", totalSize.bencode())
+            map["total_size"] = totalSize.bencode()
         }
 
         map.bencode().encodeTo(buffer)

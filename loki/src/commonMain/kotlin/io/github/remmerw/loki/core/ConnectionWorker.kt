@@ -138,10 +138,7 @@ internal open class ConnectionWorker(
 
     private fun mightUnchoke(): Boolean {
         // unchoke depending on last choked time to avoid fibrillation
-        val time = lastChoked
-        if (time == null) {
-            return true
-        }
+        val time = lastChoked ?: return true
         return time.elapsedNow().inWholeMilliseconds >= CHOKING_THRESHOLD
     }
 

@@ -180,7 +180,7 @@ internal fun buildTorrent(bytes: ByteArray): Torrent {
                 fileMap[FILE_SIZE_KEY]
             ) as BEInteger).toLong()
 
-            torrentSize = torrentSize + fileSize
+            torrentSize += fileSize
 
             val objectList = (checkNotNull(fileMap[FILE_PATH_ELEMENTS_KEY]) as BEList).toList()
 

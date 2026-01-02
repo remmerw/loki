@@ -29,7 +29,7 @@ internal data class Handshake(
      * @param bitIndex Index of a bit to set (0..63 inclusive)
      */
     fun setReservedBit(bitIndex: Int) {
-        if (bitIndex < 0 || bitIndex > UPPER_RESERVED_BOUND) {
+        if (bitIndex !in 0..UPPER_RESERVED_BOUND) {
             throw RuntimeException(
                 "Illegal bit index: " + bitIndex +
                         ". Expected index in range [0.." + UPPER_RESERVED_BOUND + "]"

@@ -268,13 +268,11 @@ internal class Bitmask(bits: Int) {
         if (this === other) return true
         if (other !is Bitmask) return false
 
-        val set = other
 
-
-        if (wordsInUse != set.wordsInUse) return false
+        if (wordsInUse != other.wordsInUse) return false
 
         // Check words in use by both Bitmasks
-        for (i in 0..<wordsInUse) if (words[i] != set.words[i]) return false
+        for (i in 0..<wordsInUse) if (words[i] != other.words[i]) return false
 
         return true
     }

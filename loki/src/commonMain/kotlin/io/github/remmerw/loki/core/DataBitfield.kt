@@ -113,7 +113,7 @@ internal data class DataBitfield(
     }
 
     private fun validatePieceIndex(pieceIndex: Int) {
-        if (pieceIndex < 0 || pieceIndex >= piecesTotal) {
+        if (pieceIndex !in 0..<piecesTotal) {
             throw RuntimeException(
                 "Illegal piece index: " + pieceIndex +
                         ", expected 0.." + (piecesTotal - 1)

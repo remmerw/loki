@@ -46,8 +46,7 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
             }
 
             while (connection.pendingRequestsSize() <= MAX_OUTSTANDING_REQUESTS) {
-                val request = connection.firstRequest()
-                if (request == null) break
+                val request = connection.firstRequest() ?: break
                 val key = key(request.piece, request.offset)
                 connection.postMessage(request)
                 connection.pendingRequestsAdd(key)

@@ -21,19 +21,13 @@ internal class PeerExchange(
         val inet4Peers = filterByAddressLength(added, 4) // ipv4
         val inet6Peers = filterByAddressLength(added, 16) // ipv6
 
-        map.put("added", encodePeers(inet4Peers))
-        map.put("added.f", encodePeerOptions(inet4Peers))
-        map.put("added6", encodePeers(inet6Peers))
-        map.put("added6.f", encodePeerOptions(inet6Peers))
+        map["added"] = encodePeers(inet4Peers)
+        map["added.f"] = encodePeerOptions(inet4Peers)
+        map["added6"] = encodePeers(inet6Peers)
+        map["added6.f"] = encodePeerOptions(inet6Peers)
 
-        map.put(
-            "dropped",
-            encodePeers(filterByAddressLength(dropped, 4)) // ipv4
-        )
-        map.put(
-            "dropped6",
-            encodePeers(filterByAddressLength(dropped, 16)) // ipv6
-        )
+        map["dropped"] = encodePeers(filterByAddressLength(dropped, 4))
+        map["dropped6"] = encodePeers(filterByAddressLength(dropped, 16))
 
         map.bencode().encodeTo(buffer)
     }
