@@ -88,7 +88,7 @@ internal class Worker(
             }
         }
         lock.withLock {
-            haves.forEach { connection: Connection, pieces: MutableSet<Int> ->
+            haves.forEach { (connection: Connection, pieces: MutableSet<Int>) ->
                 pieces.forEach { piece: Int -> pieceStatistics.addPiece(connection, piece) }
             }
         }

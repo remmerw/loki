@@ -13,7 +13,7 @@ internal data class BlockSet(
 ) {
 
     fun isPresent(blockIndex: Int): Boolean {
-        require(!(blockIndex < 0 || blockIndex >= blockCount)) {
+        require(blockIndex in 0..<blockCount) {
             "Invalid block index: " + blockIndex + ". Expected 0.." + (blockCount - 1)
         }
         return bitmask[blockIndex]

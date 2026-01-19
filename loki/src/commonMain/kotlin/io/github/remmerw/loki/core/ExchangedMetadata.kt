@@ -14,7 +14,7 @@ internal data class ExchangedMetadata(
     val totalSize: Int
 ) {
     private val lock = reentrantLock()
-    val metadata = allocateMemory(totalSize)!!
+    val metadata = allocateMemory(totalSize)
     private val metadataBlocks: BlockSet = createBlockSet(totalSize, BLOCK_SIZE)
 
     fun isBlockPresent(blockIndex: Int): Boolean {
@@ -48,7 +48,7 @@ internal data class ExchangedMetadata(
 
     private fun validateBlockIndex(blockIndex: Int) {
         val blockCount = metadataBlocks.blockCount
-        require(!(blockIndex < 0 || blockIndex >= blockCount)) {
+        require(blockIndex in 0..<blockCount) {
             "Invalid block index: $blockIndex; expected 0..$blockCount"
         }
     }
