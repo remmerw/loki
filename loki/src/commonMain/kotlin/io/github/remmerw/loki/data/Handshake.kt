@@ -9,7 +9,7 @@ package io.github.remmerw.loki.data
  *
  * Handshake message includes:
  * - a constant header, specified in standard BitTorrent protocol
- * - threads.torrent ID
+ * - torrent ID
  * - peer ID
  * - 8 reserved bytes, that are used by extensions, e.g. BEP-10: Extension Protocol
  *

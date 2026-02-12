@@ -209,7 +209,7 @@ private object UriParams {
 }
 
 /**
- * Create a magnet URI from its' string representation in BEP-9 format.
+ * Create a magnet URI from its string representation in BEP-9 format.
  * Current limitations:
  * - only v1 links are supported (xt=urn:btih:&lt;info-hash&gt;)
  * - base32-encoded info hashes are not supported
@@ -304,7 +304,7 @@ private fun parsePeer(value: String): InetSocketAddress {
 
 
 /**
- * Get binary data from its' hex-encoded representation (regardless of case).
+ * Get binary data from its hex-encoded representation (regardless of case).
  *
  * @param s Hex-encoded representation of binary data
  * @return Binary data

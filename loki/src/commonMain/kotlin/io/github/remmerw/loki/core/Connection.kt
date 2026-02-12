@@ -327,7 +327,7 @@ internal class Connection internal constructor(
                 val data = writeBlock()
                 channel.readTo(data, 0, size)
                 consumePiece(piece, offset, size)
-                return null
+                null
             }
 
             HAVE_ID -> {
@@ -338,7 +338,7 @@ internal class Connection internal constructor(
                 } else {
                     worker.consumeHave(piece, this)
                 }
-                return null
+                null
             }
 
             REQUEST_ID -> {
@@ -354,7 +354,7 @@ internal class Connection internal constructor(
                         }
                     }
                 }
-                return null
+                null
             }
 
             BITFIELD_ID -> {
@@ -365,7 +365,7 @@ internal class Connection internal constructor(
                 } else {
                     worker.consumeBitfield(data, this)
                 }
-                return null
+                null
             }
 
             CANCEL_ID -> {
@@ -373,33 +373,33 @@ internal class Connection internal constructor(
                 val blockOffset = channel.readInt()
                 channel.readInt()
                 this.cancelRequest(pieceIndex, blockOffset)
-                return null
+                null
             }
 
             CHOKE_ID -> {
                 this.isPeerChoking = true
-                return null
+                null
             }
 
             UNCHOKE_ID -> {
                 this.isPeerChoking = false
-                return null
+                null
             }
 
             INTERESTED_ID -> {
                 this.isPeerInterested = true
-                return null
+                null
             }
 
             NOT_INTERESTED_ID -> {
                 this.isPeerInterested = false
-                return null
+                null
             }
 
             PORT_ID -> {
                 val port = channel.readShort().toInt() and 0x0000FFFF
                 debug("Port not yet used $port")
-                return null
+                null
             }
 
             EXTENDED_MESSAGE_ID -> {

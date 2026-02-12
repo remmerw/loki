@@ -43,7 +43,7 @@ internal data class BlockSet(
         // then don't count it
 
         // handle the case when the last block is smaller than the others
-        // mark it as complete only when all of the block's data is present
+        // mark it as complete only when all the block's data is present
 
         if (offset <= lastBlockOffset && offset + length >= chunkSize) {
             bitmask.set(blockCount - 1)

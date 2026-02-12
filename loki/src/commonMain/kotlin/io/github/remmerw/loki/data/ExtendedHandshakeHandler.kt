@@ -26,7 +26,7 @@ internal class ExtendedHandshakeHandler : MessageHandler {
         if (mapping.isNotEmpty()) {
             // according to BEP-10, peers are only required to send a delta of changes
             // on subsequent handshakes, so we need to store all mappings received from the peer
-            // and merge the changes..
+            // and merge the changes.
             //
             // subsequent handshake messages can be used to enable/disable extensions
             // without restarting the connection

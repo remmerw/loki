@@ -137,7 +137,7 @@ internal class Bitmask(bits: Int) {
     }
 
     /**
-     * Sets all of the bits in this Bitmask to `false`.
+     * Sets all the bits in this Bitmask to `false`.
      */
     fun clear() {
         while (wordsInUse > 0) words[--wordsInUse] = 0
@@ -170,7 +170,7 @@ internal class Bitmask(bits: Int) {
      */
     fun cardinality(): Int {
         var sum = 0
-        for (i in 0..<wordsInUse) sum += words[i].countOneBits()
+        for (i in 0..wordsInUse) sum += words[i].countOneBits()
         return sum
     }
 
@@ -207,7 +207,7 @@ internal class Bitmask(bits: Int) {
 
 
     /**
-     * Clears all of the bits in this `Bitmask` whose corresponding
+     * Clears all the bits in this `Bitmask` whose corresponding
      * bit is set in the specified `Bitmask`.
      *
      * @param set the `Bitmask` with which to mask this
@@ -255,7 +255,7 @@ internal class Bitmask(bits: Int) {
      * The result is `true` if and only if the argument is
      * not `null` and is a `Bitmask` object that has
      * exactly the same set of bits set to `true` as this bit
-     * set. That is, for every non negative `int` index `k`,
+     * set. That is, for every non-negative `int` index `k`,
      * <pre>((Bitmask)obj).get(k) == this.get(k)</pre>
      * must be true. The current sizes of the two bit sets are not compared.
      *
@@ -272,7 +272,7 @@ internal class Bitmask(bits: Int) {
         if (wordsInUse != other.wordsInUse) return false
 
         // Check words in use by both Bitmasks
-        for (i in 0..<wordsInUse) if (words[i] != other.words[i]) return false
+        for (i in 0..wordsInUse) if (words[i] != other.words[i]) return false
 
         return true
     }
