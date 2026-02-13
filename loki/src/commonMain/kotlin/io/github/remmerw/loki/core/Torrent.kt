@@ -261,8 +261,8 @@ internal fun createTorrent(
 }
 
 
-internal fun key(hi: Int, lo: Int): Long {
-    return ((hi.toLong() shl 32) or lo.toLong())
+internal fun key(hi: Int, lo: Int): Key {
+    return Key(hi, lo)
 }
 
 

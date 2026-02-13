@@ -225,9 +225,7 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
     internal fun verifiedPieces(totalPieces: Int) {
         bitmaskLock.withLock {
             val bytes = ByteArray(totalPieces)
-            val size = bitmaskDatabase.read(0, bytes)
-
-            debug("Bitmask size $size total $totalPieces")
+            bitmaskDatabase.read(0, bytes)
             val mask = Bitmask.decode(bytes)
 
             dataBitfield = DataBitfield(totalPieces, mask)

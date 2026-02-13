@@ -196,7 +196,7 @@ internal const val CHOKING_THRESHOLD: Long = 10000 // millis
 internal const val FIRST_BLOCK_ARRIVAL_TIMEOUT: Long = 10000 // 10 sec
 internal const val WAIT_BEFORE_REREQUESTING_AFTER_REJECT: Long = 10000 // 10 sec
 internal const val UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL: Long = 1000
-internal const val VERSION = "Loki 0.3.1"
+internal const val VERSION = "Loki 0.5.0"
 internal const val SCHEME: String = "magnet"
 internal const val INFO_HASH_PREFIX: String = "urn:btih:"
 

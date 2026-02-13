@@ -60,10 +60,10 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
     ) {
         connection.clearRequests()
         connection.clearPieces()
-        connection.pendingRequests().forEach { key: Long ->
+        connection.pendingRequests().forEach { key: Key ->
 
-            val pieceIndex = key.shr(32).toInt()
-            val offset = key.toInt()
+            val pieceIndex = key.piece
+            val offset = key.offset
             val chunk = dataStorage.chunk(pieceIndex)
             val chunkSize = chunk.chunkSize
             val blockSize = chunk.blockSize

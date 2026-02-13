@@ -170,7 +170,7 @@ internal class Bitmask(bits: Int) {
      */
     fun cardinality(): Int {
         var sum = 0
-        for (i in 0..wordsInUse) sum += words[i].countOneBits()
+        for (i in 0..<wordsInUse) sum += words[i].countOneBits()
         return sum
     }
 
@@ -272,7 +272,7 @@ internal class Bitmask(bits: Int) {
         if (wordsInUse != other.wordsInUse) return false
 
         // Check words in use by both Bitmasks
-        for (i in 0..wordsInUse) if (words[i] != other.words[i]) return false
+        for (i in 0..<wordsInUse) if (words[i] != other.words[i]) return false
 
         return true
     }

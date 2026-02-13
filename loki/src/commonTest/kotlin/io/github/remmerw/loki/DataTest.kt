@@ -9,8 +9,8 @@ class DataTest {
     fun testKey() {
         val key = key(999, 35800)
 
-        val hi = key.shr(32).toInt()
-        val lo = key.toInt()
+        val hi = key.piece
+        val lo = key.offset
 
         assertEquals(hi, 999)
         assertEquals(lo, 35800)

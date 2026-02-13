@@ -7,8 +7,8 @@ import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 
 internal open class ConnectionState : ConnectionAgent() {
-    private val cancelledRequests: MutableSet<Long> = ConcurrentHashMap.newKeySet()
-    private val pendingRequests: MutableSet<Long> = ConcurrentHashMap.newKeySet()
+    private val cancelledRequests: MutableSet<Key> = ConcurrentHashMap.newKeySet()
+    private val pendingRequests: MutableSet<Key> = ConcurrentHashMap.newKeySet()
     private val pieces: MutableSet<Int> = ConcurrentHashMap.newKeySet()
     private val haves: MutableSet<Int> = ConcurrentHashMap.newKeySet()
     private val requests: ArrayDeque<Request> = ArrayDeque() // no concurrency
@@ -71,12 +71,12 @@ internal open class ConnectionState : ConnectionAgent() {
         )
     }
 
-    fun isCanceled(key: Long): Boolean {
+    fun isCanceled(key: Key): Boolean {
         return cancelledRequests.remove(key)
     }
 
 
-    fun pendingRequestsAdd(key: Long) {
+    fun pendingRequestsAdd(key: Key) {
         pendingRequests.add(key)
     }
 
@@ -84,11 +84,11 @@ internal open class ConnectionState : ConnectionAgent() {
         return pendingRequests.size
     }
 
-    fun pendingRequestsHas(key: Long): Boolean {
+    fun pendingRequestsHas(key: Key): Boolean {
         return pendingRequests.contains(key)
     }
 
-    fun pendingRequests(): List<Long> {
+    fun pendingRequests(): List<Key> {
         return pendingRequests.toList()
     }
 
@@ -96,7 +96,7 @@ internal open class ConnectionState : ConnectionAgent() {
         pendingRequests.clear()
     }
 
-    private fun pendingRequestsRemove(key: Long): Boolean {
+    private fun pendingRequestsRemove(key: Key): Boolean {
         return pendingRequests.remove(key)
     }
 
