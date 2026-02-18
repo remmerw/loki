@@ -1,5 +1,5 @@
 [versions]
-agp = "9.0.0"
+agp = "9.0.1"
 kotlin = "2.3.10"
 
 [libraries]
@@ -10,7 +10,7 @@ kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = 
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 sha1 = { module = "org.kotlincrypto.hash:sha1", version = "0.8.0"  }
 uri-kmp = { module = "com.eygraber:uri-kmp", version = "0.0.21" }
-nott = { module = "io.github.remmerw:nott", version ="0.1.8" }
+nott = { module = "io.github.remmerw:nott", version ="0.1.9" }
 buri = { module = "io.github.remmerw:buri", version = "0.0.6" }
 grid = { module = "io.github.remmerw:grid", version = "0.1.4" }
 
