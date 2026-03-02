@@ -219,7 +219,7 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
     }
 
     private fun position(piece: Int, offset: Int = 0): Long {
-        return (chunkSize() * piece).toLong() + offset
+        return (chunkSize().toLong() * piece.toLong()) + offset
     }
 
     internal fun verifiedPieces(totalPieces: Int) {
