@@ -95,7 +95,7 @@ private fun buildChunks(
     var lim: Long
     var remaining = size
     while (remaining > 0) {
-        off = (chunk * chunkSize).toLong()
+        off = (chunk.toLong() * chunkSize.toLong())
         lim = min(chunkSize.toLong(), remaining)
 
         val maxPos = lim + off
