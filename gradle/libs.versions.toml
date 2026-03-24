@@ -1,9 +1,9 @@
 [versions]
 agp = "9.1.0"
-kotlin = "2.3.10"
+kotlin = "2.3.20"
 
 [libraries]
-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version = "0.31.0" }
+atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version = "0.32.1" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.10.2" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.9.0" }
