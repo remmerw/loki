@@ -35,6 +35,8 @@ import kotlinx.io.files.SystemFileSystem
 import java.net.InetSocketAddress
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 
 data class State(val piecesTotal: Int, val piecesComplete: Int)
@@ -141,7 +143,7 @@ suspend fun CoroutineScope.download(
 
             launch {
                 while (true) {
-                    delay(PEER_INACTIVITY_THRESHOLD)
+                    delay(PEER_INACTIVITY_THRESHOLD.milliseconds)
 
                     worker.purgedConnections()
                 }
@@ -165,7 +167,7 @@ suspend fun CoroutineScope.download(
                             dataBitfield.piecesComplete()
                         )
                     )
-                    delay(1000)
+                    delay(1.seconds)
                 }
             }
             return dataStorage

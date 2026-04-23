@@ -22,6 +22,7 @@ import java.net.Socket
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
+import kotlin.time.Duration.Companion.seconds
 
 internal const val MAX_CONCURRENCY: Int = 32
 
@@ -82,7 +83,7 @@ internal fun CoroutineScope.performConnection(
                             worker, socket, extendedProtocol
                         ).use { connection ->
 
-                            withTimeout(3000) {
+                            withTimeout(3.seconds) {
                                 connection.performHandshake(
                                     peerId,
                                     torrentId,

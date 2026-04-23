@@ -12,6 +12,7 @@ import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.debug
 import kotlinx.coroutines.delay
 import kotlin.concurrent.Volatile
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
 internal class MetadataConsumer internal constructor(
@@ -199,7 +200,7 @@ internal class MetadataConsumer internal constructor(
      */
     suspend fun waitForTorrent() {
         while (!done) {
-            delay(100)
+            delay(100.milliseconds)
         }
     }
 }
