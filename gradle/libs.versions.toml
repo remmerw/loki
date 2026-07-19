@@ -1,6 +1,6 @@
 [versions]
 agp = "9.2.1"
-kotlin = "2.3.21"
+kotlin = "2.4.10"
 
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version = "0.32.1" }
