@@ -5,7 +5,7 @@ kotlin = "2.3.21"
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version = "0.32.1" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.10.2" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.11.0" }
 kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version = "0.9.0" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 sha1 = { module = "org.kotlincrypto.hash:sha1", version = "0.8.0"  }
