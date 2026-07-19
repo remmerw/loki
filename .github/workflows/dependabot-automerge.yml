@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Fetch Dependabot Metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v2 # Verifies PR type
+        uses: dependabot/fetch-metadata@v3 # Verifies PR type
 
       - name: Auto-merge minor and patch updates
         if: steps.metadata.outputs.update-type != 'version-update:semver-major'
