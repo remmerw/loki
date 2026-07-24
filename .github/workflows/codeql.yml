@@ -1,0 +1,8 @@
+# 1. Remove or comment out the autobuild step:
+# - name: Autobuild
+#   uses: github/codeql-action/autobuild@v3
+
+# 2. Add your custom build command instead:
+- name: Manual Build
+  run: |
+    ./gradlew assembleDebug --no-daemon
