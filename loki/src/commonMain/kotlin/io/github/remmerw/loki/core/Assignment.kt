@@ -7,19 +7,15 @@ import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 internal class Assignment internal constructor(
     private val dataStorage: DataStorage,
-    private val assignments: Assignments
+    private val assignments: Assignments,
 ) {
-
     val pieces: ArrayDeque<Int> = ArrayDeque()
 
     private var started: ValueTimeMark? = null
     private var checked: ValueTimeMark? = null
 
-
     internal fun claimPiecesIfNeeded(dataBitfield: DataBitfield) {
         if (pieces.size < MAX_SIMULTANEOUSLY_ASSIGNED_PIECES) {
-
-
             // randomize order of pieces to keep the number of pieces
             // requested from different peers at the same time to a minimum
             val requiredPieces = dataStorage.nextPieces()
@@ -38,9 +34,7 @@ internal class Assignment internal constructor(
         }
     }
 
-    fun isAssigned(piece: Int): Boolean {
-        return pieces.contains(piece)
-    }
+    fun isAssigned(piece: Int): Boolean = pieces.contains(piece)
 
     val status: Status
         get() {
@@ -69,7 +63,7 @@ internal class Assignment internal constructor(
     }
 
     enum class Status {
-        ACTIVE, TIMEOUT
+        ACTIVE,
+        TIMEOUT,
     }
 }
-

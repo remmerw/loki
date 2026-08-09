@@ -6,5 +6,8 @@ import io.github.remmerw.loki.data.Type
 internal interface MessageConsumer {
     fun consumedType(): Type
 
-    fun consume(message: Message, connection: Connection)
+    fun consume(
+        message: Message,
+        connection: Connection,
+    )
 }

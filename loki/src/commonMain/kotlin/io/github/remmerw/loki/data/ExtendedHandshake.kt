@@ -15,9 +15,9 @@ import kotlinx.io.Buffer
  * that utilize extended messaging.
  *
  */
-internal data class ExtendedHandshake(val data: Map<String, BEObject>) : ExtendedMessage {
-
-
+internal data class ExtendedHandshake(
+    val data: Map<String, BEObject>,
+) : ExtendedMessage {
     override val type: Type
         get() = Type.ExtendedHandshake
 

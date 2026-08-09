@@ -26,35 +26,34 @@ import kotlin.time.Duration.Companion.seconds
 
 internal const val MAX_CONCURRENCY: Int = 32
 
-
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
 internal fun CoroutineScope.performRequester(
     store: Store,
     counter: AtomicInt,
-    channel: ReceiveChannel<PeerResponse>
-): ReceiveChannel<InetSocketAddress> = produce {
+    channel: ReceiveChannel<PeerResponse>,
+): ReceiveChannel<InetSocketAddress> =
+    produce {
+        channel.consumeEach { response ->
+            try {
+                store.store(response.peer)
+            } catch (throwable: Throwable) {
+                debug(throwable)
+            }
+            response.addresses.forEach { address ->
 
-    channel.consumeEach { response ->
-        try {
-            store.store(response.peer)
-        } catch (throwable: Throwable) {
-            debug(throwable)
-        }
-        response.addresses.forEach { address ->
-
-            launch {
-                try {
-                    if (address.address.isReachable(3000)) {
-                        counter.incrementAndFetch()
-                        send(address)
+                launch {
+                    try {
+                        if (address.address.isReachable(3000)) {
+                            counter.incrementAndFetch()
+                            send(address)
+                        }
+                    } catch (throwable: Throwable) {
+                        debug(throwable)
                     }
-                } catch (throwable: Throwable) {
-                    debug(throwable)
                 }
             }
         }
     }
-}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.performConnection(
@@ -64,51 +63,51 @@ internal fun CoroutineScope.performConnection(
     handshakeHandlers: Collection<HandshakeHandler>,
     dataStorage: DataStorage,
     worker: Worker,
-    channel: ReceiveChannel<InetSocketAddress>
-): ReceiveChannel<Any> = produce {
+    channel: ReceiveChannel<InetSocketAddress>,
+): ReceiveChannel<Any> =
+    produce {
+        val semaphore = Semaphore(MAX_CONCURRENCY)
+        channel.consumeEach { address ->
 
-    val semaphore = Semaphore(MAX_CONCURRENCY)
-    channel.consumeEach { address ->
+            launch {
+                semaphore.withPermit {
+                    try {
+                        Socket().use { socket ->
+                            socket.soTimeout = 10000
+                            socket.connect(address, 3000)
 
-        launch {
-            semaphore.withPermit {
+                            Connection(
+                                address,
+                                dataStorage,
+                                worker,
+                                socket,
+                                extendedProtocol,
+                            ).use { connection ->
 
-                try {
-                    Socket().use { socket ->
-                        socket.soTimeout = 10000
-                        socket.connect(address, 3000)
-
-                        Connection(
-                            address, dataStorage,
-                            worker, socket, extendedProtocol
-                        ).use { connection ->
-
-                            withTimeout(3.seconds) {
-                                connection.performHandshake(
-                                    peerId,
-                                    torrentId,
-                                    handshakeHandlers
-                                )
-                            }
-
-
-                            withContext(Dispatchers.IO) {
-                                launch {
-                                    connection.reading()
-                                    coroutineContext.cancelChildren()
+                                withTimeout(3.seconds) {
+                                    connection.performHandshake(
+                                        peerId,
+                                        torrentId,
+                                        handshakeHandlers,
+                                    )
                                 }
-                                launch {
-                                    connection.posting()
-                                    coroutineContext.cancelChildren()
+
+                                withContext(Dispatchers.IO) {
+                                    launch {
+                                        connection.reading()
+                                        coroutineContext.cancelChildren()
+                                    }
+                                    launch {
+                                        connection.posting()
+                                        coroutineContext.cancelChildren()
+                                    }
                                 }
                             }
                         }
+                    } catch (throwable: Throwable) {
+                        debug("Processor.performConnection " + throwable.message)
                     }
-                } catch (throwable: Throwable) {
-                    debug("Processor.performConnection " + throwable.message)
                 }
             }
         }
     }
-}
-

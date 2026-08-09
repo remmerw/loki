@@ -4,21 +4,20 @@ package io.github.remmerw.loki.core
 internal data class Chunk(
     val chunkSize: Int,
     val blockSize: Int,
-    val checksum: ByteArray
+    val checksum: ByteArray,
 ) {
     private val blockSet = createBlockSet(chunkSize, blockSize)
 
-    fun markAvailable(offset: Int, size: Int) {
+    fun markAvailable(
+        offset: Int,
+        size: Int,
+    ) {
         blockSet.markAvailable(offset, size)
     }
 
-    fun blockCount(): Int {
-        return blockSet.blockCount
-    }
+    fun blockCount(): Int = blockSet.blockCount
 
-    fun isPresent(blockIndex: Int): Boolean {
-        return blockSet.isPresent(blockIndex)
-    }
+    fun isPresent(blockIndex: Int): Boolean = blockSet.isPresent(blockIndex)
 
     val isComplete: Boolean
         get() = blockSet.isComplete
@@ -26,5 +25,4 @@ internal data class Chunk(
     fun reset() {
         blockSet.clear()
     }
-
 }

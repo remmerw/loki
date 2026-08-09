@@ -14,8 +14,10 @@ internal class ExtendedHandshakeHandler : MessageHandler {
     private val peerTypeMappings: MutableMap<InetSocketAddress, MutableMap<Int, String>> =
         mutableMapOf()
 
-
-    private fun processTypeMapping(peer: InetSocketAddress, mappingObj: BEObject?) {
+    private fun processTypeMapping(
+        peer: InetSocketAddress,
+        mappingObj: BEObject?,
+    ) {
         if (mappingObj == null) {
             return
         }
@@ -40,22 +42,27 @@ internal class ExtendedHandshakeHandler : MessageHandler {
         return mapping?.toMap() ?: emptyMap()
     }
 
-    override fun doDecode(address: InetSocketAddress, reader: BEReader): ExtendedMessage {
+    override fun doDecode(
+        address: InetSocketAddress,
+        reader: BEReader,
+    ): ExtendedMessage {
         val map = (reader.decodeBencode() as BEMap).toMap()
         processTypeMapping(address, map["m"])
 
         return ExtendedHandshake(map)
     }
 
-    override fun doEncode(message: ExtendedMessage, buffer: Buffer) {
+    override fun doEncode(
+        message: ExtendedMessage,
+        buffer: Buffer,
+    ) {
         val extendedHandshake = message as ExtendedHandshake
         extendedHandshake.encode(buffer)
-
     }
 
     private fun mergeMappings(
         existing: MutableMap<Int, String>,
-        changes: Map<String, BEObject>
+        changes: Map<String, BEObject>,
     ): MutableMap<Int, String> {
         for ((typeName, value) in changes) {
             val typeId = (value as BEInteger).toInt()

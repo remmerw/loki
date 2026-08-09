@@ -8,24 +8,18 @@ import kotlinx.io.files.SystemFileSystem
 
 class StorageUnit internal constructor(
     private val database: Path,
-    private val torrentFile: TorrentFile
+    private val torrentFile: TorrentFile,
 ) {
     private val relPaths: List<String> = relPaths(torrentFile)
     private val startPos = torrentFile.startPosition()
 
     @Suppress("unused")
-    fun name(): String {
-        return relPaths.last()
-    }
+    fun name(): String = relPaths.last()
 
     @Suppress("unused")
-    fun relPaths(): List<String> {
-        return relPaths
-    }
+    fun relPaths(): List<String> = relPaths
 
-    fun size(): Long {
-        return torrentFile.size
-    }
+    fun size(): Long = torrentFile.size
 
     fun transferTo(sink: Sink) {
         randomAccessFile(database).use { database ->

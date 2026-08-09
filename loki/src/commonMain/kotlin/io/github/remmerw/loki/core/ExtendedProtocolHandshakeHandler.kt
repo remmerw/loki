@@ -12,13 +12,11 @@ internal data class ExtendedProtocolHandshakeHandler(
     private val tcpAcceptorPort: Int,
     private val version: String,
 ) : HandshakeHandler {
-
     private val lazyHandshake = lazy { buildHandshake() }
 
     private fun buildHandshake(): ExtendedHandshake {
         val data: MutableMap<String, BEObject> = mutableMapOf()
         val messageTypeMap: MutableMap<String, BEObject> = mutableMapOf()
-
 
         data["e"] = 0L.bencode() // require no encryption (1 is encryption)
         data["p"] = tcpAcceptorPort.bencode()
@@ -36,13 +34,11 @@ internal data class ExtendedProtocolHandshakeHandler(
             }
 
             messageTypeMap[handler.localName()] = handler.localTypeId().bencode()
-
         }
         if (!messageTypeMap.isEmpty()) {
             data["m"] = messageTypeMap.bencode()
         }
         return ExtendedHandshake(data.toMap())
-
     }
 
     override suspend fun processIncomingHandshake(connection: Connection) {
@@ -62,5 +58,4 @@ internal data class ExtendedProtocolHandshakeHandler(
             handshake.setReservedBit(43)
         }
     }
-
 }

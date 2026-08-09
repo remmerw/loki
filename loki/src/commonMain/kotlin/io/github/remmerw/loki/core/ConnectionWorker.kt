@@ -16,7 +16,7 @@ import kotlinx.atomicfu.locks.withLock
 import kotlin.time.TimeSource
 
 internal open class ConnectionWorker(
-    private val worker: Worker
+    private val worker: Worker,
 ) : ConnectionState() {
     private val outgoingMessages: ArrayDeque<Message> = ArrayDeque()
     private val pieceAnnouncements: MutableList<Have> = mutableListOf()
@@ -43,7 +43,6 @@ internal open class ConnectionWorker(
         return message
     }
 
-
     fun postMessage(message: Message) {
         if (isUrgent(message)) {
             outgoingMessages.addFirst(message)
@@ -56,7 +55,6 @@ internal open class ConnectionWorker(
         if (message == null) {
             return null
         }
-
 
         if (message is Piece) {
             // check that peer hadn't sent cancel while we were preparing the requested block
@@ -87,7 +85,6 @@ internal open class ConnectionWorker(
 
         return isCanceled(key(pieceIndex, offset))
     }
-
 
     fun getMessage(): Message? {
         if (outgoingMessages.isEmpty()) {
@@ -132,17 +129,11 @@ internal open class ConnectionWorker(
         }
     }
 
-    private fun isUrgent(message: Message): Boolean {
-        return message is Choke || message is Unchoke || message is Cancel
-    }
+    private fun isUrgent(message: Message): Boolean = message is Choke || message is Unchoke || message is Cancel
 
     private fun mightUnchoke(): Boolean {
         // unchoke depending on last choked time to avoid fibrillation
         val time = lastChoked ?: return true
         return time.elapsedNow().inWholeMilliseconds >= CHOKING_THRESHOLD
     }
-
 }
-
-
-

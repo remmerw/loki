@@ -58,8 +58,9 @@ internal class Connection internal constructor(
     private val dataStorage: DataStorage,
     private val worker: Worker,
     private val socket: Socket,
-    private val extendedProtocol: ExtendedProtocol
-) : ConnectionWorker(worker), AutoCloseable {
+    private val extendedProtocol: ExtendedProtocol,
+) : ConnectionWorker(worker),
+    AutoCloseable {
     @Volatile
     var lastActive: ValueTimeMark = TimeSource.Monotonic.markNow()
 
@@ -69,7 +70,6 @@ internal class Connection internal constructor(
     private val sendChannel = socket.outputStream.asSink().buffered()
     private var writeBlock: PooledByteArray? = null
 
-
     fun writeBlock(): ByteArray {
         if (writeBlock == null) {
             writeBlock = ByteArrayPool.getInstance(BLOCK_SIZE).get()
@@ -77,10 +77,7 @@ internal class Connection internal constructor(
         return writeBlock!!.byteArray
     }
 
-
-    fun address(): InetSocketAddress {
-        return address
-    }
+    fun address(): InetSocketAddress = address
 
     suspend fun reading() {
         while (!isClosed) {
@@ -90,7 +87,7 @@ internal class Connection internal constructor(
                 val length = receiveChannel.readInt()
                 require(length >= 0) { "Invalid read length received" }
 
-                if (length == 0) {  // keep has length 0
+                if (length == 0) { // keep has length 0
                     handleConnection()
                 } else {
                     val message = decode(receiveChannel, length)
@@ -109,7 +106,6 @@ internal class Connection internal constructor(
     }
 
     fun receiveHandshake(): Handshake {
-
         val sizeName = receiveChannel.readByte()
         require(sizeName.toInt() > 0) { "Invalid size name received" }
         val name = receiveChannel.readByteArray(sizeName.toInt())
@@ -122,9 +118,7 @@ internal class Connection internal constructor(
         require(SHA1_HASH_LENGTH == peerId.size) { "Invalid peerId received" }
 
         return Handshake(name, reserved, TorrentId(infoHash), peerId)
-
     }
-
 
     @OptIn(ExperimentalAtomicApi::class)
     val isClosed: Boolean
@@ -146,7 +140,6 @@ internal class Connection internal constructor(
 
     @OptIn(ExperimentalAtomicApi::class)
     fun posting(message: Message) {
-
         when (message) {
             is Handshake -> {
                 val data = message.name
@@ -162,7 +155,6 @@ internal class Connection internal constructor(
             }
 
             is Piece -> {
-
                 val size =
                     Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + message.length
                 sendChannel.writeInt(size)
@@ -173,12 +165,13 @@ internal class Connection internal constructor(
                 ByteArrayPool.getInstance(BLOCK_SIZE).get().use { pooledByteArray ->
                     val readBlock = pooledByteArray.byteArray
                     dataStorage.readBlock(
-                        message.piece, message.offset,
-                        readBlock, message.length
+                        message.piece,
+                        message.offset,
+                        readBlock,
+                        message.length,
                     )
                     sendChannel.write(readBlock)
                 }
-
             }
 
             is Have -> {
@@ -245,7 +238,6 @@ internal class Connection internal constructor(
             }
 
             is ExtendedMessage -> {
-
                 val buffer = Buffer()
                 extendedProtocol.doEncode(address(), message, buffer)
                 val size = buffer.size
@@ -254,22 +246,24 @@ internal class Connection internal constructor(
             }
         }
         sendChannel.flush()
-
     }
 
-    private fun consumeBitfield(
-        bitfield: ByteArray
-    ) {
+    private fun consumeBitfield(bitfield: ByteArray) {
         val piecesTotal = dataStorage.piecesTotal()
-        val dataBitfield = DataBitfield(
-            piecesTotal, Bitmask.decode(bitfield, piecesTotal)
-        )
+        val dataBitfield =
+            DataBitfield(
+                piecesTotal,
+                Bitmask.decode(bitfield, piecesTotal),
+            )
         setDataBitfield(dataBitfield)
         dataStorage.pieceStatistics()!!.addBitfield(dataBitfield)
     }
 
-
-    private fun consumePiece(piece: Int, offset: Int, length: Int) {
+    private fun consumePiece(
+        piece: Int,
+        offset: Int,
+        length: Int,
+    ) {
         if (!dataStorage.initializeDone()) {
             return
         }
@@ -312,9 +306,10 @@ internal class Connection internal constructor(
         }
     }
 
-
-    private fun decode(channel: Source, length: Int): Message? {
-
+    private fun decode(
+        channel: Source,
+        length: Int,
+    ): Message? {
         val messageType = channel.readByte()
         var size = length - Byte.SIZE_BYTES
 
@@ -345,7 +340,6 @@ internal class Connection internal constructor(
                 val piece = channel.readInt()
                 val offset = channel.readInt()
                 val length = channel.readInt()
-
 
                 if (dataStorage.initializeDone()) {
                     if (!choking) {
@@ -418,13 +412,15 @@ internal class Connection internal constructor(
     suspend fun performHandshake(
         peerId: ByteArray,
         torrentId: TorrentId,
-        handshakeHandlers: Collection<HandshakeHandler>
+        handshakeHandlers: Collection<HandshakeHandler>,
     ) {
-
-        val handshake = Handshake(
-            PROTOCOL_NAME,
-            ByteArray(HANDSHAKE_RESERVED_LENGTH), torrentId, peerId
-        )
+        val handshake =
+            Handshake(
+                PROTOCOL_NAME,
+                ByteArray(HANDSHAKE_RESERVED_LENGTH),
+                torrentId,
+                peerId,
+            )
         handshakeHandlers.forEach { handler: HandshakeHandler ->
             handler.processOutgoingHandshake(handshake)
         }
@@ -438,12 +434,10 @@ internal class Connection internal constructor(
             handler.processIncomingHandshake(this)
         }
         worker.addConnection(this)
-
     }
 
     @OptIn(ExperimentalAtomicApi::class)
     override fun close() {
-
         if (!closed.exchange(true)) {
             try {
                 writeBlock?.close()

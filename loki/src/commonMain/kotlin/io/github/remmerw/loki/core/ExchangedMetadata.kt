@@ -6,23 +6,22 @@ import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 import org.kotlincrypto.hash.sha1.SHA1
 
-
 /**
  * BEP-9 torrent metadata, thread-safe
  */
 internal data class ExchangedMetadata(
-    val totalSize: Int
+    val totalSize: Int,
 ) {
     private val lock = reentrantLock()
     val metadata = allocateMemory(totalSize)
     private val metadataBlocks: BlockSet = createBlockSet(totalSize, BLOCK_SIZE)
 
-    fun isBlockPresent(blockIndex: Int): Boolean {
-        return metadataBlocks.isPresent(blockIndex)
-    }
+    fun isBlockPresent(blockIndex: Int): Boolean = metadataBlocks.isPresent(blockIndex)
 
-
-    fun setBlock(blockIndex: Int, block: ByteArray) {
+    fun setBlock(
+        blockIndex: Int,
+        block: ByteArray,
+    ) {
         lock.withLock {
             validateBlockIndex(blockIndex)
             val offset = blockIndex * BLOCK_SIZE
@@ -37,7 +36,6 @@ internal data class ExchangedMetadata(
     val isComplete: Boolean
         get() = metadataBlocks.isComplete
 
-
     fun digest(): ByteArray {
         lock.withLock {
             check(metadataBlocks.isComplete) { "Metadata is not complete" }
@@ -45,12 +43,10 @@ internal data class ExchangedMetadata(
         }
     }
 
-
     private fun validateBlockIndex(blockIndex: Int) {
         val blockCount = metadataBlocks.blockCount
         require(blockIndex in 0..<blockCount) {
             "Invalid block index: $blockIndex; expected 0..$blockCount"
         }
     }
-
 }

@@ -38,8 +38,10 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-
-data class State(val piecesTotal: Int, val piecesComplete: Int)
+data class State(
+    val piecesTotal: Int,
+    val piecesComplete: Int,
+)
 
 interface Storage {
     fun storeTo(directory: Path)
@@ -52,13 +54,12 @@ interface Storage {
     fun storageUnits(): List<StorageUnit>
 }
 
-
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class, ExperimentalAtomicApi::class)
 suspend fun CoroutineScope.download(
     magnetUri: MagnetUri,
     directory: Path,
     store: Store = MemoryStore(),
-    progress: (State) -> Unit
+    progress: (State) -> Unit,
 ): Storage {
     val torrentId = magnetUri.torrentId
     val path = Path(directory, torrentId.bytes.toHexString())
@@ -72,72 +73,79 @@ suspend fun CoroutineScope.download(
         bootstrap.addAll(store.addresses(25))
         val nott = newNott(nodeId, bootstrap = bootstrap)
 
-        val extendedMessagesHandler: List<ExtendedMessageHandler> = listOf(
-            PeerExchangeHandler(),
-            UtMetadataHandler()
-        )
+        val extendedMessagesHandler: List<ExtendedMessageHandler> =
+            listOf(
+                PeerExchangeHandler(),
+                UtMetadataHandler(),
+            )
 
         val extendedProtocol = ExtendedProtocol(extendedMessagesHandler)
 
         // add default handshake handlers to the beginning of the connection handling chain
-        val handshakeHandlers = setOf(
-            BitfieldConnectionHandler(dataStorage),
-            ExtendedProtocolHandshakeHandler(
-                dataStorage,
-                extendedMessagesHandler,
-                nott.port(),
-                VERSION
+        val handshakeHandlers =
+            setOf(
+                BitfieldConnectionHandler(dataStorage),
+                ExtendedProtocolHandshakeHandler(
+                    dataStorage,
+                    extendedMessagesHandler,
+                    nott.port(),
+                    VERSION,
+                ),
             )
-        )
 
         val metadataConsumer = MetadataConsumer(dataStorage, torrentId)
 
-        val worker = Worker(
-            dataStorage, listOf(
-                ExtendedHandshakeConsumer(),
-                MetadataAgent(dataStorage),
-                RequestProducer(dataStorage),
-                PeerRequestProducer(dataStorage),
-                PieceProducer(dataStorage),
-                metadataConsumer
+        val worker =
+            Worker(
+                dataStorage,
+                listOf(
+                    ExtendedHandshakeConsumer(),
+                    MetadataAgent(dataStorage),
+                    RequestProducer(dataStorage),
+                    PeerRequestProducer(dataStorage),
+                    PieceProducer(dataStorage),
+                    metadataConsumer,
+                ),
             )
-        )
-
 
         try {
             val counter = AtomicInt(0)
-            val responses = requestGetPeers(nott, torrentId.bytes) {
-                val size = counter.load()
-                if (size > 100) {
-                    300000 // 300 sec
-                } else if (size > 50) {
-                    120000 // 120 sec
-                } else if (size > 30) {
-                    60000 // 60 sec
-                } else if (size > 20) {
-                    30000 // 30 sec
-                } else if (size > 10) {
-                    15000 // 15 sec
-                } else {
-                    5000 // 5 sec
+            val responses =
+                requestGetPeers(nott, torrentId.bytes) {
+                    val size = counter.load()
+                    if (size > 100) {
+                        300000 // 300 sec
+                    } else if (size > 50) {
+                        120000 // 120 sec
+                    } else if (size > 30) {
+                        60000 // 60 sec
+                    } else if (size > 20) {
+                        30000 // 30 sec
+                    } else if (size > 10) {
+                        15000 // 15 sec
+                    } else {
+                        5000 // 5 sec
+                    }
                 }
-            }
 
             val addresses = performRequester(store, counter, responses)
 
             performConnection(
-                nodeId, torrentId, extendedProtocol,
-                handshakeHandlers, dataStorage, worker, addresses
+                nodeId,
+                torrentId,
+                extendedProtocol,
+                handshakeHandlers,
+                dataStorage,
+                worker,
+                addresses,
             )
 
             if (!dataStorage.initializeDone()) {
                 metadataConsumer.waitForTorrent()
             }
 
-
             // process bitfields and haves that we received while fetching metadata
             worker.processMessages()
-
 
             val dataBitfield = dataStorage.dataBitfield()!! // must be defined
 
@@ -151,12 +159,11 @@ suspend fun CoroutineScope.download(
 
             while (true) {
                 if (dataBitfield.piecesRemaining() == 0) {
-
                     progress.invoke(
                         State(
                             dataBitfield.piecesTotal,
-                            dataBitfield.piecesComplete()
-                        )
+                            dataBitfield.piecesComplete(),
+                        ),
                     )
                     coroutineContext.cancelChildren()
                     break
@@ -164,8 +171,8 @@ suspend fun CoroutineScope.download(
                     progress.invoke(
                         State(
                             dataBitfield.piecesTotal,
-                            dataBitfield.piecesComplete()
-                        )
+                            dataBitfield.piecesComplete(),
+                        ),
                     )
                     delay(1.seconds)
                 }
@@ -187,7 +194,6 @@ suspend fun CoroutineScope.download(
     }
 }
 
-
 internal const val MAX_SIMULTANEOUSLY_ASSIGNED_PIECES: Int = 3
 internal const val BLOCK_SIZE: Int = 16 * 1024 // 16 KB
 internal const val META_EXCHANGE_MAX_SIZE: Int = 2 * 1024 * 1024 // 2 MB
@@ -201,7 +207,6 @@ internal const val UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL: Long = 1000
 internal const val VERSION = "Loki 0.5.0"
 internal const val SCHEME: String = "magnet"
 internal const val INFO_HASH_PREFIX: String = "urn:btih:"
-
 
 private object UriParams {
     const val TORRENT_ID: String = "xt"
@@ -217,14 +222,13 @@ private object UriParams {
  * - base32-encoded info hashes are not supported
  */
 fun parseMagnetUri(uri: String): MagnetUri {
-
     val paramsMap = collectParams(uri)
 
-    val infoHashes = requiredParams(paramsMap)
-        .filter { value: String -> value.startsWith(INFO_HASH_PREFIX) }
-        .map { value: String -> value.substring(INFO_HASH_PREFIX.length) }
-        .toSet()
-
+    val infoHashes =
+        requiredParams(paramsMap)
+            .filter { value: String -> value.startsWith(INFO_HASH_PREFIX) }
+            .map { value: String -> value.substring(INFO_HASH_PREFIX.length) }
+            .toSet()
 
     check(infoHashes.size == 1) {
         "Parameter ${UriParams.TORRENT_ID} has invalid number of values with prefix $INFO_HASH_PREFIX: ${infoHashes.size}"
@@ -237,7 +241,7 @@ fun parseMagnetUri(uri: String): MagnetUri {
 
     optionalParams(UriParams.TRACKER_URL, paramsMap).forEach { trackerUrl: String ->
         builder.tracker(
-            trackerUrl
+            trackerUrl,
         )
     }
     optionalParams(UriParams.PEER, paramsMap).forEach { value: String ->
@@ -252,7 +256,6 @@ fun parseMagnetUri(uri: String): MagnetUri {
 
 private fun collectParams(uri: String): Map<String, MutableList<String>> {
     val paramsMap: MutableMap<String, MutableList<String>> = mutableMapOf()
-
 
     // magnet:?param1=value1...
     // uri.getSchemeSpecificPart() will start with the question mark and contain all name-value pairs
@@ -284,17 +287,14 @@ private fun requiredParams(paramsMap: Map<String, MutableList<String>>): List<St
 
 private fun optionalParams(
     paramName: String,
-    paramsMap: Map<String, MutableList<String>>
-): List<String> {
-    return paramsMap.getOrElse(paramName) { emptyList() }
-}
+    paramsMap: Map<String, MutableList<String>>,
+): List<String> = paramsMap.getOrElse(paramName) { emptyList() }
 
 private fun buildTorrentId(infoHash: String): TorrentId {
     val len = infoHash.length
     require(len == 40) { "Invalid info hash length: $len" }
     return TorrentId(fromHex(infoHash))
 }
-
 
 private fun parsePeer(value: String): InetSocketAddress {
     val parts = value.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -303,7 +303,6 @@ private fun parsePeer(value: String): InetSocketAddress {
     val port = parts[1].toInt()
     return InetSocketAddress(hostname, port)
 }
-
 
 /**
  * Get binary data from its hex-encoded representation (regardless of case).
@@ -319,17 +318,21 @@ private fun fromHex(s: String): ByteArray {
     var i = 0
     var j = 0
     while (i < len) {
-        bytes[i] = (hexDigit(chars[j]) * 16 + hexDigit(
-            chars[j + 1]
-        )).toByte()
+        bytes[i] =
+            (
+                hexDigit(chars[j]) * 16 +
+                    hexDigit(
+                        chars[j + 1],
+                    )
+            ).toByte()
         i++
         j = i * 2
     }
     return bytes
 }
 
-private fun hexDigit(c: Char): Int {
-    return when (c) {
+private fun hexDigit(c: Char): Int =
+    when (c) {
         in '0'..'9' -> {
             c.code - '0'.code
         }
@@ -344,8 +347,6 @@ private fun hexDigit(c: Char): Int {
 
         else -> throw IllegalArgumentException("Illegal hexadecimal character: $c")
     }
-}
-
 
 @Suppress("unused")
 class MagnetUri private constructor(
@@ -367,11 +368,11 @@ class MagnetUri private constructor(
      *
      * @return Collection of well-known peer addresses
      */
-    val peerAddresses: Collection<InetSocketAddress>
+    val peerAddresses: Collection<InetSocketAddress>,
 ) {
-
-
-    class Builder internal constructor(private val torrentId: TorrentId) {
+    class Builder internal constructor(
+        private val torrentId: TorrentId,
+    ) {
         private val trackerUrls: MutableSet<String> = mutableSetOf()
         private val peerAddresses: MutableSet<InetSocketAddress> = mutableSetOf()
         private var displayName: String? = null
@@ -401,18 +402,13 @@ class MagnetUri private constructor(
             peerAddresses.add(address)
         }
 
-        fun buildUri(): MagnetUri {
-            return MagnetUri(torrentId, displayName, trackerUrls, peerAddresses)
-        }
+        fun buildUri(): MagnetUri = MagnetUri(torrentId, displayName, trackerUrls, peerAddresses)
     }
 
     companion object {
-        fun torrentId(torrentId: TorrentId): Builder {
-            return Builder(torrentId)
-        }
+        fun torrentId(torrentId: TorrentId): Builder = Builder(torrentId)
     }
 }
-
 
 @Suppress("SameReturnValue")
 private val isError: Boolean
@@ -433,8 +429,3 @@ internal fun debug(throwable: Throwable) {
         throwable.printStackTrace()
     }
 }
-
-
-
-
-

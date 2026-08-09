@@ -7,40 +7,43 @@ import io.github.remmerw.loki.data.Type
 import io.github.remmerw.loki.data.UtMetadata
 import kotlin.math.min
 
-
 internal class MetadataAgent(
-    private val dataStorage: DataStorage
-) : Produces, Consumers {
-
-
+    private val dataStorage: DataStorage,
+) : Produces,
+    Consumers {
     override val consumers: List<MessageConsumer>
         get() {
             val list: MutableList<MessageConsumer> = mutableListOf()
-            list.add(object : MessageConsumer {
-                override fun consumedType(): Type {
-                    return Type.UtMetadata
-                }
+            list.add(
+                object : MessageConsumer {
+                    override fun consumedType(): Type = Type.UtMetadata
 
-                override fun consume(
-                    message: Message,
-                    connection: Connection
-                ) {
-                    if (dataStorage.initializeDone()) {
-                        consumeUtMetadata(message as UtMetadata, connection)
+                    override fun consume(
+                        message: Message,
+                        connection: Connection,
+                    ) {
+                        if (dataStorage.initializeDone()) {
+                            consumeUtMetadata(message as UtMetadata, connection)
+                        }
                     }
-                }
-            })
+                },
+            )
             return list
         }
 
-    private fun consumeUtMetadata(message: UtMetadata, connection: Connection) {
-
+    private fun consumeUtMetadata(
+        message: UtMetadata,
+        connection: Connection,
+    ) {
         if (message.metaType == MetaType.REQUEST) {
             processMetadataRequest(connection, message.pieceIndex)
         }
     }
 
-    private fun processMetadataRequest(connection: Connection, pieceIndex: Int) {
+    private fun processMetadataRequest(
+        connection: Connection,
+        pieceIndex: Int,
+    ) {
         val response: Message
 
         if (dataStorage.torrent()!!.isPrivate) {
@@ -48,7 +51,6 @@ internal class MetadataAgent(
             // - torrent is private
             response = UtMetadata(MetaType.REJECT, pieceIndex)
         } else {
-
             val size = dataStorage.metadataSize()
             val offset = pieceIndex * BLOCK_SIZE
             if (offset > size) {
@@ -64,7 +66,6 @@ internal class MetadataAgent(
 
         connection.addOutboundMessage(response)
     }
-
 
     override fun produce(connection: Connection) {
         if (dataStorage.initializeDone()) {

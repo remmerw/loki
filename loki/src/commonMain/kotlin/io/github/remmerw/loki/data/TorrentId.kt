@@ -1,16 +1,15 @@
 package io.github.remmerw.loki.data
 
-
-data class TorrentId(val bytes: ByteArray) {
+data class TorrentId(
+    val bytes: ByteArray,
+) {
     init {
         if (bytes.size != TORRENT_ID_LENGTH) {
             throw RuntimeException("Illegal threads.torrent ID length: " + bytes.size)
         }
     }
 
-    override fun hashCode(): Int {
-        return bytes.contentHashCode()
-    }
+    override fun hashCode(): Int = bytes.contentHashCode()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

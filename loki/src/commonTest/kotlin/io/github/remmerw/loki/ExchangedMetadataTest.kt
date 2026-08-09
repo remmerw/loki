@@ -20,7 +20,6 @@ import kotlin.test.assertTrue
 import kotlin.time.measureTime
 
 class ExchangedMetadataTest {
-
     @Test
     fun testMagnetUri() {
         var uri =
@@ -39,26 +38,27 @@ class ExchangedMetadataTest {
 
     @Test
     fun testUtMetadataMessageHandler() {
-        val time = measureTime {
-            val handler = UtMetadataHandler()
-            val data = Random.nextBytes(100)
-            val metadata = UtMetadata(
-                metaType = MetaType.DATA,
-                pieceIndex = 0,
-                totalSize = 100,
-                data = data
-            )
-            val inetSocketAddress = InetSocketAddress("random", 999)
-            val buffer = Buffer()
-            handler.doEncode(metadata, buffer)
-            val bytes = buffer.readByteArray()
-            val reader = BEReader(bytes, bytes.size)
-            val cmp = handler.doDecode(inetSocketAddress, reader)
-            assertEquals(cmp, metadata)
-        }
+        val time =
+            measureTime {
+                val handler = UtMetadataHandler()
+                val data = Random.nextBytes(100)
+                val metadata =
+                    UtMetadata(
+                        metaType = MetaType.DATA,
+                        pieceIndex = 0,
+                        totalSize = 100,
+                        data = data,
+                    )
+                val inetSocketAddress = InetSocketAddress("random", 999)
+                val buffer = Buffer()
+                handler.doEncode(metadata, buffer)
+                val bytes = buffer.readByteArray()
+                val reader = BEReader(bytes, bytes.size)
+                val cmp = handler.doDecode(inetSocketAddress, reader)
+                assertEquals(cmp, metadata)
+            }
         println("Time UTMetadata " + time.inWholeMilliseconds)
     }
-
 
     @Test
     fun testBitmaskBig() {
@@ -88,7 +88,6 @@ class ExchangedMetadataTest {
         assertFalse(a[36])
         assertTrue(a[999])
 
-
         val data = a.encode(bits)
 
         val b = Bitmask.decode(data, bits)
@@ -99,33 +98,32 @@ class ExchangedMetadataTest {
         assertTrue(b[999])
     }
 
-
     @Test
-    fun createAndValidate(): Unit = runBlocking(Dispatchers.IO) {
+    fun createAndValidate(): Unit =
+        runBlocking(Dispatchers.IO) {
+            val totalSize = BLOCK_SIZE * 5 + 100
 
-        val totalSize = BLOCK_SIZE * 5 + 100
+            val meta = ExchangedMetadata(totalSize)
 
-        val meta = ExchangedMetadata(totalSize)
-
-        assertFalse(meta.isComplete)
-
-        val pieces = totalSize / BLOCK_SIZE
-        val rest = totalSize.mod(BLOCK_SIZE)
-        assertEquals(rest, totalSize - (pieces * BLOCK_SIZE))
-
-        repeat(pieces) { i ->
-            meta.setBlock(i, Random.nextBytes(ByteArray(BLOCK_SIZE)))
-        }
-
-        if (rest > 0) {
             assertFalse(meta.isComplete)
-            meta.setBlock(pieces, Random.nextBytes(ByteArray(rest)))
+
+            val pieces = totalSize / BLOCK_SIZE
+            val rest = totalSize.mod(BLOCK_SIZE)
+            assertEquals(rest, totalSize - (pieces * BLOCK_SIZE))
+
+            repeat(pieces) { i ->
+                meta.setBlock(i, Random.nextBytes(ByteArray(BLOCK_SIZE)))
+            }
+
+            if (rest > 0) {
+                assertFalse(meta.isComplete)
+                meta.setBlock(pieces, Random.nextBytes(ByteArray(rest)))
+            }
+            assertTrue(meta.isComplete)
+
+            val digest = meta.digest()
+            assertNotNull(digest)
+
+            assertTrue(digest.contentEquals(meta.digest()))
         }
-        assertTrue(meta.isComplete)
-
-        val digest = meta.digest()
-        assertNotNull(digest)
-
-        assertTrue(digest.contentEquals(meta.digest()))
-    }
 }

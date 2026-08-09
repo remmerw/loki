@@ -10,9 +10,8 @@ import java.net.InetSocketAddress
 
 internal class PeerExchange(
     val added: Collection<InetSocketAddress>,
-    val dropped: Collection<InetSocketAddress>
-) :
-    ExtendedMessage {
+    val dropped: Collection<InetSocketAddress>,
+) : ExtendedMessage {
     override val type: Type
         get() = Type.PeerExchange
 
@@ -32,12 +31,10 @@ internal class PeerExchange(
         map.bencode().encodeTo(buffer)
     }
 
-
     private fun filterByAddressLength(
-        peers: Collection<InetSocketAddress>, addressLength: Int
-    ): Collection<InetSocketAddress> {
-        return peers.filter { peer -> peer.address.address.size == addressLength }
-    }
+        peers: Collection<InetSocketAddress>,
+        addressLength: Int,
+    ): Collection<InetSocketAddress> = peers.filter { peer -> peer.address.address.size == addressLength }
 
     private fun encodePeers(peers: Collection<InetSocketAddress>): BEString {
         val bos = Buffer()
@@ -53,5 +50,4 @@ internal class PeerExchange(
         repeat(peers.size) { bos.writeInt(0) }
         return bos.readByteArray().bencode()
     }
-
 }

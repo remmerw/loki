@@ -11,10 +11,12 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 
 internal class PeerExchangeHandler : ExtendedMessageHandler {
-    override fun supportedTypes(): Collection<Type> =
-        setOf(Type.PeerExchange)
+    override fun supportedTypes(): Collection<Type> = setOf(Type.PeerExchange)
 
-    override fun doDecode(address: InetSocketAddress, reader: BEReader): ExtendedMessage {
+    override fun doDecode(
+        address: InetSocketAddress,
+        reader: BEReader,
+    ): ExtendedMessage {
         val map = (reader.decodeBencode() as BEMap).toMap()
         val added: MutableSet<InetSocketAddress> = mutableSetOf()
         extractPeers(map, "added", "added.f", 4, added) // ipv4
@@ -26,26 +28,24 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         return PeerExchange(added, dropped)
     }
 
-    override fun doEncode(message: ExtendedMessage, buffer: Buffer) {
+    override fun doEncode(
+        message: ExtendedMessage,
+        buffer: Buffer,
+    ) {
         val exchange = message as PeerExchange
         exchange.encode(buffer)
     }
 
-    override fun localTypeId(): Byte {
-        return 1
-    }
+    override fun localTypeId(): Byte = 1
 
-    override fun localName(): String {
-        return "ut_pex"
-    }
-
+    override fun localName(): String = "ut_pex"
 
     private fun extractPeers(
         map: Map<String, BEObject>,
         peersKey: String,
         flagsKey: String?,
         addressLength: Int,
-        destination: MutableCollection<InetSocketAddress>
+        destination: MutableCollection<InetSocketAddress>,
     ) {
         if (map.containsKey(peersKey)) {
             val peers = (checkNotNull(map[peersKey]) as BEString).toByteArray()
@@ -58,12 +58,11 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         }
     }
 
-
     private fun extractPeers(
         peers: ByteArray,
         flags: ByteArray,
         addressLength: Int,
-        destination: MutableCollection<InetSocketAddress>
+        destination: MutableCollection<InetSocketAddress>,
     ) {
         val cryptoFlags = ByteArray(flags.size)
         for (i in flags.indices) {
@@ -72,20 +71,18 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         parsePeers(peers, addressLength, destination, cryptoFlags)
     }
 
-
     private fun extractPeers(
         peers: ByteArray,
         addressLength: Int,
-        destination: MutableCollection<InetSocketAddress>
+        destination: MutableCollection<InetSocketAddress>,
     ) {
         parsePeers(peers, addressLength, destination)
     }
 
-
     private fun parsePeers(
         peers: ByteArray,
         cryptoFlags: ByteArray?,
-        addressLength: Int
+        addressLength: Int,
     ): List<InetSocketAddress> {
         var pos = 0
         var index = 0
@@ -102,9 +99,10 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
             pos += 2 // port length
             to = pos
 
-            val port = (((peers[from].toInt() shl 8) and 0xFF00)
-                    + (peers[to - 1].toInt() and 0x00FF))
-
+            val port = (
+                ((peers[from].toInt() shl 8) and 0xFF00) +
+                    (peers[to - 1].toInt() and 0x00FF)
+            )
 
             val requiresEncryption = cryptoFlags != null && cryptoFlags[index].toInt() == 1
             if (!requiresEncryption) {
@@ -122,24 +120,22 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
     }
 
     private fun parsePeers(
-        peers: ByteArray, addressLength: Int,
+        peers: ByteArray,
+        addressLength: Int,
         destination: MutableCollection<InetSocketAddress>,
-        cryptoFlags: ByteArray? = null
+        cryptoFlags: ByteArray? = null,
     ) {
-
         val peerLength = addressLength + 2 // 2 is port length
         require(peers.size % peerLength == 0) {
             "Invalid peers string (" + addressLength + ") -- length (" +
-                    peers.size + ") is not divisible by " + peerLength
+                peers.size + ") is not divisible by " + peerLength
         }
         val numOfPeers = peers.size / peerLength
         require(!(cryptoFlags != null && cryptoFlags.size != numOfPeers)) {
             "Number of peers (" + numOfPeers +
-                    ") is different from the number of crypto flags (" + cryptoFlags!!.size + ")"
+                ") is different from the number of crypto flags (" + cryptoFlags!!.size + ")"
         }
 
         destination.addAll(parsePeers(peers, cryptoFlags, addressLength))
-
     }
-
 }

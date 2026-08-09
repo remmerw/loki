@@ -4,14 +4,14 @@ import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
-internal class Bitmask(bits: Int) {
-
+internal class Bitmask(
+    bits: Int,
+) {
     private var words: LongArray
 
     private var wordsInUse = 0
 
     private var sizeIsSticky = false
-
 
     init {
         // bits can't be negative; size 0 is OK
@@ -35,7 +35,6 @@ internal class Bitmask(bits: Int) {
 
         wordsInUse = i + 1 // The new logical size
     }
-
 
     fun encode(piecesTotal: Int): ByteArray {
         val len = getBitmaskLength(piecesTotal)
@@ -93,9 +92,7 @@ internal class Bitmask(bits: Int) {
         expandTo(wordIndex)
 
         words[wordIndex] = words[wordIndex] or (1L shl bitIndex) // Restores invariants
-
     }
-
 
     /**
      * Sets the bits from the specified `fromIndex` (inclusive) to the
@@ -107,7 +104,10 @@ internal class Bitmask(bits: Int) {
      * or `toIndex` is negative, or `fromIndex` is
      * larger than `toIndex`
      */
-    operator fun set(fromIndex: Int, toIndex: Int) {
+    operator fun set(
+        fromIndex: Int,
+        toIndex: Int,
+    ) {
         checkRange(fromIndex, toIndex)
 
         if (fromIndex == toIndex) return
@@ -133,7 +133,6 @@ internal class Bitmask(bits: Int) {
             // Handle last word (restores invariants)
             words[endWordIndex] = words[endWordIndex] or lastWordMask
         }
-
     }
 
     /**
@@ -156,12 +155,10 @@ internal class Bitmask(bits: Int) {
     operator fun get(bitIndex: Int): Boolean {
         if (bitIndex < 0) throw IndexOutOfBoundsException("bitIndex < 0: $bitIndex")
 
-
         val wordIndex: Int = wordIndex(bitIndex)
-        return (wordIndex < wordsInUse)
-                && ((words[wordIndex] and (1L shl bitIndex)) != 0L)
+        return (wordIndex < wordsInUse) &&
+            ((words[wordIndex] and (1L shl bitIndex)) != 0L)
     }
-
 
     /**
      * Returns the number of bits set to `true` in this `Bitmask`.
@@ -173,7 +170,6 @@ internal class Bitmask(bits: Int) {
         for (i in 0..<wordsInUse) sum += words[i].countOneBits()
         return sum
     }
-
 
     /**
      * Performs a logical **OR** of this bit set with the bit set
@@ -197,14 +193,11 @@ internal class Bitmask(bits: Int) {
         // Perform logical OR on words in common
         for (i in 0..<wordsInCommon) words[i] = words[i] or set.words[i]
 
-
         // Copy any remaining words
         if (wordsInCommon < set.wordsInUse) {
             set.words.copyInto(words, wordsInCommon, wordsInCommon, wordsInUse)
         }
-
     }
-
 
     /**
      * Clears all the bits in this `Bitmask` whose corresponding
@@ -215,11 +208,12 @@ internal class Bitmask(bits: Int) {
      */
     fun andNot(set: Bitmask) {
         // Perform logical (a & !b) on words in common
-        for (i in min(wordsInUse, set.wordsInUse) - 1 downTo 0) words[i] =
-            words[i] and set.words[i].inv()
+        for (i in min(wordsInUse, set.wordsInUse) - 1 downTo 0) {
+            words[i] =
+                words[i] and set.words[i].inv()
+        }
 
         recalculateWordsInUse()
-
     }
 
     /**
@@ -268,7 +262,6 @@ internal class Bitmask(bits: Int) {
         if (this === other) return true
         if (other !is Bitmask) return false
 
-
         if (wordsInUse != other.wordsInUse) return false
 
         // Check words in use by both Bitmasks
@@ -307,37 +300,41 @@ internal class Bitmask(bits: Int) {
     }
 
     companion object {
-
         private const val ADDRESS_BITS_PER_WORD = 6
 
-        /* Used to shift left or right for a partial word mask */
+        // Used to shift left or right for a partial word mask
         private const val WORD_MASK = -0x1L
-
 
         /**
          * Given a bit index, return word index containing it.
          */
-        private fun wordIndex(bitIndex: Int): Int {
-            return bitIndex shr ADDRESS_BITS_PER_WORD
-        }
+        private fun wordIndex(bitIndex: Int): Int = bitIndex shr ADDRESS_BITS_PER_WORD
 
         /**
          * Checks that fromIndex ... toIndex is a valid range of bit indices.
          */
-        private fun checkRange(fromIndex: Int, toIndex: Int) {
+        private fun checkRange(
+            fromIndex: Int,
+            toIndex: Int,
+        ) {
             if (fromIndex < 0) throw IndexOutOfBoundsException("fromIndex < 0: $fromIndex")
             if (toIndex < 0) throw IndexOutOfBoundsException("toIndex < 0: $toIndex")
-            if (fromIndex > toIndex) throw IndexOutOfBoundsException(
-                "fromIndex: " + fromIndex +
-                        " > toIndex: " + toIndex
-            )
+            if (fromIndex > toIndex) {
+                throw IndexOutOfBoundsException(
+                    "fromIndex: " + fromIndex +
+                        " > toIndex: " + toIndex,
+                )
+            }
         }
 
-        fun decode(bytes: ByteArray, piecesTotal: Int): Bitmask {
+        fun decode(
+            bytes: ByteArray,
+            piecesTotal: Int,
+        ): Bitmask {
             val expectedBitmaskLength = getBitmaskLength(piecesTotal)
             require(bytes.size == expectedBitmaskLength) {
                 "Invalid bitfield: total (" + piecesTotal +
-                        "), bitmask length (" + bytes.size + "). Expected bitmask length: " + expectedBitmaskLength
+                    "), bitmask length (" + bytes.size + "). Expected bitmask length: " + expectedBitmaskLength
             }
 
             val bitmask = Bitmask(piecesTotal)
@@ -358,7 +355,6 @@ internal class Bitmask(bits: Int) {
             return bitmask
         }
 
-
         /**
          * Gets i-th bit in a bitmask.
          *
@@ -366,7 +362,10 @@ internal class Bitmask(bits: Int) {
          * @param i        Bit index (0-based)
          * @return 1 if bit is set, 0 otherwise
          */
-        private fun getBit(bytes: ByteArray, i: Int): Int {
+        private fun getBit(
+            bytes: ByteArray,
+            i: Int,
+        ): Int {
             val byteIndex = (i / 8.0).toInt()
             if (byteIndex >= bytes.size) {
                 throw RuntimeException("bit index is too large: $i")
@@ -378,7 +377,6 @@ internal class Bitmask(bits: Int) {
             return (bytes[byteIndex].toInt() and bitMask) shr shift
         }
 
-
         /**
          * Check if i-th bit in the bitmask is set.
          *
@@ -386,9 +384,10 @@ internal class Bitmask(bits: Int) {
          * @param i        Bit index (0-based)
          * @return true if i-th bit in the bitmask is set, false otherwise
          */
-        private fun isSet(bytes: ByteArray, i: Int): Boolean {
-            return getBit(bytes, i) == 1
-        }
+        private fun isSet(
+            bytes: ByteArray,
+            i: Int,
+        ): Boolean = getBit(bytes, i) == 1
 
         /**
          * Sets i-th bit in a bitmask.
@@ -396,7 +395,10 @@ internal class Bitmask(bits: Int) {
          * @param bytes    Bitmask.
          * @param i        Bit index (0-based)
          */
-        private fun setBit(bytes: ByteArray, i: Int) {
+        private fun setBit(
+            bytes: ByteArray,
+            i: Int,
+        ) {
             val byteIndex = (i / 8.0).toInt()
             if (byteIndex >= bytes.size) {
                 throw RuntimeException("bit index is too large: $i")
@@ -409,8 +411,6 @@ internal class Bitmask(bits: Int) {
             bytes[byteIndex] = (currentByte.toInt() or bitMask).toByte()
         }
 
-        fun getBitmaskLength(piecesTotal: Int): Int {
-            return ceil(piecesTotal / 8.0).toInt()
-        }
+        fun getBitmaskLength(piecesTotal: Int): Int = ceil(piecesTotal / 8.0).toInt()
     }
 }
