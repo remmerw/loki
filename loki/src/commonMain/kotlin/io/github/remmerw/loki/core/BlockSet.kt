@@ -9,9 +9,8 @@ internal data class BlockSet(
     val blockCount: Int,
     private val lastBlockSize: Int,
     private val lastBlockOffset: Int,
-    private val bitmask: Bitmask
+    private val bitmask: Bitmask,
 ) {
-
     fun isPresent(blockIndex: Int): Boolean {
         require(blockIndex in 0..<blockCount) {
             "Invalid block index: " + blockIndex + ". Expected 0.." + (blockCount - 1)
@@ -21,7 +20,6 @@ internal data class BlockSet(
 
     val isComplete: Boolean
         get() = bitmask.cardinality() == blockCount
-
 
     fun clear() {
         bitmask.clear()
@@ -37,7 +35,10 @@ internal data class BlockSet(
      * represented in it (i.e. 2 trailing bytes are trimmed). In such case only the first block will be
      * considered saved (i.e. the corresponding index in the bitmask will be set to 1).
      */
-    fun markAvailable(offset: Int, length: Int) {
+    fun markAvailable(
+        offset: Int,
+        length: Int,
+    ) {
         // update bitmask with the info about the new blocks;
         // if only a part of some block is written,
         // then don't count it

@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.data
 
-
 /**
  * Standard handshake message.
  * This is the very first message that peers must send,
@@ -19,10 +18,8 @@ internal data class Handshake(
     val name: ByteArray,
     val reserved: ByteArray,
     val torrentId: TorrentId,
-    val peerId: ByteArray
-) :
-    Message {
-
+    val peerId: ByteArray,
+) : Message {
     /**
      * Set a reserved bit.
      *
@@ -32,12 +29,11 @@ internal data class Handshake(
         if (bitIndex !in 0..UPPER_RESERVED_BOUND) {
             throw RuntimeException(
                 "Illegal bit index: " + bitIndex +
-                        ". Expected index in range [0.." + UPPER_RESERVED_BOUND + "]"
+                    ". Expected index in range [0.." + UPPER_RESERVED_BOUND + "]",
             )
         }
         setBit(reserved, bitIndex)
     }
-
 
     /**
      * Sets i-th bit in a bitmask.
@@ -45,7 +41,10 @@ internal data class Handshake(
      * @param bytes    Bitmask.
      * @param i        Bit index (0-based)
      */
-    private fun setBit(bytes: ByteArray, i: Int) {
+    private fun setBit(
+        bytes: ByteArray,
+        i: Int,
+    ) {
         val byteIndex = (i / 8.0).toInt()
         if (byteIndex >= bytes.size) {
             throw RuntimeException("bit index is too large: $i")
@@ -57,5 +56,4 @@ internal data class Handshake(
         val currentByte = bytes[byteIndex]
         bytes[byteIndex] = (currentByte.toInt() or bitMask).toByte()
     }
-
 }

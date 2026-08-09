@@ -6,16 +6,13 @@ import io.github.remmerw.loki.data.Handshake
 internal data class BitfieldConnectionHandler(
     private val dataStorage: DataStorage,
 ) : HandshakeHandler {
-    override suspend fun processIncomingHandshake(
-        connection: Connection
-    ) {
-
+    override suspend fun processIncomingHandshake(connection: Connection) {
         val bitfield = dataStorage.dataBitfield()
         if (bitfield != null) {
             if (bitfield.piecesComplete() > 0) {
                 val bitfieldMessage =
                     Bitfield(
-                        bitfield.encode()
+                        bitfield.encode(),
                     )
                 connection.posting(bitfieldMessage)
             }

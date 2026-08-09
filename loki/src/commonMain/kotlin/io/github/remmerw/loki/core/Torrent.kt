@@ -13,7 +13,6 @@ import kotlinx.io.files.SystemFileSystem
 import kotlin.math.ceil
 import kotlin.math.min
 
-
 internal interface Agent
 
 internal interface Consumers : Agent {
@@ -24,19 +23,17 @@ internal interface Produces : Agent {
     fun produce(connection: Connection)
 }
 
-
-internal data class TorrentFile(val size: Long, val pathElements: List<String>) {
+internal data class TorrentFile(
+    val size: Long,
+    val pathElements: List<String>,
+) {
     val pieces: MutableList<Int> = mutableListOf()
 
     private var startPos = 0L
 
-    fun endPosition(): Long {
-        return startPos + size
-    }
+    fun endPosition(): Long = startPos + size
 
-    fun startPosition(): Long {
-        return startPos
-    }
+    fun startPosition(): Long = startPos
 
     fun startPosition(value: Long) {
         this.startPos = value
@@ -47,7 +44,10 @@ internal data class TorrentFile(val size: Long, val pathElements: List<String>) 
     }
 }
 
-internal fun createTorrentFile(size: Long, pathElements: List<String>): TorrentFile {
+internal fun createTorrentFile(
+    size: Long,
+    pathElements: List<String>,
+): TorrentFile {
     if (size < 0) {
         throw RuntimeException("Invalid torrent file size: $size")
     }
@@ -61,7 +61,6 @@ internal fun createTorrentFile(size: Long, pathElements: List<String>): TorrentF
 private const val UNDEFINED_TORRENT_NAME: String = "undefined"
 private const val CHUNK_HASH_LENGTH = 20
 
-
 internal data class Torrent(
     val name: String,
     val chunks: List<Chunk>,
@@ -70,13 +69,14 @@ internal data class Torrent(
     val chunkSize: Int,
     val isPrivate: Boolean,
     val createdBy: String,
-    val singleFile: Boolean
+    val singleFile: Boolean,
 )
 
 private fun buildChunks(
     hashes: List<ByteArray>,
     files: List<TorrentFile>,
-    size: Long, chunkSize: Int
+    size: Long,
+    chunkSize: Int,
 ): List<Chunk> {
     val chunks: MutableList<Chunk> = mutableListOf()
     var startRange = 0L
@@ -136,37 +136,44 @@ internal fun buildTorrent(bytes: ByteArray): Torrent {
 
     val root = (reader.decodeBencode() as BEMap).toMap()
 
-    val infoMap = if (root.containsKey(INFOMAP_KEY)) {
-        // standard BEP-3 format
-        (root[INFOMAP_KEY] as BEMap).toMap()
-    } else {
-        // BEP-9 exchanged metadata (just the info dictionary)
-        root
-    }
-
+    val infoMap =
+        if (root.containsKey(INFOMAP_KEY)) {
+            // standard BEP-3 format
+            (root[INFOMAP_KEY] as BEMap).toMap()
+        } else {
+            // BEP-9 exchanged metadata (just the info dictionary)
+            root
+        }
 
     var name = UNDEFINED_TORRENT_NAME
     if (infoMap[TORRENT_NAME_KEY] != null) {
-        name = (checkNotNull(
-            infoMap[TORRENT_NAME_KEY]
-        ) as BEString).toString()
+        name =
+            (
+                checkNotNull(
+                    infoMap[TORRENT_NAME_KEY],
+                ) as BEString
+            ).toString()
     }
 
-    val chunkSize = (checkNotNull(
-        infoMap[CHUNK_SIZE_KEY]
-    ) as BEInteger).toLong()
-
+    val chunkSize =
+        (
+            checkNotNull(
+                infoMap[CHUNK_SIZE_KEY],
+            ) as BEInteger
+        ).toLong()
 
     val chunkHashes =
         (checkNotNull(infoMap[CHUNK_HASHES_KEY]) as BEString).toByteArray()
 
-
     val torrentFiles: MutableList<TorrentFile> = mutableListOf()
     val size: Long
     if (infoMap[TORRENT_SIZE_KEY] != null) {
-        val torrentSize = (checkNotNull(
-            infoMap[TORRENT_SIZE_KEY]
-        ) as BEInteger).toLong()
+        val torrentSize =
+            (
+                checkNotNull(
+                    infoMap[TORRENT_SIZE_KEY],
+                ) as BEInteger
+            ).toLong()
         size = torrentSize
     } else {
         val files =
@@ -176,9 +183,12 @@ internal fun buildTorrent(bytes: ByteArray): Torrent {
             val file = data as BEMap
             val fileMap = file.toMap()
 
-            val fileSize = (checkNotNull(
-                fileMap[FILE_SIZE_KEY]
-            ) as BEInteger).toLong()
+            val fileSize =
+                (
+                    checkNotNull(
+                        fileMap[FILE_SIZE_KEY],
+                    ) as BEInteger
+                ).toLong()
 
             torrentSize += fileSize
 
@@ -187,14 +197,16 @@ internal fun buildTorrent(bytes: ByteArray): Torrent {
             val pathElements: MutableList<BEString> = mutableListOf()
             objectList.forEach { beObject: BEObject ->
                 pathElements.add(
-                    beObject as BEString
+                    beObject as BEString,
                 )
             }
 
             torrentFiles.add(
                 createTorrentFile(
-                    fileSize, pathElements
-                        .map { obj: BEString -> obj.toString() })
+                    fileSize,
+                    pathElements
+                        .map { obj: BEString -> obj.toString() },
+                ),
             )
         }
 
@@ -202,9 +214,12 @@ internal fun buildTorrent(bytes: ByteArray): Torrent {
     }
     var isPrivate = false
     if (infoMap[PRIVATE_KEY] != null) {
-        if (1 == (checkNotNull(
-                infoMap[PRIVATE_KEY]
-            ) as BEInteger).toInt()
+        if (1 ==
+            (
+                checkNotNull(
+                    infoMap[PRIVATE_KEY],
+                ) as BEInteger
+            ).toInt()
         ) {
             isPrivate = true
         }
@@ -213,14 +228,21 @@ internal fun buildTorrent(bytes: ByteArray): Torrent {
     var createdBy = ""
 
     if (root[CREATED_BY_KEY] != null) {
-        createdBy = (checkNotNull(
-            root[CREATED_BY_KEY]
-        ) as BEString).toString()
+        createdBy =
+            (
+                checkNotNull(
+                    root[CREATED_BY_KEY],
+                ) as BEString
+            ).toString()
     }
     return createTorrent(
-        name, torrentFiles,
-        chunkHashes, size, chunkSize.toInt(),
-        isPrivate, createdBy
+        name,
+        torrentFiles,
+        chunkHashes,
+        size,
+        chunkSize.toInt(),
+        isPrivate,
+        createdBy,
     )
 }
 
@@ -235,14 +257,18 @@ const val FILE_PATH_ELEMENTS_KEY: String = "path"
 const val PRIVATE_KEY: String = "private"
 const val CREATED_BY_KEY: String = "created by"
 
-
 internal fun createTorrent(
-    name: String, torrentFiles: MutableList<TorrentFile>, chunkHashes: ByteArray,
-    size: Long, chunkSize: Int, isPrivate: Boolean, createdBy: String
+    name: String,
+    torrentFiles: MutableList<TorrentFile>,
+    chunkHashes: ByteArray,
+    size: Long,
+    chunkSize: Int,
+    isPrivate: Boolean,
+    createdBy: String,
 ): Torrent {
     require(chunkHashes.size.mod(CHUNK_HASH_LENGTH) == 0) {
         "Invalid chunk hashes string -- length (" + chunkHashes.size +
-                ") is not divisible by " + CHUNK_HASH_LENGTH
+            ") is not divisible by " + CHUNK_HASH_LENGTH
     }
     var singleFile = false
     if (torrentFiles.isEmpty()) {
@@ -253,18 +279,25 @@ internal fun createTorrent(
     val hashes = buildHashes(chunkHashes)
     val chunks = buildChunks(hashes, torrentFiles, size, chunkSize)
 
-    val torrent = Torrent(
-        name, chunks, torrentFiles, size, chunkSize, isPrivate, createdBy, singleFile
-    )
+    val torrent =
+        Torrent(
+            name,
+            chunks,
+            torrentFiles,
+            size,
+            chunkSize,
+            isPrivate,
+            createdBy,
+            singleFile,
+        )
 
     return torrent
 }
 
-
-internal fun key(hi: Int, lo: Int): Key {
-    return Key(hi, lo)
-}
-
+internal fun key(
+    hi: Int,
+    lo: Int,
+): Key = Key(hi, lo)
 
 fun String.normalizeForFileName(replacementChar: String = "_"): String {
     // 1. Trim whitespace
@@ -287,7 +320,6 @@ fun String.normalizeForFileName(replacementChar: String = "_"): String {
     // 4. Handle leading/trailing replacement characters (optional, but good practice)
     normalized = normalized.removePrefix(replacementChar).removeSuffix(replacementChar)
 
-
     // 5. Handle names that are just dots (or became dots after normalization)
     if (normalized == "." || normalized == "") {
         return replacementChar + normalized + replacementChar // e.g., "_._" or "_.._"
@@ -307,10 +339,8 @@ fun String.normalizeForFileName(replacementChar: String = "_"): String {
     //     if (normalized.isEmpty()) return replacementChar
     // }
 
-
     return normalized
 }
-
 
 internal fun relPaths(torrentFile: TorrentFile): List<String> {
     val paths: MutableList<String> = mutableListOf()
@@ -321,7 +351,10 @@ internal fun relPaths(torrentFile: TorrentFile): List<String> {
     return paths
 }
 
-internal fun getFilePath(root: Path, torrentFile: TorrentFile): Path {
+internal fun getFilePath(
+    root: Path,
+    torrentFile: TorrentFile,
+): Path {
     require(SystemFileSystem.exists(root)) { "Root directory does not exists" }
     var pathToFile = root
     for (path in torrentFile.pathElements) {
@@ -335,8 +368,10 @@ internal fun getFilePath(root: Path, torrentFile: TorrentFile): Path {
     return pathToFile
 }
 
-
-internal fun createBlockSet(chunkSize: Int, blockSize: Int): BlockSet {
+internal fun createBlockSet(
+    chunkSize: Int,
+    blockSize: Int,
+): BlockSet {
     // intentionally allow length to be greater than block size
     require(!(chunkSize < 0 || blockSize < 0)) {
         "Illegal arguments: length ($chunkSize), block size ($blockSize)"
@@ -345,7 +380,7 @@ internal fun createBlockSet(chunkSize: Int, blockSize: Int): BlockSet {
     val blockCount = ceil((chunkSize.toDouble()) / blockSize).toInt()
     require(blockCount <= Int.MAX_VALUE) {
         "Too many blocks: length (" + chunkSize +
-                "), block size (" + blockSize + "), total blocks (" + blockCount + ")"
+            "), block size (" + blockSize + "), total blocks (" + blockCount + ")"
     }
 
     // handle the case when the last block is smaller than the others
@@ -358,7 +393,11 @@ internal fun createBlockSet(chunkSize: Int, blockSize: Int): BlockSet {
         lastBlockOffset = chunkSize - blockSize
     }
     return BlockSet(
-        chunkSize, blockSize, blockCount, lastBlockSize, lastBlockOffset, Bitmask(blockCount)
+        chunkSize,
+        blockSize,
+        blockCount,
+        lastBlockSize,
+        lastBlockOffset,
+        Bitmask(blockCount),
     )
 }
-

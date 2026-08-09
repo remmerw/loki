@@ -6,7 +6,9 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.decrementAndFetch
 import kotlin.concurrent.atomics.incrementAndFetch
 
-internal class Assignments(private val dataStorage: DataStorage) {
+internal class Assignments(
+    private val dataStorage: DataStorage,
+) {
     private val assignedPieces: MutableSet<Int> = ConcurrentHashMap.newKeySet()
 
     @OptIn(ExperimentalAtomicApi::class)
@@ -23,9 +25,7 @@ internal class Assignments(private val dataStorage: DataStorage) {
     }
 
     @OptIn(ExperimentalAtomicApi::class)
-    fun count(): Int {
-        return assignments.load()
-    }
+    fun count(): Int = assignments.load()
 
     @OptIn(ExperimentalAtomicApi::class)
     fun assign(connection: Connection) {
@@ -43,8 +43,12 @@ internal class Assignments(private val dataStorage: DataStorage) {
     }
 
     fun claim(pieceIndex: Int): Boolean {
-        val claimed = !dataStorage.isComplete(pieceIndex) && (isEndgame()
-                || !assignedPieces.contains(pieceIndex))
+        val claimed =
+            !dataStorage.isComplete(pieceIndex) &&
+                (
+                    isEndgame() ||
+                        !assignedPieces.contains(pieceIndex)
+                )
         if (claimed) {
             assignedPieces.add(pieceIndex)
         }
@@ -69,7 +73,10 @@ internal class Assignments(private val dataStorage: DataStorage) {
     /**
      * @return Collection of peers that have interesting pieces and can be given an assignment
      */
-    fun update(ready: Set<Connection>, choking: Set<Connection>): Set<Connection> {
+    fun update(
+        ready: Set<Connection>,
+        choking: Set<Connection>,
+    ): Set<Connection> {
         val result: MutableSet<Connection> = mutableSetOf()
         for (connection in ready) {
             if (hasInterestingPieces(connection)) {

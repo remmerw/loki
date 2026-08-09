@@ -4,8 +4,9 @@ import io.github.remmerw.buri.BEReader
 import kotlinx.io.Buffer
 import java.net.InetSocketAddress
 
-internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
-
+internal class ExtendedProtocol(
+    messageHandlers: List<ExtendedMessageHandler>,
+) {
     private val extendedHandshakeHandler = ExtendedHandshakeHandler()
     private val handlers: MutableMap<Type, MessageHandler> = mutableMapOf()
     private val uniqueTypes: MutableMap<String, Type> = mutableMapOf()
@@ -13,13 +14,13 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
     private val nameMap: MutableMap<Byte, String> = mutableMapOf()
     private val typeMap: MutableMap<Type, String> = mutableMapOf()
 
-
     init {
         handlers[Type.ExtendedHandshake] = extendedHandshakeHandler
 
         messageHandlers.forEach { handler ->
             nameMap[handler.localTypeId()] = handler.localName()
-            handler.supportedTypes()
+            handler
+                .supportedTypes()
                 .forEach { messageType -> typeMap[messageType] = handler.localName() }
 
             if (handler.supportedTypes().isEmpty()) {
@@ -30,7 +31,7 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
             handler.supportedTypes().forEach { messageType ->
                 if (handlers.containsKey(messageType)) {
                     throw RuntimeException(
-                        "Encountered duplicate handler for message type: $messageType"
+                        "Encountered duplicate handler for message type: $messageType",
                     )
                 }
                 handlers[messageType] = handler
@@ -39,16 +40,14 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
         }
     }
 
-    private fun getTypeNameForId(typeId: Byte): String {
-        return nameMap[typeId]!!
-    }
+    private fun getTypeNameForId(typeId: Byte): String = nameMap[typeId]!!
 
-    fun getTypeNameFor(type: Type): String {
-        return typeMap[type]!!
-    }
+    fun getTypeNameFor(type: Type): String = typeMap[type]!!
 
-
-    fun doDecode(address: InetSocketAddress, reader: BEReader): ExtendedMessage {
+    fun doDecode(
+        address: InetSocketAddress,
+        reader: BEReader,
+    ): ExtendedMessage {
         val typeId = reader.read()
         val handler: MessageHandler?
         if (typeId == EXTENDED_HANDSHAKE_TYPE_ID) {
@@ -60,8 +59,11 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
         return checkNotNull(handler).doDecode(address, reader)
     }
 
-    fun doEncode(address: InetSocketAddress, message: ExtendedMessage, buffer: Buffer) {
-
+    fun doEncode(
+        address: InetSocketAddress,
+        message: ExtendedMessage,
+        buffer: Buffer,
+    ) {
         buffer.writeByte(EXTENDED_MESSAGE_ID)
         if (message is ExtendedHandshake) {
             buffer.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
@@ -78,5 +80,4 @@ internal class ExtendedProtocol(messageHandlers: List<ExtendedMessageHandler>) {
         }
         checkNotNull(handlers[message.type]).doEncode(message, buffer)
     }
-
 }

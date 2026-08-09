@@ -10,31 +10,30 @@ import kotlinx.io.readByteArray
 import java.net.InetSocketAddress
 
 internal class UtMetadataHandler : ExtendedMessageHandler {
-    override fun supportedTypes(): Collection<Type> = setOf(
-        Type.UtMetadata
-    )
+    override fun supportedTypes(): Collection<Type> =
+        setOf(
+            Type.UtMetadata,
+        )
 
-    override fun doEncode(message: ExtendedMessage, buffer: Buffer) {
+    override fun doEncode(
+        message: ExtendedMessage,
+        buffer: Buffer,
+    ) {
         val utMetadata = message as UtMetadata
 
         return utMetadata.encode(buffer)
     }
 
-    override fun doDecode(address: InetSocketAddress, reader: BEReader): ExtendedMessage {
-        return decodeMetadata(reader)
-    }
+    override fun doDecode(
+        address: InetSocketAddress,
+        reader: BEReader,
+    ): ExtendedMessage = decodeMetadata(reader)
 
-    override fun localTypeId(): Byte {
-        return 2
-    }
+    override fun localTypeId(): Byte = 2
 
-    override fun localName(): String {
-        return "ut_metadata"
-    }
-
+    override fun localName(): String = "ut_metadata"
 
     private fun decodeMetadata(reader: BEReader): ExtendedMessage {
-
         val map = (reader.decodeBencode() as BEMap).toMap()
         val messageType = getMessageType(map)
         val pieceIndex = getPieceIndex(map)
@@ -52,7 +51,6 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
                 UtMetadata(MetaType.REJECT, pieceIndex)
             }
         }
-
     }
 
     private fun readByteArray(reader: BEReader): ByteArray {
@@ -69,7 +67,6 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
         return metaTypeForId(typeId)
     }
 
-
     private fun metaTypeForId(id: Int): MetaType {
         for (type in MetaType.entries) {
             if (type.id == id) {
@@ -79,15 +76,14 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
         throw IllegalArgumentException("Unknown message id: $id")
     }
 
-    private fun getPieceIndex(m: Map<String, BEObject>): Int {
-        return getIntAttribute("piece", m)
-    }
+    private fun getPieceIndex(m: Map<String, BEObject>): Int = getIntAttribute("piece", m)
 
-    private fun getTotalSize(m: Map<String, BEObject>): Int {
-        return getIntAttribute("total_size", m)
-    }
+    private fun getTotalSize(m: Map<String, BEObject>): Int = getIntAttribute("total_size", m)
 
-    private fun getIntAttribute(name: String, m: Map<String, BEObject>): Int {
+    private fun getIntAttribute(
+        name: String,
+        m: Map<String, BEObject>,
+    ): Int {
         val value = (m[name] as BEInteger?)
         checkNotNull(value) { "Message attribute is missing: $name" }
         return value.toInt()

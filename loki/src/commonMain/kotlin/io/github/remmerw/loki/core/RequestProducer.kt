@@ -5,11 +5,10 @@ import io.github.remmerw.loki.data.Cancel
 import io.github.remmerw.loki.data.Request
 import kotlin.math.min
 
-internal class RequestProducer(private val dataStorage: DataStorage) : Produces {
-
-
+internal class RequestProducer(
+    private val dataStorage: DataStorage,
+) : Produces {
     override fun produce(connection: Connection) {
-
         if (dataStorage.initializeDone()) {
             val assignment = connection.assignment
             if (assignment == null) {
@@ -54,10 +53,7 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
         }
     }
 
-
-    private fun resetConnection(
-        connection: Connection
-    ) {
+    private fun resetConnection(connection: Connection) {
         connection.clearRequests()
         connection.clearPieces()
         connection.pendingRequests().forEach { key: Key ->
@@ -74,7 +70,10 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
         connection.pendingRequestsClear()
     }
 
-    private fun buildRequests(connection: Connection, pieceIndex: Int): List<Request> {
+    private fun buildRequests(
+        connection: Connection,
+        pieceIndex: Int,
+    ): List<Request> {
         val requests: MutableList<Request> = mutableListOf()
         val chunk = dataStorage.chunk(pieceIndex)
         val chunkSize = chunk.chunkSize
@@ -94,6 +93,3 @@ internal class RequestProducer(private val dataStorage: DataStorage) : Produces 
         return requests
     }
 }
-
-
-

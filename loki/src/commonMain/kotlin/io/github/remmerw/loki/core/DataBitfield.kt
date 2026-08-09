@@ -6,7 +6,7 @@ import kotlin.concurrent.Volatile
 
 internal data class DataBitfield(
     val piecesTotal: Int,
-    val bitmask: Bitmask
+    val bitmask: Bitmask,
 ) {
     private val lock = reentrantLock()
 
@@ -54,7 +54,6 @@ internal data class DataBitfield(
                 bitmask.or(skipped!!)
                 return piecesTotal - bitmask.cardinality()
             }
-
         }
     }
 
@@ -69,7 +68,6 @@ internal data class DataBitfield(
             } else {
                 PieceStatus.INCOMPLETE
             }
-
         }
     }
 
@@ -116,7 +114,7 @@ internal data class DataBitfield(
         if (pieceIndex !in 0..<piecesTotal) {
             throw RuntimeException(
                 "Illegal piece index: " + pieceIndex +
-                        ", expected 0.." + (piecesTotal - 1)
+                    ", expected 0.." + (piecesTotal - 1),
             )
         }
     }
@@ -139,7 +137,8 @@ internal data class DataBitfield(
      * Status of a particular piece.
      */
     enum class PieceStatus {
-        INCOMPLETE, COMPLETE, COMPLETE_VERIFIED
+        INCOMPLETE,
+        COMPLETE,
+        COMPLETE_VERIFIED,
     }
-
 }

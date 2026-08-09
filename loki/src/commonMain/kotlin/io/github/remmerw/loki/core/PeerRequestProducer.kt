@@ -3,10 +3,8 @@ package io.github.remmerw.loki.core
 import io.github.remmerw.loki.data.Piece
 
 internal class PeerRequestProducer(
-    private val dataStorage: DataStorage
+    private val dataStorage: DataStorage,
 ) : Produces {
-
-
     override fun produce(connection: Connection) {
         if (dataStorage.initializeDone()) {
             do {

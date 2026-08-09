@@ -3,10 +3,11 @@ package io.github.remmerw.loki.core
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 
-internal data class PieceStatistics(private val piecesTotal: Int) {
+internal data class PieceStatistics(
+    private val piecesTotal: Int,
+) {
     private val pieces: IntArray = IntArray(piecesTotal)
     private val lock = reentrantLock()
-
 
     fun addBitfield(dataBitfield: DataBitfield) {
         validateBitfieldLength(dataBitfield)
@@ -27,12 +28,10 @@ internal data class PieceStatistics(private val piecesTotal: Int) {
             if (count > 0) {
                 val list = data.getOrPut(count) { mutableListOf() }
                 list.add(pieceIndex)
-
             }
         }
         return data.map { i -> i.value.shuffled() }.flatten()
     }
-
 
     /**
      * Remove connection's bitfield.
@@ -50,11 +49,10 @@ internal data class PieceStatistics(private val piecesTotal: Int) {
         connection.removeDataBitfield()
     }
 
-
     private fun validateBitfieldLength(dataBitfield: DataBitfield) {
         require(dataBitfield.piecesTotal == pieces.size) {
             "Bitfield has invalid length (" + dataBitfield.piecesTotal +
-                    "). Expected number of pieces: " + pieces.size
+                "). Expected number of pieces: " + pieces.size
         }
     }
 
@@ -62,7 +60,10 @@ internal data class PieceStatistics(private val piecesTotal: Int) {
      * Update peer's bitfield by indicating that the peer has a given piece.
      * Total count of the specified piece will be incremented by 1.
      */
-    fun addPiece(connection: Connection, piece: Int) {
+    fun addPiece(
+        connection: Connection,
+        piece: Int,
+    ) {
         lock.withLock {
             var bitfield = connection.dataBitfield()
             if (bitfield == null) {
@@ -74,8 +75,10 @@ internal data class PieceStatistics(private val piecesTotal: Int) {
         }
     }
 
-
-    private fun markPieceVerified(dataBitfield: DataBitfield, piece: Int) {
+    private fun markPieceVerified(
+        dataBitfield: DataBitfield,
+        piece: Int,
+    ) {
         lock.withLock {
             if (!dataBitfield.isVerified(piece)) {
                 dataBitfield.markVerified(piece)
@@ -89,7 +92,6 @@ internal data class PieceStatistics(private val piecesTotal: Int) {
             return pieces[pieceIndex]
         }
     }
-
 
     override fun hashCode(): Int {
         var result = piecesTotal
@@ -110,5 +112,4 @@ internal data class PieceStatistics(private val piecesTotal: Int) {
 
         return true
     }
-
 }

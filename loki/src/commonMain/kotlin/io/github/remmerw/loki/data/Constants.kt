@@ -1,32 +1,20 @@
 package io.github.remmerw.loki.data
 
-
 private val choke = Choke()
 
-internal fun choke(): Choke {
-    return choke
-}
-
+internal fun choke(): Choke = choke
 
 private val interested = Interested()
 
-internal fun interested(): Interested {
-    return interested
-}
-
+internal fun interested(): Interested = interested
 
 private val notInterested = NotInterested()
 
-internal fun notInterested(): NotInterested {
-    return notInterested
-}
-
+internal fun notInterested(): NotInterested = notInterested
 
 private val unchoke = Unchoke()
 
-internal fun unchoke(): Unchoke {
-    return unchoke
-}
+internal fun unchoke(): Unchoke = unchoke
 
 const val UPPER_RESERVED_BOUND = 8 * 8 - 1
 internal const val HANDSHAKE_RESERVED_LENGTH = 8
@@ -60,4 +48,3 @@ internal const val EXTENDED_HANDSHAKE_TYPE_ID: Byte = 0
 internal val PROTOCOL_NAME = "BitTorrent protocol".encodeToByteArray()
 
 internal val KEEPALIVE = byteArrayOf(0, 0, 0, 0)
-

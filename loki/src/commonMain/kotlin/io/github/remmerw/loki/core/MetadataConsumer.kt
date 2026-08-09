@@ -17,9 +17,9 @@ import kotlin.time.TimeSource
 
 internal class MetadataConsumer internal constructor(
     private val dataStorage: DataStorage,
-    private val torrentId: TorrentId
-) : Produces, Consumers {
-
+    private val torrentId: TorrentId,
+) : Produces,
+    Consumers {
     // set immediately after metadata has been fetched and verified
     @Volatile
     private var done = false
@@ -30,7 +30,10 @@ internal class MetadataConsumer internal constructor(
     @Volatile
     private var doConsume: Boolean = !dataStorage.initializeDone()
 
-    private fun doConsume(message: Message, connection: Connection) {
+    private fun doConsume(
+        message: Message,
+        connection: Connection,
+    ) {
         if (message is ExtendedHandshake) {
             consume(message, connection)
         }
@@ -42,34 +45,37 @@ internal class MetadataConsumer internal constructor(
     override val consumers: List<MessageConsumer>
         get() {
             val list: MutableList<MessageConsumer> = mutableListOf()
-            list.add(object : MessageConsumer {
-                override fun consumedType(): Type {
-                    return Type.ExtendedHandshake
-                }
+            list.add(
+                object : MessageConsumer {
+                    override fun consumedType(): Type = Type.ExtendedHandshake
 
-                override fun consume(
-                    message: Message,
-                    connection: Connection
-                ) {
-                    doConsume(message, connection)
-                }
-            })
-            list.add(object : MessageConsumer {
-                override fun consumedType(): Type {
-                    return Type.UtMetadata
-                }
+                    override fun consume(
+                        message: Message,
+                        connection: Connection,
+                    ) {
+                        doConsume(message, connection)
+                    }
+                },
+            )
+            list.add(
+                object : MessageConsumer {
+                    override fun consumedType(): Type = Type.UtMetadata
 
-                override fun consume(
-                    message: Message,
-                    connection: Connection
-                ) {
-                    doConsume(message, connection)
-                }
-            })
+                    override fun consume(
+                        message: Message,
+                        connection: Connection,
+                    ) {
+                        doConsume(message, connection)
+                    }
+                },
+            )
             return list
         }
 
-    private fun consume(handshake: ExtendedHandshake, connection: Connection) {
+    private fun consume(
+        handshake: ExtendedHandshake,
+        connection: Connection,
+    ) {
         if (handshake.supportedMessageTypes.contains("ut_metadata")) {
             // moreover the extended handshake message type map is additive,
             // so we can't learn about the peer turning off extensions solely from the message
@@ -77,22 +83,22 @@ internal class MetadataConsumer internal constructor(
         }
     }
 
-
-    private fun consume(message: UtMetadata, connection: Connection) {
+    private fun consume(
+        message: UtMetadata,
+        connection: Connection,
+    ) {
         if (doConsume) {
-
             // being lenient herer and not checking if the peer advertised ut_metadata support
             when (message.metaType) {
                 MetaType.DATA -> {
                     val totalSize = message.totalSize
                     check(totalSize < META_EXCHANGE_MAX_SIZE) {
                         "Declared metadata size is too large: " + totalSize +
-                                "; max allowed is " + META_EXCHANGE_MAX_SIZE
+                            "; max allowed is " + META_EXCHANGE_MAX_SIZE
                     }
                     processMetadataBlock(connection, message.pieceIndex, totalSize, message.data)
 
                     connection.withoutMetadata = TimeSource.Monotonic.markNow()
-
                 }
 
                 MetaType.REJECT -> {
@@ -106,7 +112,9 @@ internal class MetadataConsumer internal constructor(
 
     private fun processMetadataBlock(
         connection: Connection,
-        pieceIndex: Int, totalSize: Int, data: ByteArray
+        pieceIndex: Int,
+        totalSize: Int,
+        data: ByteArray,
     ) {
         if (metadata == null) {
             metadata = ExchangedMetadata(totalSize)
@@ -119,23 +127,22 @@ internal class MetadataConsumer internal constructor(
                 val digest = metadata!!.digest()
 
                 if (digest.contentEquals(torrentId.bytes)) {
-
                     var fetchedTorrent: Torrent? = null
                     try {
                         val meta = metadata!!.metadata
-                        fetchedTorrent = buildTorrent(
-                            meta.readBytes(
-                                0,
-                                meta.size()
+                        fetchedTorrent =
+                            buildTorrent(
+                                meta.readBytes(
+                                    0,
+                                    meta.size(),
+                                ),
                             )
-                        )
                     } catch (throwable: Throwable) {
                         debug(throwable)
                         metadata = null
                     }
 
                     if (fetchedTorrent != null) {
-
                         dataStorage.metadata(metadata!!.metadata)
                         dataStorage.initialize(fetchedTorrent)
 
@@ -153,7 +160,6 @@ internal class MetadataConsumer internal constructor(
             }
         }
     }
-
 
     override fun produce(connection: Connection) {
         // stop here if metadata has already been fetched

@@ -15,10 +15,9 @@ import kotlin.concurrent.Volatile
 import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
-
 internal class Worker(
     private val dataStorage: DataStorage,
-    agents: List<Agent>
+    agents: List<Agent>,
 ) {
     private val connections: MutableMap<InetSocketAddress, Connection> = ConcurrentHashMap()
     private val bitfields: MutableMap<Connection, ByteArray> = ConcurrentHashMap()
@@ -39,31 +38,37 @@ internal class Worker(
             if (agent is Consumers) {
                 agent.consumers.forEach { consumer: MessageConsumer ->
                     val consumedType = consumer.consumedType()
-                    cons.getOrPut(consumedType) { mutableListOf() }
+                    cons
+                        .getOrPut(consumedType) { mutableListOf() }
                         .add(consumer)
-
                 }
             }
 
             if (agent is Produces) {
-                prods.add(object : MessageProducer {
-                    override fun produce(
-                        connection: Connection
-                    ) {
-                        agent.produce(connection)
-                    }
-                })
+                prods.add(
+                    object : MessageProducer {
+                        override fun produce(connection: Connection) {
+                            agent.produce(connection)
+                        }
+                    },
+                )
             }
         }
         consumers = cons.toMap()
         producers = prods.toSet()
     }
 
-    fun consumeBitfield(bitfield: ByteArray, connection: Connection) {
+    fun consumeBitfield(
+        bitfield: ByteArray,
+        connection: Connection,
+    ) {
         bitfields[connection] = bitfield
     }
 
-    fun consumeHave(piece: Int, connection: Connection) {
+    fun consumeHave(
+        piece: Int,
+        connection: Connection,
+    ) {
         lock.withLock {
             val peerHaves = haves.getOrPut(connection) { mutableSetOf() }
             peerHaves.add(piece)
@@ -72,17 +77,17 @@ internal class Worker(
 
     // process bitfields and haves that we received while fetching metadata
     fun processMessages() {
-
         val pieceStatistics = dataStorage.pieceStatistics()!!
         val piecesTotal = dataStorage.piecesTotal()
 
         require(piecesTotal > 0) { "Pieces total not yet defined" }
         bitfields.forEach { (connection: Connection, bitfieldBytes: ByteArray) ->
             if (!connection.hasDataBitfield()) { // the else case should never happen
-                val dataBitfield = DataBitfield(
-                    piecesTotal,
-                    Bitmask.decode(bitfieldBytes, piecesTotal)
-                )
+                val dataBitfield =
+                    DataBitfield(
+                        piecesTotal,
+                        Bitmask.decode(bitfieldBytes, piecesTotal),
+                    )
                 connection.setDataBitfield(dataBitfield)
                 pieceStatistics.addBitfield(dataBitfield)
             }
@@ -94,14 +99,16 @@ internal class Worker(
         }
     }
 
-
-    fun consume(message: Message, connection: Connection) {
+    fun consume(
+        message: Message,
+        connection: Connection,
+    ) {
         if (message is ExtendedMessage) {
             val consumers: Collection<MessageConsumer>? = consumers[message.type]
             consumers?.forEach { consumer: MessageConsumer ->
                 consumer.consume(
                     message,
-                    connection
+                    connection,
                 )
             }
         }
@@ -113,12 +120,9 @@ internal class Worker(
         }
     }
 
-    fun connections(): List<Connection> {
-        return connections.values.toList()
-    }
+    fun connections(): List<Connection> = connections.values.toList()
 
     fun purgedConnections() {
-
         val removing: MutableList<Connection> = mutableListOf()
         connections.values.forEach { connection: Connection ->
             if (connection.lastActive.elapsedNow().inWholeMilliseconds
@@ -134,9 +138,7 @@ internal class Worker(
         check(connections.put(connection.address(), connection) == null)
     }
 
-
     fun purgeConnection(connection: Connection) {
-
         connections.remove(connection.address())
 
         assignments.remove(connection)
@@ -149,9 +151,7 @@ internal class Worker(
         connections.forEach { connection: Connection -> connection.close() }
     }
 
-
     fun producedMessage(connection: Connection): Message? {
-
         val bitfield = dataStorage.dataBitfield()
 
         if (bitfield != null &&
@@ -165,16 +165,14 @@ internal class Worker(
             val interestUpdate = connection.interestUpdate
             connection.interestUpdate = null
             return interestUpdate ?: connection.nextMessage()
-
         } else {
             return connection.nextMessage()
         }
     }
 
-
     private fun inspectAssignment(
         connection: Connection,
-        assignments: Assignments
+        assignments: Assignments,
     ) {
         val assignment = connection.assignment
         if (assignment != null) {
@@ -188,15 +186,12 @@ internal class Worker(
         }
     }
 
-
     private fun shouldUpdateAssignments(): Boolean {
         val elapsed = lastUpdatedAssignments.elapsedNow().inWholeMilliseconds
         return elapsed > UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
     }
 
-
     private fun updateAssignments(assignments: Assignments) {
-
         val ready: MutableSet<Connection> = mutableSetOf()
         val choking: MutableSet<Connection> = mutableSetOf()
         connections().forEach { connection ->
@@ -232,6 +227,4 @@ internal class Worker(
 
         lastUpdatedAssignments = TimeSource.Monotonic.markNow()
     }
-
-
 }

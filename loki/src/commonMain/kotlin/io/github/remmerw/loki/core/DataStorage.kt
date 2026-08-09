@@ -15,8 +15,10 @@ import org.kotlincrypto.hash.sha1.SHA1
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
 
-internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
-
+internal data class DataStorage(
+    val directory: Path,
+) : Storage,
+    AutoCloseable {
     private val validPieces: MutableSet<Int> = mutableSetOf()
     private var pieceFiles: MutableMap<Int, List<TorrentFile>> = mutableMapOf()
     private val bitmaskDatabase = randomAccessFile(Path(directory, "bitmask.db"))
@@ -28,7 +30,7 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
 
     init {
         require(
-            SystemFileSystem.metadataOrNull(directory)?.isDirectory == true
+            SystemFileSystem.metadataOrNull(directory)?.isDirectory == true,
         ) {
             "Path is not a directory."
         }
@@ -59,42 +61,25 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
     @Volatile
     private var pieceStatistics: PieceStatistics? = null
 
-
     fun completePiece(piece: Int) {
         completedPieces.add(piece)
     }
 
-    fun completePieces(): Set<Int> {
-        return completedPieces
-    }
+    fun completePieces(): Set<Int> = completedPieces
 
-    fun initializeDone(): Boolean {
-        return initializeDone
-    }
+    fun initializeDone(): Boolean = initializeDone
 
-    fun pieceStatus(piece: Int): DataBitfield.PieceStatus {
-        return dataBitfield!!.pieceStatus(piece)
-    }
+    fun pieceStatus(piece: Int): DataBitfield.PieceStatus = dataBitfield!!.pieceStatus(piece)
 
-    fun pieceStatistics(): PieceStatistics? {
-        return pieceStatistics
-    }
+    fun pieceStatistics(): PieceStatistics? = pieceStatistics
 
-    fun dataBitfield(): DataBitfield? {
-        return dataBitfield
-    }
+    fun dataBitfield(): DataBitfield? = dataBitfield
 
-    fun piecesTotal(): Int {
-        return dataBitfield?.piecesTotal ?: -1
-    }
+    fun piecesTotal(): Int = dataBitfield?.piecesTotal ?: -1
 
-    fun isComplete(piece: Int): Boolean {
-        return dataBitfield?.isComplete(piece) == true
-    }
+    fun isComplete(piece: Int): Boolean = dataBitfield?.isComplete(piece) == true
 
-    fun isVerified(piece: Int): Boolean {
-        return dataBitfield?.isVerified(piece) == true
-    }
+    fun isVerified(piece: Int): Boolean = dataBitfield?.isVerified(piece) == true
 
     fun metadata(metadata: Memory) {
         this.metadata = metadata
@@ -116,8 +101,6 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
         var index = 0
         var remaining = totalSize
         while (remaining > 0) {
-
-
             val chunkFiles: MutableList<TorrentFile> = mutableListOf()
             torrent.files.forEach { torrentFile ->
                 if (torrentFile.size > 0) {
@@ -156,40 +139,35 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
         }
 
         initializeDone = true
-
     }
 
-    fun torrent(): Torrent? {
-        return torrent
-    }
+    fun torrent(): Torrent? = torrent
 
     internal fun nextPieces(): Array<Int> {
         val selectedFilesPieces = validPieces()
         val pieceStatistics = pieceStatistics()!!
-        return pieceStatistics.rarestFirst().filter { pieceIndex ->
-            selectedFilesPieces.contains(pieceIndex) &&
+        return pieceStatistics
+            .rarestFirst()
+            .filter { pieceIndex ->
+                selectedFilesPieces.contains(pieceIndex) &&
                     !isPieceComplete(pieceIndex)
-        }.toTypedArray()
+            }.toTypedArray()
     }
-
 
     private fun isPieceComplete(pieceIndex: Int): Boolean {
         val pieceStatus = pieceStatus(pieceIndex)
         return pieceStatus == DataBitfield.PieceStatus.COMPLETE ||
-                pieceStatus == DataBitfield.PieceStatus.COMPLETE_VERIFIED
+            pieceStatus == DataBitfield.PieceStatus.COMPLETE_VERIFIED
     }
 
-    internal fun validPieces(): Set<Int> {
-        return validPieces
-    }
+    internal fun validPieces(): Set<Int> = validPieces
 
-    internal fun sliceMetadata(offset: Int, length: Int): ByteArray {
-        return metadata!!.readBytes(offset, length)
-    }
+    internal fun sliceMetadata(
+        offset: Int,
+        length: Int,
+    ): ByteArray = metadata!!.readBytes(offset, length)
 
-    internal fun metadataSize(): Int {
-        return metadata?.size() ?: -1
-    }
+    internal fun metadataSize(): Int = metadata?.size() ?: -1
 
     internal fun markVerified(piece: Int) {
         dataBitfield!!.markVerified(piece)
@@ -198,7 +176,10 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
         }
     }
 
-    internal fun digestChunk(piece: Int, chunk: Chunk): Boolean {
+    internal fun digestChunk(
+        piece: Int,
+        chunk: Chunk,
+    ): Boolean {
         databaseLock.withLock {
             val bytes = ByteArray(chunk.chunkSize)
             database.readBytes(position(piece), bytes)
@@ -214,13 +195,12 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
         }
     }
 
-    private fun chunkSize(): Int {
-        return torrent!!.chunkSize
-    }
+    private fun chunkSize(): Int = torrent!!.chunkSize
 
-    private fun position(piece: Int, offset: Int = 0): Long {
-        return (chunkSize().toLong() * piece.toLong()) + offset
-    }
+    private fun position(
+        piece: Int,
+        offset: Int = 0,
+    ): Long = (chunkSize().toLong() * piece.toLong()) + offset
 
     internal fun verifiedPieces(totalPieces: Int) {
         bitmaskLock.withLock {
@@ -249,23 +229,25 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
         }
     }
 
-
-    internal fun readBlock(piece: Int, offset: Int, bytes: ByteArray, length: Int) {
-        return databaseLock.withLock {
-            database.readBytes(position(piece, offset), bytes, 0, length)
-        }
+    internal fun readBlock(
+        piece: Int,
+        offset: Int,
+        bytes: ByteArray,
+        length: Int,
+    ) = databaseLock.withLock {
+        database.readBytes(position(piece, offset), bytes, 0, length)
     }
 
-    internal fun writeBlock(piece: Int, offset: Int, data: ByteArray, length: Int) {
-        return databaseLock.withLock {
-            database.writeBytes(position(piece, offset), data, 0, length)
-        }
+    internal fun writeBlock(
+        piece: Int,
+        offset: Int,
+        data: ByteArray,
+        length: Int,
+    ) = databaseLock.withLock {
+        database.writeBytes(position(piece, offset), data, 0, length)
     }
 
-
-    internal fun chunk(piece: Int): Chunk {
-        return torrent!!.chunks[piece]
-    }
+    internal fun chunk(piece: Int): Chunk = torrent!!.chunks[piece]
 
     override fun storeTo(directory: Path) {
         storageUnits().forEach { storageUnit ->
@@ -286,20 +268,15 @@ internal data class DataStorage(val directory: Path) : Storage, AutoCloseable {
         }
     }
 
-    override fun storageUnits(): List<StorageUnit> {
-        return torrentFiles().filter { torrentFile -> torrentFile.size > 0 }
+    override fun storageUnits(): List<StorageUnit> =
+        torrentFiles()
+            .filter { torrentFile -> torrentFile.size > 0 }
             .map { torrentFile ->
                 StorageUnit(
                     Path(directory, "database.db"),
-                    torrentFile
+                    torrentFile,
                 )
             }
 
-    }
-
-    internal fun torrentFiles(): List<TorrentFile> {
-        return torrent!!.files
-    }
-
-
+    internal fun torrentFiles(): List<TorrentFile> = torrent!!.files
 }

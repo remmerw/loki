@@ -40,13 +40,9 @@ internal open class ConnectionAgent {
         }
     }
 
-    fun hasDataBitfield(): Boolean {
-        return dataBitfield() != null
-    }
+    fun hasDataBitfield(): Boolean = dataBitfield() != null
 
-    internal fun dataBitfield(): DataBitfield? {
-        return dataBitfield
-    }
+    internal fun dataBitfield(): DataBitfield? = dataBitfield
 
     internal fun setDataBitfield(bitfield: DataBitfield) {
         this.dataBitfield = bitfield
@@ -56,11 +52,10 @@ internal open class ConnectionAgent {
         this.dataBitfield = null
     }
 
-    internal fun firstOutboundMessage(): Message? {
-        return lock.withLock {
+    internal fun firstOutboundMessage(): Message? =
+        lock.withLock {
             outboundMessages.firstOrNull()
         }
-    }
 
     internal fun addRequest(message: Request) {
         lock.withLock {
@@ -68,9 +63,8 @@ internal open class ConnectionAgent {
         }
     }
 
-    internal fun firstCompleteRequest(): Request? {
-        return lock.withLock {
+    internal fun firstCompleteRequest(): Request? =
+        lock.withLock {
             completedReads.firstOrNull()
         }
-    }
 }

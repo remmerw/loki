@@ -5,14 +5,12 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
-
 internal open class ConnectionState : ConnectionAgent() {
     private val cancelledRequests: MutableSet<Key> = ConcurrentHashMap.newKeySet()
     private val pendingRequests: MutableSet<Key> = ConcurrentHashMap.newKeySet()
     private val pieces: MutableSet<Int> = ConcurrentHashMap.newKeySet()
     private val haves: MutableSet<Int> = ConcurrentHashMap.newKeySet()
     private val requests: ArrayDeque<Request> = ArrayDeque() // no concurrency
-
 
     @Volatile
     var isInterested = false
@@ -26,34 +24,25 @@ internal open class ConnectionState : ConnectionAgent() {
     @Volatile
     var isPeerChoking = true
 
-
     @Volatile
     var shouldChoke: Boolean? = null
 
     @Volatile
     var lastChoked: ValueTimeMark? = null
 
-
     fun removePiece(piece: Int) {
         pieces.remove(piece)
     }
 
-    fun addPiece(piece: Int): Boolean {
-        return pieces.add(piece)
-    }
+    fun addPiece(piece: Int): Boolean = pieces.add(piece)
 
-    fun addHave(piece: Int): Boolean {
-        return haves.add(piece)
-    }
+    fun addHave(piece: Int): Boolean = haves.add(piece)
 
     fun clearPieces() {
         pieces.clear()
     }
 
-
-    fun firstRequest(): Request? {
-        return requests.removeFirstOrNull()
-    }
+    fun firstRequest(): Request? = requests.removeFirstOrNull()
 
     fun clearRequests() {
         requests.clear()
@@ -63,44 +52,40 @@ internal open class ConnectionState : ConnectionAgent() {
         this.requests.addAll(requests)
     }
 
-    fun cancelRequest(piece: Int, offset: Int) {
+    fun cancelRequest(
+        piece: Int,
+        offset: Int,
+    ) {
         cancelledRequests.add(
             key(
-                piece, offset
-            )
+                piece,
+                offset,
+            ),
         )
     }
 
-    fun isCanceled(key: Key): Boolean {
-        return cancelledRequests.remove(key)
-    }
-
+    fun isCanceled(key: Key): Boolean = cancelledRequests.remove(key)
 
     fun pendingRequestsAdd(key: Key) {
         pendingRequests.add(key)
     }
 
-    fun pendingRequestsSize(): Int {
-        return pendingRequests.size
-    }
+    fun pendingRequestsSize(): Int = pendingRequests.size
 
-    fun pendingRequestsHas(key: Key): Boolean {
-        return pendingRequests.contains(key)
-    }
+    fun pendingRequestsHas(key: Key): Boolean = pendingRequests.contains(key)
 
-    fun pendingRequests(): List<Key> {
-        return pendingRequests.toList()
-    }
+    fun pendingRequests(): List<Key> = pendingRequests.toList()
 
     fun pendingRequestsClear() {
         pendingRequests.clear()
     }
 
-    private fun pendingRequestsRemove(key: Key): Boolean {
-        return pendingRequests.remove(key)
-    }
+    private fun pendingRequestsRemove(key: Key): Boolean = pendingRequests.remove(key)
 
-    protected fun checkBlockIsExpected(piece: Int, offset: Int): Boolean {
+    protected fun checkBlockIsExpected(
+        piece: Int,
+        offset: Int,
+    ): Boolean {
         val key = key(piece, offset)
         return pendingRequestsRemove(key)
     }

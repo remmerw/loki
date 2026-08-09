@@ -4,19 +4,20 @@ import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.bencode
 import kotlinx.io.Buffer
 
-
 internal data class UtMetadata(
     val metaType: MetaType,
     val pieceIndex: Int,
     val totalSize: Int,
-    val data: ByteArray
+    val data: ByteArray,
 ) : ExtendedMessage {
-
     override val type: Type
         get() = Type.UtMetadata
 
     constructor(type: MetaType, pieceIndex: Int) : this(
-        type, pieceIndex, 0, byteArrayOf()
+        type,
+        pieceIndex,
+        0,
+        byteArrayOf(),
     )
 
     init {
@@ -27,7 +28,6 @@ internal data class UtMetadata(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is UtMetadata) return false
-
 
         if (pieceIndex != other.pieceIndex) return false
         if (totalSize != other.totalSize) return false
@@ -47,9 +47,7 @@ internal data class UtMetadata(
         return result
     }
 
-
     fun encode(buffer: Buffer) {
-
         val map = mutableMapOf<String, BEObject>()
 
         map["msg_type"] = metaType.id.bencode()
