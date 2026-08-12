@@ -2,6 +2,9 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.bencode
+import io.github.remmerw.buri.bencodeMap
+import io.github.remmerw.buri.bencodeEof
+import io.github.remmerw.buri.bencodeMapKey
 import kotlinx.io.Buffer
 
 internal data class UtMetadata(
