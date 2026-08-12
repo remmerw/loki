@@ -3,6 +3,10 @@ package io.github.remmerw.loki.data
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.bencode
+import io.github.remmerw.buri.bencodeMap
+import io.github.remmerw.buri.bencodeEof
+import io.github.remmerw.buri.bencodeArray
+import io.github.remmerw.buri.bencodeArrayData
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
 import kotlinx.io.writeUShort
@@ -16,19 +20,29 @@ internal class PeerExchange(
         get() = Type.PeerExchange
 
     fun encode(buffer: Buffer) {
-        val map = mutableMapOf<String, BEObject>()
+
+        val sink = io.github.remmerw.buri.Buffer(4096)
+        sink.bencodeMap()
         val inet4Peers = filterByAddressLength(added, 4) // ipv4
         val inet6Peers = filterByAddressLength(added, 16) // ipv6
 
-        map["added"] = encodePeers(inet4Peers)
-        map["added.f"] = encodePeerOptions(inet4Peers)
-        map["added6"] = encodePeers(inet6Peers)
-        map["added6.f"] = encodePeerOptions(inet6Peers)
+        sink.bencodedMapKey("added")
+        sink.bencodePeers(inet4Peers,4)
+        sink.bencodedMapKey("added.f")
+        sink.bencodePeerOptions(inet4Peers)
+        sink.bencodedMapKey("added6")
+        sink.bencodePeers(inet6Peer,16)
+        sink.bencodedMapKey("added6.f")
+        sink.encodePeerOptions(inet6Peers)
 
-        map["dropped"] = encodePeers(filterByAddressLength(dropped, 4))
-        map["dropped6"] = encodePeers(filterByAddressLength(dropped, 16))
+        sink.bencodedMapKey("dropped")
+        sink.bencodePeers(filterByAddressLength(dropped, 4),4)
+        sink.bencodedMapKey("dropped6")
+        sink.bencodePeers(filterByAddressLength(dropped, 16),16)
 
-        map.bencode().encodeTo(buffer)
+        
+        sink.bencodeEof()
+        buffer.write(sink.data,0,sink.length)
     }
 
     private fun filterByAddressLength(
@@ -36,18 +50,22 @@ internal class PeerExchange(
         addressLength: Int,
     ): Collection<InetSocketAddress> = peers.filter { peer -> peer.address.address.size == addressLength }
 
-    private fun encodePeers(peers: Collection<InetSocketAddress>): BEString {
-        val bos = Buffer()
+    
+}
+internal fun io.github.remmerw.buri.Buffer.bencodePeers(peers: Collection<InetSocketAddress>, size:Int) {
+        
+        this.bencodeArray((size + 2) * peers.size)
         for (peer in peers) {
-            bos.write(peer.address.address)
-            bos.writeUShort(peer.port.toUShort())
+            this.bencodeArrayData(peer.address.address)
+            this.bencodeArrayData(peer.port.toUShort())
         }
-        return bos.readByteArray().bencode()
     }
 
-    private fun encodePeerOptions(peers: Collection<InetSocketAddress>): BEString {
-        val bos = Buffer()
-        repeat(peers.size) { bos.writeInt(0) }
-        return bos.readByteArray().bencode()
+internal fun io.github.remmerw.buri.Buffer.bencodePeerOptions(peers: Collection<InetSocketAddress>) {
+        this.bencodeArray(4 * peers.size
+        repeat(peers.size) { this.bencodeArrayData(0.toByte())
+  this.bencodeArrayData(0.toByte())
+this.bencodeArrayData(0.toByte())
+this.bencodeArrayData(0.toByte())
+ }
     }
-}
