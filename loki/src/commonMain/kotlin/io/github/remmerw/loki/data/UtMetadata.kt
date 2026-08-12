@@ -49,7 +49,7 @@ internal data class UtMetadata(
 
     fun encode(buffer: Buffer) {
 
-        val sink = io.github.remmerw.buri.Buffer(1024)
+        val sink = io.github.remmerw.buri.Buffer(100)
         
         sink.bencodeMap()
         
