@@ -4,6 +4,10 @@ import io.github.remmerw.buri.BEInteger
 import io.github.remmerw.buri.BEMap
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.bencode
+import io.github.remmerw.buri.bencode
+import io.github.remmerw.buri.bencodeMap
+import io.github.remmerw.buri.bencodeMapKey
+import io.github.remmerw.buri.bencodeEof
 import kotlinx.io.Buffer
 
 /**
