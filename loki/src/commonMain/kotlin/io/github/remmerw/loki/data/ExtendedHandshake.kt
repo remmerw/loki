@@ -44,6 +44,8 @@ internal data class ExtendedHandshake(
         get() = data["p"] as BEInteger?
 
     fun encode(buffer: Buffer) {
-        data.bencode().encodeTo(buffer)
+        val sink = io.github.remmerw.buri.Buffer(1024)
+        data.bencode().encodeTo(sink)
+        buffer.write(sink.data,0,sink.length)
     }
 }
