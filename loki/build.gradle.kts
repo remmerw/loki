@@ -10,6 +10,8 @@ version = "0.5.4"
 
 kotlin {
 
+    jvmToolchain(21)
+
     android {
         namespace = "io.github.remmerw.loki"
         compileSdk = 37
