@@ -4,6 +4,7 @@ import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.bencode
 import io.github.remmerw.buri.bencodeMap
+import io.github.remmerw.buri.bencodeMapKey
 import io.github.remmerw.buri.bencodeEof
 import io.github.remmerw.buri.bencodeArray
 import io.github.remmerw.buri.bencodeArrayData
