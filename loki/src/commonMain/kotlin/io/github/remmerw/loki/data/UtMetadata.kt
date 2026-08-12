@@ -48,15 +48,23 @@ internal data class UtMetadata(
     }
 
     fun encode(buffer: Buffer) {
-        val map = mutableMapOf<String, BEObject>()
 
-        map["msg_type"] = metaType.id.bencode()
-        map["piece"] = pieceIndex.bencode()
+        val sink = io.github.remmerw.buri.Buffer(1024)
+        
+        sink.bencodeMap()
+        
+        sink.bencodeMapKey("msg_type")
+        sink.bencode(metaType.id.)
+        sink.bencodeMapKey("piece")
+        sink.bencode(pieceIndex)
         if (totalSize > 0) {
-            map["total_size"] = totalSize.bencode()
+            sink.bencodeMapKey("total_size")
+            sink.bencode(totalSize)
         }
 
-        map.bencode().encodeTo(buffer)
+        sink.bencodeEof()
+
+        buffer.write(sink.data,0,sink.length)
 
         if (data.isNotEmpty()) {
             buffer.write(data)
