@@ -5,7 +5,7 @@ import io.github.remmerw.buri.BEMap
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.decodeBencode
-import kotlinx.io.Buffer
+import kotlinx.io.Sink
 import java.net.InetSocketAddress
 
 internal class ExtendedHandshakeHandler : MessageHandler {
@@ -54,10 +54,10 @@ internal class ExtendedHandshakeHandler : MessageHandler {
 
     override fun doEncode(
         message: ExtendedMessage,
-        buffer: Buffer,
+        sink: Sink,
     ) {
         val extendedHandshake = message as ExtendedHandshake
-        extendedHandshake.encode(buffer)
+        extendedHandshake.encode(sink)
     }
 
     private fun mergeMappings(
