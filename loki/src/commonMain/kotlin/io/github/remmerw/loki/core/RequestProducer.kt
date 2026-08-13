@@ -21,20 +21,16 @@ internal class RequestProducer(
                 resetConnection(connection)
                 return
             } else {
-                var finishedPieces: MutableList<Int>? = null
+                val finishedPieces = mutableListOf<Int>()
                 for (assignedPiece in assignedPieces) {
                     if (dataStorage.isComplete(assignedPiece)) {
-                        if (finishedPieces == null) {
-                            finishedPieces = ArrayList(assignedPieces.size + 1)
-                        }
-                        // delay removing piece from assignments to avoid CME
-                        finishedPieces.add(assignedPiece)
+finishedPieces.add(assignedPiece)
                     } else if (connection.addPiece(assignedPiece)) {
                         val requests = buildRequests(connection, assignedPiece).shuffled()
                         connection.addRequests(requests)
                     }
                 }
-                finishedPieces?.forEach { finishedPiece: Int ->
+                finishedPieces.forEach { finishedPiece: Int ->
                     assignment.finish(finishedPiece)
                     val dataBitfield = connection.dataBitfield()
                     if (dataBitfield != null) {
