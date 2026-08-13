@@ -43,7 +43,7 @@ internal data class ExtendedHandshake(
          */
         get() = data["p"] as BEInteger?
 
-    fun encode(sink: Buffer) {
+    fun encode(sink: Sink) {
         data.bencode().encodeTo(sink)
     }
 }
