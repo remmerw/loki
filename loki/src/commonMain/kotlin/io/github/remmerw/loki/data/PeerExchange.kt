@@ -63,7 +63,7 @@ internal fun io.github.remmerw.buri.Buffer.bencodePeers(peers: Collection<InetSo
     }
 
 internal fun io.github.remmerw.buri.Buffer.bencodePeerOptions(peers: Collection<InetSocketAddress>) {
-        this.bencodeArray(4 * peers.size
+        this.bencodeArray(4 * peers.size)
         repeat(peers.size) { 
   this.bencodeArrayData(0.toByte())
   this.bencodeArrayData(0.toByte())
