@@ -63,7 +63,6 @@ internal data class UtMetadata(
 
         sink.bencodeEof()
 
-
         if (data.isNotEmpty()) {
             sink.write(data)
         }

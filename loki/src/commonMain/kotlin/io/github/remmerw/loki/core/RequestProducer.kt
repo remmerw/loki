@@ -24,7 +24,7 @@ internal class RequestProducer(
                 val finishedPieces = mutableListOf<Int>()
                 for (assignedPiece in assignedPieces) {
                     if (dataStorage.isComplete(assignedPiece)) {
-finishedPieces.add(assignedPiece)
+                        finishedPieces.add(assignedPiece)
                     } else if (connection.addPiece(assignedPiece)) {
                         val requests = buildRequests(connection, assignedPiece).shuffled()
                         connection.addRequests(requests)
