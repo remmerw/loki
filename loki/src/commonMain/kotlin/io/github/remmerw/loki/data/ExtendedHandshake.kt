@@ -4,10 +4,6 @@ import io.github.remmerw.buri.BEInteger
 import io.github.remmerw.buri.BEMap
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.bencode
-import io.github.remmerw.buri.bencode
-import io.github.remmerw.buri.bencodeMap
-import io.github.remmerw.buri.bencodeMapKey
-import io.github.remmerw.buri.bencodeEof
 import kotlinx.io.Buffer
 
 /**
@@ -48,8 +44,10 @@ internal data class ExtendedHandshake(
         get() = data["p"] as BEInteger?
 
     fun encode(buffer: Buffer) {
-        val sink = io.github.remmerw.buri.Buffer(1024)
+        val sink =
+            io.github.remmerw.buri
+                .Buffer(1024)
         data.bencode().encodeTo(sink)
-        buffer.write(sink.data,0,sink.length)
+        buffer.write(sink.data, 0, sink.length)
     }
 }

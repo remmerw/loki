@@ -1,9 +1,8 @@
 package io.github.remmerw.loki.data
 
-import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.bencode
-import io.github.remmerw.buri.bencodeMap
 import io.github.remmerw.buri.bencodeEof
+import io.github.remmerw.buri.bencodeMap
 import io.github.remmerw.buri.bencodeMapKey
 import kotlinx.io.Buffer
 
@@ -51,11 +50,12 @@ internal data class UtMetadata(
     }
 
     fun encode(buffer: Buffer) {
+        val sink =
+            io.github.remmerw.buri
+                .Buffer(100)
 
-        val sink = io.github.remmerw.buri.Buffer(100)
-        
         sink.bencodeMap()
-        
+
         sink.bencodeMapKey("msg_type")
         sink.bencode(metaType.id)
         sink.bencodeMapKey("piece")
@@ -67,7 +67,7 @@ internal data class UtMetadata(
 
         sink.bencodeEof()
 
-        buffer.write(sink.data,0,sink.length)
+        buffer.write(sink.data, 0, sink.length)
 
         if (data.isNotEmpty()) {
             buffer.write(data)
