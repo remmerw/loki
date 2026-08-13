@@ -92,10 +92,12 @@ internal class Worker(
                 pieceStatistics.addBitfield(dataBitfield)
             }
         }
+        bitfields.clear()
         lock.withLock {
             haves.forEach { (connection: Connection, pieces: MutableSet<Int>) ->
                 pieces.forEach { piece: Int -> pieceStatistics.addPiece(connection, piece) }
             }
+            haves.clear()
         }
     }
 
