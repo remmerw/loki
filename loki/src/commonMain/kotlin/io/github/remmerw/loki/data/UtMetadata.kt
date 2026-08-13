@@ -4,7 +4,7 @@ import io.github.remmerw.buri.bencode
 import io.github.remmerw.buri.bencodeEof
 import io.github.remmerw.buri.bencodeMap
 import io.github.remmerw.buri.bencodeMapKey
-import kotlinx.io.Buffer
+import kotlinx.io.Sink
 
 internal data class UtMetadata(
     val metaType: MetaType,
@@ -49,11 +49,7 @@ internal data class UtMetadata(
         return result
     }
 
-    fun encode(buffer: Buffer) {
-        val sink =
-            io.github.remmerw.buri
-                .Buffer(100)
-
+    fun encode(sink: Sink) {
         sink.bencodeMap()
 
         sink.bencodeMapKey("msg_type")
@@ -67,10 +63,9 @@ internal data class UtMetadata(
 
         sink.bencodeEof()
 
-        buffer.write(sink.data, 0, sink.length)
 
         if (data.isNotEmpty()) {
-            buffer.write(data)
+            sink.write(data)
         }
     }
 }
