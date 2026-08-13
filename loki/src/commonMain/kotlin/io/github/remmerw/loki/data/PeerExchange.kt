@@ -15,10 +15,7 @@ internal class PeerExchange(
     override val type: Type
         get() = Type.PeerExchange
 
-    fun encode(buffer: Buffer) {
-        val sink =
-            io.github.remmerw.buri
-                .Buffer(4096)
+    fun encode(sink: Sink) {
         sink.bencodeMap()
         val inet4Peers = filterByAddressLength(added, 4) // ipv4
         val inet6Peers = filterByAddressLength(added, 16) // ipv6
@@ -38,7 +35,6 @@ internal class PeerExchange(
         sink.bencodePeers(filterByAddressLength(dropped, 16), 16)
 
         sink.bencodeEof()
-        buffer.write(sink.data, 0, sink.length)
     }
 
     private fun filterByAddressLength(
