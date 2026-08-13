@@ -5,7 +5,7 @@ import io.github.remmerw.buri.bencodeArrayData
 import io.github.remmerw.buri.bencodeEof
 import io.github.remmerw.buri.bencodeMap
 import io.github.remmerw.buri.bencodeMapKey
-import kotlinx.io.Buffer
+import kotlinx.io.Sink
 import java.net.InetSocketAddress
 
 internal class PeerExchange(
@@ -43,7 +43,7 @@ internal class PeerExchange(
     ): Collection<InetSocketAddress> = peers.filter { peer -> peer.address.address.size == addressLength }
 }
 
-internal fun io.github.remmerw.buri.Buffer.bencodePeers(
+internal fun Sink.bencodePeers(
     peers: Collection<InetSocketAddress>,
     size: Int,
 ) {
@@ -54,7 +54,7 @@ internal fun io.github.remmerw.buri.Buffer.bencodePeers(
     }
 }
 
-internal fun io.github.remmerw.buri.Buffer.bencodePeerOptions(peers: Collection<InetSocketAddress>) {
+internal fun Sink.bencodePeerOptions(peers: Collection<InetSocketAddress>) {
     this.bencodeArray(4 * peers.size)
     repeat(peers.size) {
         this.bencodeArrayData(0.toByte())
