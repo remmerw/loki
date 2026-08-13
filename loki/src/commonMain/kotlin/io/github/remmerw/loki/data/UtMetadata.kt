@@ -57,7 +57,7 @@ internal data class UtMetadata(
         sink.bencodeMap()
         
         sink.bencodeMapKey("msg_type")
-        sink.bencode(metaType.id.)
+        sink.bencode(metaType.id)
         sink.bencodeMapKey("piece")
         sink.bencode(pieceIndex)
         if (totalSize > 0) {
