@@ -6,6 +6,7 @@ import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.decodeBencode
 import kotlinx.io.Buffer
+import kotlinx.io.Sink
 import kotlinx.io.readByteArray
 import java.net.InetSocketAddress
 
@@ -17,11 +18,11 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
 
     override fun doEncode(
         message: ExtendedMessage,
-        buffer: Buffer,
+        sink: Sink,
     ) {
         val utMetadata = message as UtMetadata
 
-        return utMetadata.encode(buffer)
+        return utMetadata.encode(sink)
     }
 
     override fun doDecode(
