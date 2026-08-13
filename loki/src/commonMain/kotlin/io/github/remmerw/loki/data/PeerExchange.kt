@@ -27,18 +27,18 @@ internal class PeerExchange(
         val inet4Peers = filterByAddressLength(added, 4) // ipv4
         val inet6Peers = filterByAddressLength(added, 16) // ipv6
 
-        sink.bencodedMapKey("added")
+        sink.bencodeMapKey("added")
         sink.bencodePeers(inet4Peers,4)
-        sink.bencodedMapKey("added.f")
+        sink.bencodeMapKey("added.f")
         sink.bencodePeerOptions(inet4Peers)
-        sink.bencodedMapKey("added6")
-        sink.bencodePeers(inet6Peer,16)
-        sink.bencodedMapKey("added6.f")
-        sink.encodePeerOptions(inet6Peers)
+        sink.bencodeMapKey("added6")
+        sink.bencodePeers(inet6Peers,16)
+        sink.bencodeMapKey("added6.f")
+        sink.bencodePeerOptions(inet6Peers)
 
-        sink.bencodedMapKey("dropped")
+        sink.bencodeMapKey("dropped")
         sink.bencodePeers(filterByAddressLength(dropped, 4),4)
-        sink.bencodedMapKey("dropped6")
+        sink.bencodeMapKey("dropped6")
         sink.bencodePeers(filterByAddressLength(dropped, 16),16)
 
         
@@ -64,9 +64,10 @@ internal fun io.github.remmerw.buri.Buffer.bencodePeers(peers: Collection<InetSo
 
 internal fun io.github.remmerw.buri.Buffer.bencodePeerOptions(peers: Collection<InetSocketAddress>) {
         this.bencodeArray(4 * peers.size
-        repeat(peers.size) { this.bencodeArrayData(0.toByte())
+        repeat(peers.size) { 
   this.bencodeArrayData(0.toByte())
-this.bencodeArrayData(0.toByte())
-this.bencodeArrayData(0.toByte())
+  this.bencodeArrayData(0.toByte())
+  this.bencodeArrayData(0.toByte())
+  this.bencodeArrayData(0.toByte())
  }
     }
