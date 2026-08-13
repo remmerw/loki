@@ -6,7 +6,7 @@ import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.loki.debug
-import kotlinx.io.Buffer
+import kotlinx.io.Sink
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
@@ -30,10 +30,10 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
 
     override fun doEncode(
         message: ExtendedMessage,
-        buffer: Buffer,
+        sink: Sink,
     ) {
         val exchange = message as PeerExchange
-        exchange.encode(buffer)
+        exchange.encode(sink)
     }
 
     override fun localTypeId(): Byte = 1
