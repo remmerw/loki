@@ -6,16 +6,16 @@ import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.decodeBencode
 import kotlinx.io.Sink
-import java.net.InetSocketAddress
+import io.github.remmerw.nott.Address
 
 internal class ExtendedHandshakeHandler : MessageHandler {
     override fun supportedTypes(): Collection<Type> = setOf(Type.ExtendedHandshake)
 
-    private val peerTypeMappings: MutableMap<InetSocketAddress, MutableMap<Int, String>> =
+    private val peerTypeMappings: MutableMap<Address, MutableMap<Int, String>> =
         mutableMapOf()
 
     private fun processTypeMapping(
-        peer: InetSocketAddress,
+        peer: Address,
         mappingObj: BEObject?,
     ) {
         if (mappingObj == null) {
@@ -37,13 +37,13 @@ internal class ExtendedHandshakeHandler : MessageHandler {
         }
     }
 
-    fun getPeerTypeMapping(peer: InetSocketAddress): Map<Int, String> {
+    fun getPeerTypeMapping(peer: Address): Map<Int, String> {
         val mapping: Map<Int, String>? = peerTypeMappings[peer]
         return mapping?.toMap() ?: emptyMap()
     }
 
     override fun doDecode(
-        address: InetSocketAddress,
+        address: Address,
         reader: BEReader,
     ): ExtendedMessage {
         val map = (reader.decodeBencode() as BEMap).toMap()
