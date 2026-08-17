@@ -3,6 +3,7 @@ package io.github.remmerw.loki.core
 import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
+import io.github.remmerw.nott.Address
 import io.github.remmerw.nott.PeerResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,9 +39,10 @@ internal fun CoroutineScope.performRequester(
             } catch (throwable: Throwable) {
                 debug(throwable)
             }
-            response.addresses.forEach { address ->
+            response.addresses.forEach { i ->
 
                 launch {
+                    val address = i.toInetSocketAddress()
                     try {
                         if (address.address.isReachable(3000)) {
                             counter.incrementAndFetch()
