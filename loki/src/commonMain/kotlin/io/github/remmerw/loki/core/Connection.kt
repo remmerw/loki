@@ -37,6 +37,7 @@ import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UNCHOKE_ID
 import io.github.remmerw.loki.data.Unchoke
 import io.github.remmerw.loki.debug
+import io.github.remmerw.nott.Address
 import kotlinx.coroutines.yield
 import kotlinx.io.Buffer
 import kotlinx.io.Source
@@ -45,7 +46,6 @@ import kotlinx.io.asSource
 import kotlinx.io.buffered
 import kotlinx.io.readByteArray
 import kotlinx.io.readTo
-import java.net.InetSocketAddress
 import java.net.Socket
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -54,7 +54,7 @@ import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 internal class Connection internal constructor(
-    private val address: InetSocketAddress,
+    private val address: Address,
     private val dataStorage: DataStorage,
     private val worker: Worker,
     private val socket: Socket,
@@ -77,7 +77,7 @@ internal class Connection internal constructor(
         return writeBlock!!.byteArray
     }
 
-    fun address(): InetSocketAddress = address
+    fun address(): Address = address
 
     suspend fun reading() {
         while (!isClosed) {
