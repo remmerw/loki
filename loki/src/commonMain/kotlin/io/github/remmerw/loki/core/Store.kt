@@ -1,4 +1,4 @@
-package io.github.remmerw.loki.data
+package io.github.remmerw.loki.core
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
