@@ -45,7 +45,7 @@ internal class ExtendedProtocol(
     fun getTypeNameFor(type: Type): String = typeMap[type]!!
 
     fun doDecode(
-        address: InetSocketAddress,
+        address: Address,
         reader: BEReader,
     ): ExtendedMessage {
         val typeId = reader.read()
