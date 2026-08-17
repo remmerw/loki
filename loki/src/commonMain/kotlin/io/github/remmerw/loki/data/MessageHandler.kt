@@ -2,7 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.buri.BEReader
 import kotlinx.io.Sink
-import java.net.InetSocketAddress
+import io.github.remmerw.nott.Address
 
 interface MessageHandler {
     /**
@@ -14,7 +14,7 @@ interface MessageHandler {
     )
 
     fun doDecode(
-        address: InetSocketAddress,
+        address: Address,
         reader: BEReader,
     ): ExtendedMessage
 
