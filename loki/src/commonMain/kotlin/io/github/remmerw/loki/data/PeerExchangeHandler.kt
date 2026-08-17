@@ -7,6 +7,7 @@ import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.loki.debug
 import kotlinx.io.Sink
+import io.github.remmerw.nott.Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
@@ -14,15 +15,15 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> = setOf(Type.PeerExchange)
 
     override fun doDecode(
-        address: InetSocketAddress,
+        address: Address,
         reader: BEReader,
     ): ExtendedMessage {
         val map = (reader.decodeBencode() as BEMap).toMap()
-        val added: MutableSet<InetSocketAddress> = mutableSetOf()
+        val added: MutableSet<Address> = mutableSetOf()
         extractPeers(map, "added", "added.f", 4, added) // ipv4
         extractPeers(map, "added6", "added6.f", 16, added) // ipv6
 
-        val dropped: MutableSet<InetSocketAddress> = mutableSetOf()
+        val dropped: MutableSet<Address> = mutableSetOf()
         extractPeers(map, "dropped", null, 4, dropped) // ipv4
         extractPeers(map, "dropped6", null, 16, dropped) // ipv6
         return PeerExchange(added, dropped)
@@ -45,7 +46,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         peersKey: String,
         flagsKey: String?,
         addressLength: Int,
-        destination: MutableCollection<InetSocketAddress>,
+        destination: MutableCollection<Address>,
     ) {
         if (map.containsKey(peersKey)) {
             val peers = (checkNotNull(map[peersKey]) as BEString).toByteArray()
@@ -62,7 +63,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         peers: ByteArray,
         flags: ByteArray,
         addressLength: Int,
-        destination: MutableCollection<InetSocketAddress>,
+        destination: MutableCollection<Address>,
     ) {
         val cryptoFlags = ByteArray(flags.size)
         for (i in flags.indices) {
@@ -74,7 +75,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
     private fun extractPeers(
         peers: ByteArray,
         addressLength: Int,
-        destination: MutableCollection<InetSocketAddress>,
+        destination: MutableCollection<Address>,
     ) {
         parsePeers(peers, addressLength, destination)
     }
@@ -83,11 +84,11 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
         peers: ByteArray,
         cryptoFlags: ByteArray?,
         addressLength: Int,
-    ): List<InetSocketAddress> {
+    ): List<Address> {
         var pos = 0
         var index = 0
 
-        val result = mutableListOf<InetSocketAddress>()
+        val result = mutableListOf<Address>()
         while (pos < peers.size) {
             var from = pos
             pos += addressLength
@@ -108,8 +109,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
             if (!requiresEncryption) {
                 // only not required encryption peers are supported
                 try {
-                    val inetAddress = InetAddress.getByAddress(address)
-                    result.add(InetSocketAddress(inetAddress.hostName, port))
+                    result.add(Address(address, port.toUShort()))
                 } catch (throwable: Throwable) {
                     debug(throwable)
                 }
@@ -122,7 +122,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
     private fun parsePeers(
         peers: ByteArray,
         addressLength: Int,
-        destination: MutableCollection<InetSocketAddress>,
+        destination: MutableCollection<Address>,
         cryptoFlags: ByteArray? = null,
     ) {
         val peerLength = addressLength + 2 // 2 is port length
