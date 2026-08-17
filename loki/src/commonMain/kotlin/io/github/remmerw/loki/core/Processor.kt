@@ -4,7 +4,6 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
 import io.github.remmerw.nott.PeerResponse
-import io.github.remmerw.nott.toInetSocketAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,7 +30,7 @@ internal fun CoroutineScope.performRequester(
     store: Store,
     counter: AtomicInt,
     channel: ReceiveChannel<PeerResponse>,
-): ReceiveChannel<InetSocketAddress> =
+): ReceiveChannel<Address> =
     produce {
         channel.consumeEach { response ->
             try {
@@ -39,12 +38,11 @@ internal fun CoroutineScope.performRequester(
             } catch (throwable: Throwable) {
                 debug(throwable)
             }
-            response.addresses.forEach { i ->
+            response.addresses.forEach { address ->
 
                 launch {
-                    val address = i.toInetSocketAddress()
                     try {
-                        if (address.address.isReachable(3000)) {
+                        if (address.inetAddress().isReachable(3000)) {
                             counter.incrementAndFetch()
                             send(address)
                         }
@@ -64,7 +62,7 @@ internal fun CoroutineScope.performConnection(
     handshakeHandlers: Collection<HandshakeHandler>,
     dataStorage: DataStorage,
     worker: Worker,
-    channel: ReceiveChannel<InetSocketAddress>,
+    channel: ReceiveChannel<Address>,
 ): ReceiveChannel<Any> =
     produce {
         val semaphore = Semaphore(MAX_CONCURRENCY)
