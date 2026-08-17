@@ -6,11 +6,11 @@ import io.github.remmerw.buri.bencodeEof
 import io.github.remmerw.buri.bencodeMap
 import io.github.remmerw.buri.bencodeMapKey
 import kotlinx.io.Sink
-import java.net.InetSocketAddress
+import io.github.remmerw.nott.Address
 
 internal class PeerExchange(
-    val added: Collection<InetSocketAddress>,
-    val dropped: Collection<InetSocketAddress>,
+    val added: Collection<Address>,
+    val dropped: Collection<Address>,
 ) : ExtendedMessage {
     override val type: Type
         get() = Type.PeerExchange
@@ -38,23 +38,23 @@ internal class PeerExchange(
     }
 
     private fun filterByAddressLength(
-        peers: Collection<InetSocketAddress>,
+        peers: Collection<Address>,
         addressLength: Int,
-    ): Collection<InetSocketAddress> = peers.filter { peer -> peer.address.address.size == addressLength }
+    ): Collection<Address> = peers.filter { peer -> peer.address.size == addressLength }
 }
 
 internal fun Sink.bencodePeers(
-    peers: Collection<InetSocketAddress>,
+    peers: Collection<Address>,
     size: Int,
 ) {
     this.bencodeArray((size + 2) * peers.size)
     for (peer in peers) {
-        this.bencodeArrayData(peer.address.address)
-        this.bencodeArrayData(peer.port.toUShort())
+        this.bencodeArrayData(peer.address)
+        this.bencodeArrayData(peer.port)
     }
 }
 
-internal fun Sink.bencodePeerOptions(peers: Collection<InetSocketAddress>) {
+internal fun Sink.bencodePeerOptions(peers: Collection<Address>) {
     this.bencodeArray(4 * peers.size)
     repeat(peers.size) {
         this.bencodeArrayData(0.toByte())
