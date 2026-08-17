@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.nott.Address
 import io.github.remmerw.loki.PEER_INACTIVITY_THRESHOLD
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
 import io.github.remmerw.loki.data.ExtendedMessage
