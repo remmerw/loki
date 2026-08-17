@@ -8,8 +8,6 @@ import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.loki.debug
 import kotlinx.io.Sink
 import io.github.remmerw.nott.Address
-import java.net.InetAddress
-import java.net.InetSocketAddress
 
 internal class PeerExchangeHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> = setOf(Type.PeerExchange)
