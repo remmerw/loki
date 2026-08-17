@@ -1,8 +1,8 @@
 package io.github.remmerw.loki.data
 
 import io.github.remmerw.buri.BEReader
-import kotlinx.io.Sink
 import io.github.remmerw.nott.Address
+import kotlinx.io.Sink
 
 interface MessageHandler {
     /**

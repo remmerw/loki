@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.nott.Address
 import io.github.remmerw.loki.PEER_INACTIVITY_THRESHOLD
 import io.github.remmerw.loki.UPDATE_ASSIGNMENTS_OPTIONAL_INTERVAL
 import io.github.remmerw.loki.data.ExtendedMessage
@@ -8,6 +7,7 @@ import io.github.remmerw.loki.data.Message
 import io.github.remmerw.loki.data.Type
 import io.github.remmerw.loki.data.interested
 import io.github.remmerw.loki.data.notInterested
+import io.github.remmerw.nott.Address
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
 import java.util.concurrent.ConcurrentHashMap
