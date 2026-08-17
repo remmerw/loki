@@ -49,7 +49,7 @@ class ExchangedMetadataTest {
                         totalSize = 100,
                         data = data,
                     )
-                val address = Address(byteArrayOf(10, 20, 30, 40), 999.toUInt())
+                val address = Address(byteArrayOf(10, 20, 30, 40), 999.toUShort())
                 val buffer = Buffer()
                 handler.doEncode(metadata, buffer)
                 val bytes = buffer.readByteArray()
