@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.nott.Address
 import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
