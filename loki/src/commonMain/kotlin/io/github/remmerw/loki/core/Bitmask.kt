@@ -1,10 +1,8 @@
 package io.github.remmerw.loki.core
 
-import kotlin.math.ceil
-import kotlin.math.max
-import kotlin.math.min
-
-internal class Bitmask(bits: Int) {
+internal class Bitmask(
+    bits: Int,
+) {
     private var words: LongArray
     private var wordsInUse = 0
     private var sizeIsSticky = false
@@ -68,7 +66,10 @@ internal class Bitmask(bits: Int) {
         words[wi] = words[wi] or (1L shl offset)
     }
 
-    operator fun set(fromIndex: Int, toIndex: Int) {
+    operator fun set(
+        fromIndex: Int,
+        toIndex: Int,
+    ) {
         checkRange(fromIndex, toIndex)
         if (fromIndex == toIndex) return
 
@@ -173,13 +174,19 @@ internal class Bitmask(bits: Int) {
 
         private fun wordIndex(bitIndex: Int): Int = bitIndex shr ADDRESS_BITS_PER_WORD
 
-        private fun checkRange(fromIndex: Int, toIndex: Int) {
+        private fun checkRange(
+            fromIndex: Int,
+            toIndex: Int,
+        ) {
             if (fromIndex < 0) throw IndexOutOfBoundsException("fromIndex < 0: $fromIndex")
             if (toIndex < 0) throw IndexOutOfBoundsException("toIndex < 0: $toIndex")
             if (fromIndex > toIndex) throw IndexOutOfBoundsException("fromIndex: $fromIndex > toIndex: $toIndex")
         }
 
-        fun decode(bytes: ByteArray, piecesTotal: Int): Bitmask {
+        fun decode(
+            bytes: ByteArray,
+            piecesTotal: Int,
+        ): Bitmask {
             val expectedBitmaskLength = getBitmaskLength(piecesTotal)
             require(bytes.size == expectedBitmaskLength) {
                 "Invalid bitfield: total ($piecesTotal), bitmask length (${bytes.size}). Expected $expectedBitmaskLength"
@@ -208,7 +215,10 @@ internal class Bitmask(bits: Int) {
             return bitmask
         }
 
-        private fun getBit(bytes: ByteArray, i: Int): Int {
+        private fun getBit(
+            bytes: ByteArray,
+            i: Int,
+        ): Int {
             val byteIndex = i ushr 3
             if (byteIndex >= bytes.size) throw RuntimeException("bit index is too large: $i")
             val bitIndex = i and 7
@@ -217,9 +227,15 @@ internal class Bitmask(bits: Int) {
             return (bytes[byteIndex].toInt() and bitMask) shr shift
         }
 
-        private fun isSet(bytes: ByteArray, i: Int): Boolean = getBit(bytes, i) == 1
+        private fun isSet(
+            bytes: ByteArray,
+            i: Int,
+        ): Boolean = getBit(bytes, i) == 1
 
-        private fun setBit(bytes: ByteArray, i: Int) {
+        private fun setBit(
+            bytes: ByteArray,
+            i: Int,
+        ) {
             val byteIndex = i ushr 3
             if (byteIndex >= bytes.size) throw RuntimeException("bit index is too large: $i")
             val bitIndex = i and 7
@@ -231,6 +247,3 @@ internal class Bitmask(bits: Int) {
         fun getBitmaskLength(piecesTotal: Int): Int = (piecesTotal + 7) ushr 3
     }
 }
-
-
-
