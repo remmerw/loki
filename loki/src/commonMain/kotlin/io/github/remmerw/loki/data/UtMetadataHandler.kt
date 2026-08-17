@@ -9,6 +9,7 @@ import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
 import java.net.InetSocketAddress
+import io.github.remmerw.nott.Address
 
 internal class UtMetadataHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> =
@@ -26,7 +27,7 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
     }
 
     override fun doDecode(
-        address: InetSocketAddress,
+        address: Address,
         reader: BEReader,
     ): ExtendedMessage = decodeMetadata(reader)
 
