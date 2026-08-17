@@ -2,7 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.buri.BEReader
 import kotlinx.io.Buffer
-import java.net.InetSocketAddress
+import io.github.remmerw.nott.Address
 
 internal class ExtendedProtocol(
     messageHandlers: List<ExtendedMessageHandler>,
@@ -60,7 +60,7 @@ internal class ExtendedProtocol(
     }
 
     fun doEncode(
-        address: InetSocketAddress,
+        address: Address,
         message: ExtendedMessage,
         buffer: Buffer,
     ) {
