@@ -5,12 +5,14 @@ import io.github.remmerw.loki.core.BitfieldConnectionHandler
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.ExtendedHandshakeConsumer
 import io.github.remmerw.loki.core.ExtendedProtocolHandshakeHandler
+import io.github.remmerw.loki.core.MemoryStore
 import io.github.remmerw.loki.core.MetadataAgent
 import io.github.remmerw.loki.core.MetadataConsumer
 import io.github.remmerw.loki.core.PeerRequestProducer
 import io.github.remmerw.loki.core.PieceProducer
 import io.github.remmerw.loki.core.RequestProducer
 import io.github.remmerw.loki.core.StorageUnit
+import io.github.remmerw.loki.core.Store
 import io.github.remmerw.loki.core.Worker
 import io.github.remmerw.loki.core.performConnection
 import io.github.remmerw.loki.core.performRequester
@@ -19,8 +21,6 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.loki.core.MemoryStore
-import io.github.remmerw.loki.core.Store
 import io.github.remmerw.nott.defaultBootstrap
 import io.github.remmerw.nott.newNott
 import io.github.remmerw.nott.nodeId
