@@ -15,7 +15,7 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.io.readByteArray
-import java.net.InetSocketAddress
+import io.github.remmerw.nott.Address
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -92,7 +92,7 @@ class TorrentParserTest {
             )
         val handler = UtMetadataHandler()
 
-        val peer = InetSocketAddress("random", 999)
+        val peer = Address(byteArrayOf(10, 20, 30, 40), 999.toUShort())
 
         handler.doEncode(utMetadata, data)
 
