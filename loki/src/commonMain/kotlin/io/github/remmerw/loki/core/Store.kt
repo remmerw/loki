@@ -1,8 +1,8 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.nott.Address
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import io.github.remmerw.nott.Address
 
 interface Store {
     suspend fun addresses(limit: Int): List<Address>
