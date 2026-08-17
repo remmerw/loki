@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
-import java.net.InetSocketAddress
+import io.github.remmerw.nott.Address
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -49,12 +49,12 @@ class ExchangedMetadataTest {
                         totalSize = 100,
                         data = data,
                     )
-                val inetSocketAddress = InetSocketAddress("random", 999)
+                val address = Address(byteArrayOf(10, 20, 30, 40), 999.toUInt())
                 val buffer = Buffer()
                 handler.doEncode(metadata, buffer)
                 val bytes = buffer.readByteArray()
                 val reader = BEReader(bytes, bytes.size)
-                val cmp = handler.doDecode(inetSocketAddress, reader)
+                val cmp = handler.doDecode(address, reader)
                 assertEquals(cmp, metadata)
             }
         println("Time UTMetadata " + time.inWholeMilliseconds)
