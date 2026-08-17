@@ -21,6 +21,7 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
+import io.github.remmerw.nott.Address
 import io.github.remmerw.nott.defaultBootstrap
 import io.github.remmerw.nott.newNott
 import io.github.remmerw.nott.nodeId
@@ -68,7 +69,7 @@ suspend fun CoroutineScope.download(
     DataStorage(path).use { dataStorage ->
 
         val nodeId = nodeId()
-        val bootstrap = mutableSetOf<InetSocketAddress>()
+        val bootstrap = mutableSetOf<Address>()
         bootstrap.addAll(defaultBootstrap())
         bootstrap.addAll(store.addresses(25))
         val nott = newNott(nodeId, bootstrap = bootstrap)
