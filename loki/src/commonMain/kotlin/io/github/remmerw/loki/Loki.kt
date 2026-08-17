@@ -19,8 +19,8 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.PeerExchangeHandler
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.UtMetadataHandler
-import io.github.remmerw.nott.MemoryStore
-import io.github.remmerw.nott.Store
+import io.github.remmerw.loki.core.MemoryStore
+import io.github.remmerw.loki.core.Store
 import io.github.remmerw.nott.defaultBootstrap
 import io.github.remmerw.nott.newNott
 import io.github.remmerw.nott.nodeId
