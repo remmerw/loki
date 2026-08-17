@@ -4,7 +4,6 @@ import io.github.remmerw.loki.data.ExtendedProtocol
 import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.debug
 import io.github.remmerw.nott.PeerResponse
-import io.github.remmerw.nott.Store
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
