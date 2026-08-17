@@ -5,8 +5,8 @@ import io.github.remmerw.buri.bencodeArrayData
 import io.github.remmerw.buri.bencodeEof
 import io.github.remmerw.buri.bencodeMap
 import io.github.remmerw.buri.bencodeMapKey
-import kotlinx.io.Sink
 import io.github.remmerw.nott.Address
+import kotlinx.io.Sink
 
 internal class PeerExchange(
     val added: Collection<Address>,

@@ -1,8 +1,8 @@
 package io.github.remmerw.loki.data
 
 import io.github.remmerw.buri.BEReader
-import kotlinx.io.Buffer
 import io.github.remmerw.nott.Address
+import kotlinx.io.Buffer
 
 internal class ExtendedProtocol(
     messageHandlers: List<ExtendedMessageHandler>,

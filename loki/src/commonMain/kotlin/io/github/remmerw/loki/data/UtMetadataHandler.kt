@@ -5,11 +5,10 @@ import io.github.remmerw.buri.BEMap
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.decodeBencode
+import io.github.remmerw.nott.Address
 import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
-import java.net.InetSocketAddress
-import io.github.remmerw.nott.Address
 
 internal class UtMetadataHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> =
