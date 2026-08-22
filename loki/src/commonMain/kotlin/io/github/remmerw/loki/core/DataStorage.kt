@@ -83,9 +83,9 @@ internal data class DataStorage(
     fun metadata(metadata: ByteBuffer) {
         this.metadata = metadata
         if (!SystemFileSystem.exists(torrentDatabase)) {
-            SystemFileSystem.sink(torrentDatabase, false).use { sink ->
-                metadata.transferTo(sink)
-            }
+            
+                metadata.transferTo(torrent database.toString())
+            
         }
     }
 
