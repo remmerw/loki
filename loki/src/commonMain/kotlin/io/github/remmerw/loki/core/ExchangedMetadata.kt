@@ -4,7 +4,7 @@ import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.BLOCK_SIZE
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
-import org.kotlincrypto.hash.sha1.SHA1
+import java.nio.ByteBuffer
 
 /**
  * BEP-9 torrent metadata, thread-safe
@@ -13,7 +13,7 @@ internal data class ExchangedMetadata(
     val totalSize: Int,
 ) {
     private val lock = reentrantLock()
-    val metadata = allocateMemory(totalSize)
+    val metadata = ByteBuffer.allocateDirect(totalSize)
     private val metadataBlocks: BlockSet = createBlockSet(totalSize, BLOCK_SIZE)
 
     fun isBlockPresent(blockIndex: Int): Boolean = metadataBlocks.isPresent(blockIndex)
@@ -39,7 +39,7 @@ internal data class ExchangedMetadata(
     fun digest(): ByteArray {
         lock.withLock {
             check(metadataBlocks.isComplete) { "Metadata is not complete" }
-            return SHA1().digest(metadata.readBytes(0, metadata.size()))
+            return metadata.toSha1()
         }
     }
 
