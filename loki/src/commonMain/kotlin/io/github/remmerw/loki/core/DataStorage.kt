@@ -34,7 +34,7 @@ internal data class DataStorage(
             "Path is not a directory."
         }
         if (SystemFileSystem.exists(torrentDatabase)) {
-           val metadata = createMemory(torrent database.toString())
+           val metadata = createMemory(torrentDatabase.toString())
            val torrent = buildTorrent(           
                     metadata.readMemory(
                                    0,
