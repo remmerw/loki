@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.grid.allocateMemory
 import io.github.remmerw.loki.BLOCK_SIZE
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock

@@ -73,7 +73,7 @@ internal fun CoroutineScope.performConnection(
                 semaphore.withPermit {
                     try {
                         Socket().use { socket ->
-                            socket.tcpNoDelay= true
+                            socket.tcpNoDelay = true
                             socket.soTimeout = 10000
                             socket.connect(InetSocketAddress(address.inetAddress(), address.port.toInt()), 3000)
 

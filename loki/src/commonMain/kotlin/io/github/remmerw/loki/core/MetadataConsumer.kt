@@ -10,7 +10,6 @@ import io.github.remmerw.loki.data.TorrentId
 import io.github.remmerw.loki.data.Type
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.debug
-import java.nio.ByteBuffer
 import kotlinx.coroutines.delay
 import kotlin.concurrent.Volatile
 import kotlin.time.Duration.Companion.milliseconds
