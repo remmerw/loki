@@ -84,7 +84,7 @@ internal data class DataStorage(
         this.metadata = metadata
         if (!SystemFileSystem.exists(torrentDatabase)) {
             
-                metadata.transferTo(torrent database.toString())
+                metadata.transferTo(torrentDatabase.toString())
             
         }
     }
