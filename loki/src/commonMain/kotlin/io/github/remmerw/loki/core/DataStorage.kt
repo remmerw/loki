@@ -34,14 +34,15 @@ internal data class DataStorage(
             "Path is not a directory."
         }
         if (SystemFileSystem.exists(torrentDatabase)) {
-            SystemFileSystem.source(torrentDatabase).buffered().use { source ->
-                val bytes = source.readByteArray()
-                val torrent = buildTorrent(bytes)
-                val metadata = ByteBuffer.allocateDirect(bytes.size)
-                metadata.writeMemory(bytes, 0)
-                metadata(metadata)
-                initialize(torrent)
-            }
+           val metadata = createMemory(torrent database.toString())
+           val torrent =                                 metadata.readMemory(
+                                    0,
+                                    metadata.capacity(),
+                                ),
+                
+            metadata(metadata)
+            initialize(torrent)
+            
         }
     }
 
