@@ -7,6 +7,30 @@ import java.security.MessageDigest
 import kotlin.math.min
 import java.io.FileOutputStream
 
+import java.io.FileInputStream
+import java.io.File
+import java.nio.ByteBuffer
+
+internal fun createMemory(size: Int): ByteBuffer {
+    return ByteBuffer.allocateDirect(size)
+}
+
+internal fun createMemory(filePath: String): ByteBuffer {
+    val file = File(filePath)
+    
+    val buffer = createMemory(file.length().toInt())
+
+    FileInputStream(file).use { fis ->
+        fis.channel.use { channel ->
+            while (channel.read(buffer) != -1) {
+                
+            }
+        }
+    }
+
+    buffer.flip()
+    return buffer
+}
 
 internal fun ByteBuffer.transferTo(filePath: String) {
     rewind()
