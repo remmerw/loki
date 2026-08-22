@@ -2,6 +2,8 @@ package io.github.remmerw.loki
 
 import io.github.remmerw.buri.BEReader
 import java.nio.ByteBuffer
+import io.github.remmerw.loki.core.DataStorage
+import io.github.remmerw.loki.core.writeMemory
 import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
