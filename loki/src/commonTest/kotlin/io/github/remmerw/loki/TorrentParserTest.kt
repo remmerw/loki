@@ -1,8 +1,7 @@
 package io.github.remmerw.loki
 
 import io.github.remmerw.buri.BEReader
-import io.github.remmerw.grid.allocateMemory
-import io.github.remmerw.loki.core.DataStorage
+import java.nio.ByteBuffer
 import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
@@ -44,8 +43,8 @@ class TorrentParserTest {
                 val torrent = buildTorrent(bytes)
                 assertNotNull(torrent)
 
-                val metadata = allocateMemory(bytes.size)
-                metadata.writeBytes(bytes, 0)
+                val metadata = ByteBuffer.allocateDirect(bytes.size)
+                metadata.writeMemory(bytes, 0)
                 dataStorage.metadata(metadata)
                 dataStorage.initialize(torrent)
                 val dataBitfield = dataStorage.dataBitfield()
