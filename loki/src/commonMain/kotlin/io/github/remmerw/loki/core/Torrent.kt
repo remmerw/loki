@@ -132,13 +132,8 @@ private fun buildHashes(hashes: ByteArray): List<ByteArray> {
 }
 
 internal fun buildTorrent(metadata: ByteBuffer): Torrent {
-    val bytes =
-        metadata.readMemory(
-            0,
-            metadata.capacity(),
-        )
-    require(bytes.isNotEmpty()) { "Can't parse bytes array: null or empty" }
-    val reader = BEReader(bytes, bytes.size)
+    require(metadata.hasRemaining()) { "Can't parse bytes array: empty" }
+    val reader = BEReader(metadata)
 
     val root = (reader.decodeBencode() as BEMap).toMap()
 
