@@ -8,6 +8,7 @@ import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.loki.BLOCK_SIZE
+import java.nio.ByteBuffer
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlin.math.ceil
@@ -130,7 +131,11 @@ private fun buildHashes(hashes: ByteArray): List<ByteArray> {
     return result
 }
 
-internal fun buildTorrent(bytes: ByteArray): Torrent {
+internal fun buildTorrent(metadata: ByteBuffer): Torrent {
+    val bytes = metadata.readMemory(
+                        0,
+                        metadata.capacity(),
+                    )
     require(bytes.isNotEmpty()) { "Can't parse bytes array: null or empty" }
     val reader = BEReader(bytes, bytes.size)
 
