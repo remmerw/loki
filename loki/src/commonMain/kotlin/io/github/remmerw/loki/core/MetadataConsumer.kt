@@ -131,12 +131,7 @@ internal class MetadataConsumer internal constructor(
                     try {
                         val meta = metadata!!.metadata
                         fetchedTorrent =
-                            buildTorrent(
-                                meta.readMemory(
-                                    0,
-                                    meta.capacity(),
-                                ),
-                            )
+                            buildTorrent(meta)
                     } catch (throwable: Throwable) {
                         debug(throwable)
                         metadata = null
