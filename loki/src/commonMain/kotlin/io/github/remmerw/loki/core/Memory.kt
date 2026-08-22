@@ -1,10 +1,7 @@
 package io.github.remmerw.loki.core
 
-import kotlinx.io.Buffer
 import kotlinx.io.RawSink
-import kotlinx.io.RawSource
 import kotlinx.io.buffered
-import kotlinx.io.bytestring.getByteString
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import kotlin.math.min
@@ -39,16 +36,15 @@ internal fun ByteBuffer.writeMemory(
 internal fun ByteBuffer.transferTo(sink: RawSink) {
     rewind()
     val bufferedSink = sink.buffered()
-    
+
     val bufferSize = 8192
     val tempArray = ByteArray(min(remaining(), bufferSize))
-    
+
     while (hasRemaining()) {
         val bytesToRead = min(remaining(), tempArray.size)
-        get(tempArray, 0, bytesToRead) 
+        get(tempArray, 0, bytesToRead)
         bufferedSink.write(tempArray, 0, bytesToRead)
     }
-    
+
     bufferedSink.flush()
 }
-
