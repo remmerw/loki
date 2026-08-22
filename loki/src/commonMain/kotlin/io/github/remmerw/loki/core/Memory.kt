@@ -2,6 +2,7 @@ import java.nio.ByteBuffer
 import java.security.MessageDigest
 
 internal fun ByteBuffer.toSha1(): ByteArray {
+    rewind()
     val md = MessageDigest.getInstance("SHA-1")
     md.update(this)
     return md.digest()
