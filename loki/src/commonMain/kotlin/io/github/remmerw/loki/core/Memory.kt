@@ -8,7 +8,7 @@ import kotlin.math.min
 import java.io.FileOutputStream
 
 
-fun ByteBuffer.transferTo(filePath: String) {
+internal fun ByteBuffer.transferTo(filePath: String) {
     rewind()
 
     FileOutputStream(filePath).use { fos ->
@@ -19,7 +19,6 @@ fun ByteBuffer.transferTo(filePath: String) {
         }
     }
 }
-
 
 internal fun ByteBuffer.toSha1(): ByteArray {
     rewind()
@@ -48,18 +47,3 @@ internal fun ByteBuffer.writeMemory(
     put(bytes)
 }
 
-internal fun ByteBuffer.transferTo(sink: RawSink) {
-    rewind()
-    val bufferedSink = sink.buffered()
-
-    val bufferSize = 8192
-    val tempArray = ByteArray(min(remaining(), bufferSize))
-
-    while (hasRemaining()) {
-        val bytesToRead = min(remaining(), tempArray.size)
-        get(tempArray, 0, bytesToRead)
-        bufferedSink.write(tempArray, 0, bytesToRead)
-    }
-
-    bufferedSink.flush()
-}
