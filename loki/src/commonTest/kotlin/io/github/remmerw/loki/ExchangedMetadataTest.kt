@@ -1,5 +1,6 @@
 package io.github.remmerw.loki
 
+import java.nio.ByteBuffer
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.loki.core.Bitmask
 import io.github.remmerw.loki.core.ExchangedMetadata
