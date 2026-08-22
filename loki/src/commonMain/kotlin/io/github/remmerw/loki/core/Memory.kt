@@ -1,28 +1,21 @@
 package io.github.remmerw.loki.core
 
-import kotlinx.io.RawSink
-import kotlinx.io.buffered
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.security.MessageDigest
-import kotlin.math.min
-import java.io.FileOutputStream
 
-import java.io.FileInputStream
-import java.io.File
-
-internal fun createMemory(size: Int): ByteBuffer {
-    return ByteBuffer.allocateDirect(size)
-}
+internal fun createMemory(size: Int): ByteBuffer = ByteBuffer.allocateDirect(size)
 
 internal fun createMemory(filePath: String): ByteBuffer {
     val file = File(filePath)
-    
+
     val buffer = createMemory(file.length().toInt())
 
     FileInputStream(file).use { fis ->
         fis.channel.use { channel ->
             while (channel.read(buffer) != -1) {
-                
             }
         }
     }
@@ -69,4 +62,3 @@ internal fun ByteBuffer.writeMemory(
     position(offset)
     put(bytes)
 }
-
