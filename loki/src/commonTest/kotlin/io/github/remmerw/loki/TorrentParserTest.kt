@@ -8,6 +8,7 @@ import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.nott.Address
+import java.nio.ByteBuffer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
@@ -93,7 +94,8 @@ class TorrentParserTest {
         handler.doEncode(utMetadata, data)
 
         val bytes = data.readByteArray()
-        val reader = BEReader(bytes, bytes.size)
+        val buffer = ByteBuffer.wrap(bytes)
+        val reader = BEReader(buffer))
 
         val result = handler.doDecode(peer, reader)
         assertEquals(result, utMetadata)
