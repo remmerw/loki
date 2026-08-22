@@ -71,3 +71,4 @@ internal fun ByteBuffer.writeMemory(
                 // nothing to do
             }
         }
+}
