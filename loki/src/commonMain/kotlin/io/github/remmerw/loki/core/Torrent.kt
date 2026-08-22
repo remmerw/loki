@@ -132,6 +132,7 @@ private fun buildHashes(hashes: ByteArray): List<ByteArray> {
 }
 
 internal fun buildTorrent(metadata: ByteBuffer): Torrent {
+    metadata.flip()
     require(metadata.hasRemaining()) { "Can't parse bytes array: empty" }
     val reader = BEReader(metadata)
 
