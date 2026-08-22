@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-import java.nio.ByteBuffer
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.grid.ByteArrayPool
 import io.github.remmerw.grid.PooledByteArray
@@ -48,6 +47,7 @@ import kotlinx.io.buffered
 import kotlinx.io.readByteArray
 import kotlinx.io.readTo
 import java.net.Socket
+import java.nio.ByteBuffer
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi

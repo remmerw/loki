@@ -1,6 +1,5 @@
 package io.github.remmerw.loki
 
-import java.nio.ByteBuffer
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.loki.core.Bitmask
 import io.github.remmerw.loki.core.ExchangedMetadata
@@ -12,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
+import java.nio.ByteBuffer
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
