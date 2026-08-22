@@ -12,7 +12,7 @@ internal data class ExchangedMetadata(
     val totalSize: Int,
 ) {
     private val lock = reentrantLock()
-    val metadata = ByteBuffer.allocateDirect(totalSize)
+    val metadata = createMemory(totalSize)
     private val metadataBlocks: BlockSet = createBlockSet(totalSize, BLOCK_SIZE)
 
     fun isBlockPresent(blockIndex: Int): Boolean = metadataBlocks.isPresent(blockIndex)
