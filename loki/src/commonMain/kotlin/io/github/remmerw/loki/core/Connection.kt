@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.core
 
+import java.nio.ByteBuffer
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.grid.ByteArrayPool
 import io.github.remmerw.grid.PooledByteArray
@@ -399,7 +400,9 @@ internal class Connection internal constructor(
             EXTENDED_MESSAGE_ID -> {
                 val data = channel.readByteArray(size)
                 require(size == data.size) { "Invalid number of data received" }
-                val reader = BEReader(data, data.size)
+                // todo optmize
+                val buffer = ByteBuffer.wrap(data)
+                val reader = BEReader(buffer)
                 extendedProtocol.doDecode(address(), reader)
             }
 
