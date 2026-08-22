@@ -3,7 +3,6 @@ package io.github.remmerw.loki
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.buildTorrent
-import io.github.remmerw.loki.core.writeMemory
 import io.github.remmerw.loki.core.createMemory
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
@@ -12,12 +11,10 @@ import io.github.remmerw.nott.Address
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
-import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.io.readByteArray
-import java.nio.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -42,18 +39,17 @@ class TorrentParserTest {
 
             val dataStorage = DataStorage(path)
             val metadata = createMemory(file.toString())
-                val torrent = buildTorrent(metadata)
-                assertNotNull(torrent)
+            val torrent = buildTorrent(metadata)
+            assertNotNull(torrent)
 
-               
-                dataStorage.metadata(metadata)
-                dataStorage.initialize(torrent)
-                val dataBitfield = dataStorage.dataBitfield()
-                assertNotNull(dataBitfield)
+            dataStorage.metadata(metadata)
+            dataStorage.initialize(torrent)
+            val dataBitfield = dataStorage.dataBitfield()
+            assertNotNull(dataBitfield)
 
-                val files = dataStorage.torrentFiles()
-                assertEquals(files.size, torrent.files.size)
-            
+            val files = dataStorage.torrentFiles()
+            assertEquals(files.size, torrent.files.size)
+
             dataStorage.delete()
         }
 
