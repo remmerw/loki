@@ -25,7 +25,7 @@ internal data class ExchangedMetadata(
         lock.withLock {
             validateBlockIndex(blockIndex)
             val offset = blockIndex * BLOCK_SIZE
-            metadata.writeBytes(block, offset)
+            metadata.writeMemory(block, offset)
             metadataBlocks.markAvailable(offset, block.size)
         }
     }
