@@ -95,7 +95,7 @@ class TorrentParserTest {
 
         val bytes = data.readByteArray()
         val buffer = ByteBuffer.wrap(bytes)
-        val reader = BEReader(buffer))
+        val reader = BEReader(buffer)
 
         val result = handler.doDecode(peer, reader)
         assertEquals(result, utMetadata)
