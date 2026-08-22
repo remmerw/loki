@@ -12,7 +12,6 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readByteArray
 import java.io.RandomAccessFile
-import java.nio.ByteBuffer
 import kotlin.math.min
 import kotlin.uuid.ExperimentalUuidApi
 
