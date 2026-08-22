@@ -39,8 +39,7 @@ internal data class DataStorage(
             SystemFileSystem.source(torrentDatabase).buffered().use { source ->
                 val bytes = source.readByteArray()
                 val torrent = buildTorrent(bytes)
-                val metadata = ByteBuffer
-allocateDirect(bytes.size)
+                val metadata = ByteBuffer.allocateDirect(bytes.size)
                 metadata.writeMemory(bytes, 0)
                 metadata(metadata)
                 initialize(torrent)
