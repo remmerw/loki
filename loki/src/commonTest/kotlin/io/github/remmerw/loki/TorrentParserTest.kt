@@ -1,10 +1,9 @@
 package io.github.remmerw.loki
 
 import io.github.remmerw.buri.BEReader
-import java.nio.ByteBuffer
 import io.github.remmerw.loki.core.DataStorage
-import io.github.remmerw.loki.core.writeMemory
 import io.github.remmerw.loki.core.buildTorrent
+import io.github.remmerw.loki.core.writeMemory
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
@@ -17,6 +16,7 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.io.readByteArray
+import java.nio.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
