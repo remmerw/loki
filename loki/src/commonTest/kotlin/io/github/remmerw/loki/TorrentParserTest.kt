@@ -4,6 +4,7 @@ import io.github.remmerw.buri.BEReader
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.core.writeMemory
+import io.github.remmerw.loki.core.createMemory
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
@@ -40,13 +41,11 @@ class TorrentParserTest {
             SystemFileSystem.createDirectories(path)
 
             val dataStorage = DataStorage(path)
-            SystemFileSystem.source(file).buffered().use { source ->
-                val bytes = source.readByteArray()
-                val torrent = buildTorrent(bytes)
+            val metadata = createMemory(file.getAbsolutePath())
+                val torrent = buildTorrent(metadata)
                 assertNotNull(torrent)
 
-                val metadata = ByteBuffer.allocateDirect(bytes.size)
-                metadata.writeMemory(bytes, 0)
+               
                 dataStorage.metadata(metadata)
                 dataStorage.initialize(torrent)
                 val dataBitfield = dataStorage.dataBitfield()
@@ -54,7 +53,7 @@ class TorrentParserTest {
 
                 val files = dataStorage.torrentFiles()
                 assertEquals(files.size, torrent.files.size)
-            }
+            
             dataStorage.delete()
         }
 
