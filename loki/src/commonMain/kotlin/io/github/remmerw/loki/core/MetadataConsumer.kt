@@ -132,7 +132,7 @@ internal class MetadataConsumer internal constructor(
                         val meta = metadata!!.metadata
                         fetchedTorrent =
                             buildTorrent(
-                                meta.readBytes(
+                                meta.readMemory(
                                     0,
                                     meta.size(),
                                 ),
