@@ -35,11 +35,12 @@ internal data class DataStorage(
         }
         if (SystemFileSystem.exists(torrentDatabase)) {
            val metadata = createMemory(torrent database.toString())
-           val torrent =                                 metadata.readMemory(
-                                    0,
+           val torrent = buildTorrent(           
+                    metadata.readMemory(
+                                   0,
                                     metadata.capacity(),
                                 ),
-                
+                )
             metadata(metadata)
             initialize(torrent)
             
