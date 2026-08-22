@@ -5,10 +5,8 @@ import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
-import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readByteArray
 import org.kotlincrypto.hash.sha1.SHA1
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
@@ -34,16 +32,16 @@ internal data class DataStorage(
             "Path is not a directory."
         }
         if (SystemFileSystem.exists(torrentDatabase)) {
-           val metadata = createMemory(torrentDatabase.toString())
-           val torrent = buildTorrent(           
+            val metadata = createMemory(torrentDatabase.toString())
+            val torrent =
+                buildTorrent(
                     metadata.readMemory(
-                                   0,
-                                    metadata.capacity(),
-                                ),
+                        0,
+                        metadata.capacity(),
+                    ),
                 )
             metadata(metadata)
             initialize(torrent)
-            
         }
     }
 
