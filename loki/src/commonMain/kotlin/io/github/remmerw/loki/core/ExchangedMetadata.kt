@@ -3,7 +3,6 @@ package io.github.remmerw.loki.core
 import io.github.remmerw.loki.BLOCK_SIZE
 import kotlinx.atomicfu.locks.reentrantLock
 import kotlinx.atomicfu.locks.withLock
-import java.nio.ByteBuffer
 
 /**
  * BEP-9 torrent metadata, thread-safe
