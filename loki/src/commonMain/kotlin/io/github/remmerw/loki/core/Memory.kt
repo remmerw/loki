@@ -37,29 +37,18 @@ internal fun ByteBuffer.writeMemory(
 }
 
 internal fun ByteBuffer.transferTo(sink: RawSink) {
-    rawSource().buffered().transferTo(sink)
-}
-
-internal fun ByteBuffer.rawSource(): RawSource {
     rewind()
-
-    return object : RawSource {
-        override fun readAtMostTo(
-            sink: Buffer,
-            byteCount: Long,
-        ): Long {
-            val read = min(byteCount, remaining().toLong())
-            if (read > 0) {
-                val data = getByteString(read.toInt())
-                sink.write(data.toByteArray())
-                return read
-            } else {
-                return -1
-            }
-        }
-
-        override fun close() {
-            // nothing to do
-        }
+    val bufferedSink = sink.buffered()
+    
+    val bufferSize = 8192
+    val tempArray = ByteArray(min(remaining(), bufferSize))
+    
+    while (hasRemaining()) {
+        val bytesToRead = min(remaining(), tempArray.size)
+        get(tempArray, 0, bytesToRead) 
+        bufferedSink.write(tempArray, 0, bytesToRead)
     }
+    
+    bufferedSink.flush()
 }
+
