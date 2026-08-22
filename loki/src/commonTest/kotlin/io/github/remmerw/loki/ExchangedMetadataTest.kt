@@ -54,8 +54,8 @@ class ExchangedMetadataTest {
                 val buffer = Buffer()
                 handler.doEncode(metadata, buffer)
                 val bytes = buffer.readByteArray()
-                val data = ByteBuffer.wrap(bytes)
-                val reader = BEReader(data)
+                val bytebuffer = ByteBuffer.wrap(bytes)
+                val reader = BEReader(bytebuffer)
                 val cmp = handler.doDecode(address, reader)
                 assertEquals(cmp, metadata)
             }
