@@ -1,7 +1,6 @@
 package io.github.remmerw.loki.core
 
-import io.github.remmerw.grid.Memory
-import io.github.remmerw.grid.allocateMemory
+
 import io.github.remmerw.grid.randomAccessFile
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
@@ -14,6 +13,8 @@ import kotlinx.io.readByteArray
 import org.kotlincrypto.hash.sha1.SHA1
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
+import java.nio.ByteBuffer
+
 
 internal data class DataStorage(
     val directory: Path,
@@ -47,7 +48,7 @@ internal data class DataStorage(
     }
 
     @Volatile
-    private var metadata: Memory? = null
+    private var metadata: ByteBuffer? = null
 
     @Volatile
     private var dataBitfield: DataBitfield? = null
@@ -81,7 +82,7 @@ internal data class DataStorage(
 
     fun isVerified(piece: Int): Boolean = dataBitfield?.isVerified(piece) == true
 
-    fun metadata(metadata: Memory) {
+    fun metadata(metadata: ByteBuffer) {
         this.metadata = metadata
         if (!SystemFileSystem.exists(torrentDatabase)) {
             SystemFileSystem.sink(torrentDatabase, false).use { sink ->
@@ -165,9 +166,9 @@ internal data class DataStorage(
     internal fun sliceMetadata(
         offset: Int,
         length: Int,
-    ): ByteArray = metadata!!.readBytes(offset, length)
+    ): ByteArray = metadata!!.readMemory(offset, length)
 
-    internal fun metadataSize(): Int = metadata?.size() ?: -1
+    internal fun metadataSize(): Int = metadata?. capacity() ?: -1
 
     internal fun markVerified(piece: Int) {
         dataBitfield!!.markVerified(piece)
