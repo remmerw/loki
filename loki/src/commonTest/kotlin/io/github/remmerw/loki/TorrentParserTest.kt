@@ -41,7 +41,7 @@ class TorrentParserTest {
             SystemFileSystem.createDirectories(path)
 
             val dataStorage = DataStorage(path)
-            val metadata = createMemory(file.getAbsolutePath())
+            val metadata = createMemory(file.toString())
                 val torrent = buildTorrent(metadata)
                 assertNotNull(torrent)
 
