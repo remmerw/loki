@@ -41,9 +41,10 @@ class TorrentParserTest {
 
             val dataStorage = DataStorage(path)
             val metadata = createMemory(file.toString())
+            fail()
             val torrent = buildTorrent(metadata)
             assertNotNull(torrent)
-            fail()
+            
             dataStorage.metadata(metadata)
             dataStorage.initialize(torrent)
             val dataBitfield = dataStorage.dataBitfield()
