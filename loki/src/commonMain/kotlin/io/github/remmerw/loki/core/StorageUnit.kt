@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-
 import kotlinx.io.Sink
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
