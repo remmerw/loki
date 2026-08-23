@@ -240,7 +240,7 @@ fun allocateMemory(size: Int): Memory {
     return MemoryImpl(memory, size)
 }
 
-fun randomAccessFile(path: Path): io.github.remmerw.grid.RandomAccessFile {
+fun randomAccessFile(path: Path): io.github.remmerw.loki.core.RandomAccessFile {
     val raf = RandomAccessFile(path.toString(), "rw")
     return RandomAccessFileImpl(raf)
 }
