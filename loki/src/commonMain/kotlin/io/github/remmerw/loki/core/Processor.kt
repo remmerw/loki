@@ -75,7 +75,7 @@ internal fun CoroutineScope.performConnection(
                         Socket().use { socket ->
                             socket.tcpNoDelay = true
                             socket.soTimeout = 10000
-                            socket.connect(InetSocketAddress(address.inetAddress(), address.port.toInt()), 3000)
+                            socket.connect(address.inetSocketAddress(), 3000)
 
                             Connection(
                                 address,
