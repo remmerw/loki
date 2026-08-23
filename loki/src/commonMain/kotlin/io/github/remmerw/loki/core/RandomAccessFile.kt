@@ -101,8 +101,7 @@ fun allocateMemory(path: Path): Memory {
 
 private class RandomAccessFileImpl(
     val raf: RandomAccessFile,
-) : io.github.remmerw.loki
-core.RandomAccessFile {
+) : io.github.remmerw.loki.core.RandomAccessFile {
     override fun read(
         position: Long,
         bytes: ByteArray,
