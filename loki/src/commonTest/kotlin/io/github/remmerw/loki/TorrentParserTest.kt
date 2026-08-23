@@ -17,6 +17,7 @@ import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.io.readByteArray
 import java.nio.ByteBuffer
 import kotlin.test.Test
+import kotlin.test.fail
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -42,7 +43,7 @@ class TorrentParserTest {
             val metadata = createMemory(file.toString())
             val torrent = buildTorrent(metadata)
             assertNotNull(torrent)
-
+            fail()
             dataStorage.metadata(metadata)
             dataStorage.initialize(torrent)
             val dataBitfield = dataStorage.dataBitfield()
