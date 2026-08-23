@@ -45,7 +45,7 @@ fun RandomAccessFile.writeBytes(
     write(bytes, offset, length)
 }
 
-fun RandomAccessFile.transferToe(
+fun RandomAccessFile.transferTo(
     position: Long,
     sink: Sink,
     length: Long,
