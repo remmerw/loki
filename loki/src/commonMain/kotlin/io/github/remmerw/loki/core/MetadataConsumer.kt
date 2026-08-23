@@ -130,6 +130,7 @@ internal class MetadataConsumer internal constructor(
                     var fetchedTorrent: Torrent? = null
                     try {
                         val meta = metadata!!.metadata
+                        meta.flip()
                         fetchedTorrent =
                             buildTorrent(meta)
                     } catch (throwable: Throwable) {
