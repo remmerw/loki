@@ -77,7 +77,7 @@ class TorrentParserTest {
             dataStorage.delete()
         }
 
-    //@Test
+    @Test
     fun testMetadata() {
         val data = Buffer()
         val utMetadata =
