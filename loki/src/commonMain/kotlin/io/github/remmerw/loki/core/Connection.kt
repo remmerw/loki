@@ -1,8 +1,6 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.buri.BEReader
-import io.github.remmerw.grid.ByteArrayPool
-import io.github.remmerw.grid.PooledByteArray
 import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.data.BITFIELD_ID
 import io.github.remmerw.loki.data.Bitfield
