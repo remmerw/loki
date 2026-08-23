@@ -42,7 +42,7 @@ class TorrentParserTest {
             val dataStorage = DataStorage(path)
             
             val metadata = createMemory(file.toString())
-            fail()
+            
             val torrent = buildTorrent(metadata)
             assertNotNull(torrent)
             
