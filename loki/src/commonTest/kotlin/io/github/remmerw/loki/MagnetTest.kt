@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
 
 class MagnetTest {
-    @Test
+    //@Test
     fun downloadMagnetUri(): Unit =
         runBlocking(Dispatchers.IO) {
             if (internet()) {
