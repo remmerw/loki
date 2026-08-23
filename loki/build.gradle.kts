@@ -47,7 +47,6 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.core)
 
                 implementation(libs.sha1)
-                implementation(libs.grid)
                 implementation(libs.buri)
                 implementation(libs.nott)
             }
