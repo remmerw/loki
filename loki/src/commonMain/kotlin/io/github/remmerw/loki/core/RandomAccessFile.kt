@@ -7,20 +7,20 @@ import kotlin.math.min
 
 const val SPLITTER = 4096L
 
+fun randomAccessFile(path: Path): RandomAccessFile = RandomAccessFile(path.toString(), "rw")
 
-
-fun randomAccessFile(path: Path): RandomAccessFile {
-    return RandomAccessFile(path.toString(), "rw")
-}
-
-
-
-fun RandomAccessFile.read(position: Long, bytes: ByteArray): Int {
+fun RandomAccessFile.read(
+    position: Long,
+    bytes: ByteArray,
+): Int {
     seek(position)
     return read(bytes)
 }
 
-fun RandomAccessFile.writeBoolean(position: Long, boolean: Boolean) {
+fun RandomAccessFile.writeBoolean(
+    position: Long,
+    boolean: Boolean,
+) {
     seek(position)
     writeBoolean(boolean)
 }
@@ -57,12 +57,10 @@ fun RandomAccessFile.transferTo(
     while (stillToRead > 0) {
         val toRead = min(SPLITTER, stillToRead).toInt()
         val read = read(data, 0, toRead)
-        
+
         if (read == -1) break
-        
+
         sink.write(data, 0, read)
         stillToRead -= read
     }
 }
-
-
