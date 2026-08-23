@@ -7,6 +7,7 @@ import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.nott.Address
+import io.github.remmerw.nott.createAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
@@ -50,7 +51,7 @@ class ExchangedMetadataTest {
                         totalSize = 100,
                         data = data,
                     )
-                val address = Address(byteArrayOf(10, 20, 30, 40), 999.toUShort())
+                val address = createAddress(byteArrayOf(10, 20, 30, 40), 999.toUShort())
                 val buffer = Buffer()
                 handler.doEncode(metadata, buffer)
                 val bytes = buffer.readByteArray()
