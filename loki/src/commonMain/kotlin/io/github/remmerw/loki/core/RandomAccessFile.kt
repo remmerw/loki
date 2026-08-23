@@ -41,10 +41,7 @@ interface RandomAccessFile : AutoCloseable {
         length: Int = bytes.size,
     )
 
-    fun writeMemory(
-        position: Long,
-        memory: Memory,
-    )
+   
 
     fun transferTo(
         position: Long,
@@ -138,7 +135,7 @@ private class RandomAccessFileImpl(
         raf.write(bytes, offset, length)
     }
 
-    override fun writeMemory(
+    private fun writeMemory(
         position: Long,
         memory: Memory,
     ) {
