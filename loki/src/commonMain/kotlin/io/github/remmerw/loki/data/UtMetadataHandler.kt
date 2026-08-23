@@ -55,11 +55,10 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
     }
 
     private fun readByteArray(reader: BEReader): ByteArray {
-        val buffer = Buffer()
-        while (!reader.exhausted()) {
-            buffer.writeByte(reader.read())
-        }
-        return buffer.readByteArray()
+        val buffer = reader.data
+        val data = ByteArray(buffer.remaining())
+        buffer.get(data)
+        return data
     }
 
     private fun getMessageType(map: Map<String, BEObject>): MetaType {
