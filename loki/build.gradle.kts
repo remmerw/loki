@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "io.github.remmerw"
-version = "0.5.7"
+version = "0.5.8"
 
 kotlin {
 
