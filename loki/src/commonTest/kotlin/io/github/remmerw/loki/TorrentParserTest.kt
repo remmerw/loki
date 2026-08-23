@@ -34,7 +34,7 @@ class TorrentParserTest {
         runBlocking(Dispatchers.IO) {
             val resources = Path(path)
 
-            val file = Path(resources, "lubuntu-24.04-desktop-amd64.iso.torrent")
+            val file = Path(resources, "big-buck-bunny.torrent")
 
             val path = Path(SystemTemporaryDirectory, Uuid.random().toHexString())
             SystemFileSystem.createDirectories(path)
