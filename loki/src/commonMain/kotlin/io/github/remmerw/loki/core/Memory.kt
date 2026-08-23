@@ -20,7 +20,6 @@ internal fun createMemory(filePath: String): ByteBuffer {
         }
     }
 
-    buffer.flip()
     return buffer
 }
 
