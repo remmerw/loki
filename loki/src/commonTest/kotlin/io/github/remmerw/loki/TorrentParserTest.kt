@@ -8,7 +8,7 @@ import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.nott.Address
-import io.github.remmetw.nott.createAddress
+import io.github.remmerw.nott.createAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
