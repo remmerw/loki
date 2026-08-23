@@ -20,9 +20,9 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
         message: ExtendedMessage,
         sink: Sink,
     ) {
-        val utMetadata = message as UtMetadata
+        message as UtMetadata
 
-        return utMetadata.encode(sink)
+        message.encode(sink)
     }
 
     override fun doDecode(
