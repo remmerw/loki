@@ -38,7 +38,7 @@ class ExchangedMetadataTest {
         assertNotNull(magnetUri)
     }
 
-    //@Test
+    @Test
     fun testUtMetadataMessageHandler() {
         val time =
             measureTime {
