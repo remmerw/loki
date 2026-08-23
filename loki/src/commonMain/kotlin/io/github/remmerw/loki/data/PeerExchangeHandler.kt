@@ -7,6 +7,7 @@ import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.loki.debug
 import io.github.remmerw.nott.Address
+import io.github.remmetw.nott.createAddress
 import kotlinx.io.Sink
 
 internal class PeerExchangeHandler : ExtendedMessageHandler {
@@ -107,7 +108,7 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
             if (!requiresEncryption) {
                 // only not required encryption peers are supported
                 try {
-                    result.add(Address(address, port.toUShort()))
+                    result.add(createAddress(address, port.toUShort()))
                 } catch (throwable: Throwable) {
                     debug(throwable)
                 }
