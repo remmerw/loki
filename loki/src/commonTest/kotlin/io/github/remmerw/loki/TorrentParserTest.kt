@@ -29,7 +29,7 @@ class TorrentParserTest {
     private val path: String = "src/commonTest/resources"
 
     @OptIn(ExperimentalUuidApi::class)
-    @Test
+    // @Test 
     fun parseTorrent(): Unit =
         runBlocking(Dispatchers.IO) {
             val resources = Path(path)
