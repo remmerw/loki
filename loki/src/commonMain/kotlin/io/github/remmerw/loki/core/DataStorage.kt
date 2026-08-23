@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-
 import io.github.remmerw.loki.Storage
 import io.github.remmerw.loki.debug
 import kotlinx.atomicfu.locks.reentrantLock

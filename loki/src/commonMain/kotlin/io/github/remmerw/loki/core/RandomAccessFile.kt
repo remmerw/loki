@@ -1,18 +1,9 @@
 package io.github.remmerw.loki.core
 
-import kotlinx.io.Buffer
-import kotlinx.io.RawSink
-import kotlinx.io.RawSource
 import kotlinx.io.Sink
-import kotlinx.io.buffered
-import kotlinx.io.bytestring.getByteString
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readByteArray
 import java.io.RandomAccessFile
-import java.nio.ByteBuffer
 import kotlin.math.min
-import kotlin.uuid.ExperimentalUuidApi
 
 const val SPLITTER = 4096L
 
@@ -41,8 +32,6 @@ interface RandomAccessFile : AutoCloseable {
         length: Int = bytes.size,
     )
 
-   
-
     fun transferTo(
         position: Long,
         sink: Sink,
@@ -51,8 +40,6 @@ interface RandomAccessFile : AutoCloseable {
 
     override fun close()
 }
-
-
 
 private class RandomAccessFileImpl(
     val raf: RandomAccessFile,
@@ -120,10 +107,7 @@ private class RandomAccessFileImpl(
     }
 }
 
-
-
 fun randomAccessFile(path: Path): io.github.remmerw.loki.core.RandomAccessFile {
     val raf = RandomAccessFile(path.toString(), "rw")
     return RandomAccessFileImpl(raf)
 }
-
