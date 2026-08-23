@@ -8,6 +8,7 @@ import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.nott.Address
+import io.github.remmetw.nott.createAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
@@ -89,7 +90,7 @@ class TorrentParserTest {
             )
         val handler = UtMetadataHandler()
 
-        val peer = Address(byteArrayOf(10, 20, 30, 40), 999.toUShort())
+        val peer = createAddress(byteArrayOf(10, 20, 30, 40), 999.toUShort())
 
         handler.doEncode(utMetadata, data)
 
