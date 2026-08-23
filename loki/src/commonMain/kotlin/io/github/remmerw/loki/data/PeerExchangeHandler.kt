@@ -7,7 +7,7 @@ import io.github.remmerw.buri.BEString
 import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.loki.debug
 import io.github.remmerw.nott.Address
-import io.github.remmetw.nott.createAddress
+import io.github.remmerw.nott.createAddress
 import kotlinx.io.Sink
 
 internal class PeerExchangeHandler : ExtendedMessageHandler {
