@@ -237,9 +237,11 @@ internal class Connection internal constructor(
             }
 
             is ExtendedMessage -> {
-                val buffer = Buffer()
-                extendedProtocol.doEncode(address(), message, buffer)
-                val size = buffer.size
+                // Todo big !!!!
+                val buffer = ByteBuffer.allocate(10000)
+                val res = extendedProtocol.doEncode(address(), message, buffer)
+                val size = buffer.remaining()
+                buffer.flip()
                 sendChannel.writeInt(size.toInt())
                 sendChannel.write(buffer, size)
             }
