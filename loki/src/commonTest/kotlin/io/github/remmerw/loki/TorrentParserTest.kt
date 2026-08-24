@@ -27,7 +27,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class TorrentParserTest {
-    private val path: String = "src/commonTest/resources"
+   
 
     @OptIn(ExperimentalUuidApi::class)
     @Test 
