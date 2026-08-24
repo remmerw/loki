@@ -8,7 +8,7 @@ import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.loki.debug
 import io.github.remmerw.nott.Address
 import io.github.remmerw.nott.createAddress
-import kotlinx.io.Sink
+import java.nio.ByteBuffer
 
 internal class PeerExchangeHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> = setOf(Type.PeerExchange)
@@ -30,10 +30,10 @@ internal class PeerExchangeHandler : ExtendedMessageHandler {
 
     override fun doEncode(
         message: ExtendedMessage,
-        sink: Sink,
+        buffer: ByteBuffer,
     ) {
         val exchange = message as PeerExchange
-        exchange.encode(sink)
+        exchange.encode(buffer)
     }
 
     override fun localTypeId(): Byte = 1
