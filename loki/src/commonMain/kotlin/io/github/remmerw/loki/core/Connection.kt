@@ -37,15 +37,11 @@ import io.github.remmerw.loki.data.Unchoke
 import io.github.remmerw.loki.debug
 import io.github.remmerw.nott.Address
 import kotlinx.coroutines.yield
-import kotlinx.io.Buffer
-import kotlinx.io.Source
-import kotlinx.io.asSink
-import kotlinx.io.asSource
-import kotlinx.io.buffered
-import kotlinx.io.readByteArray
-import kotlinx.io.readTo
 import java.net.Socket
 import java.nio.ByteBuffer
+import java.nio.channels.Channels
+import java.nio.channels.ReadableByteChannel
+import java.nio.channels.WritableByteChannel
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -65,10 +61,11 @@ internal class Connection internal constructor(
 
     @OptIn(ExperimentalAtomicApi::class)
     private val closed = AtomicBoolean(false)
-    private val receiveChannel = socket.inputStream.asSource().buffered()
-    private val sendChannel = socket.outputStream.asSink().buffered()
+    private val receiveChannel = Channels.newChannel(socket.inputStream)
+    private val sendChannel = Channels.newChannel(socket.outputStream)
     private var writeBlock: PooledByteArray? = null
-
+    private sending = ByteBuffer.allocate(10024)// todo
+    private reading = ByteBuffer.allocate(10024)// todo
     fun writeBlock(): ByteArray {
         if (writeBlock == null) {
             writeBlock = ByteArrayPool.getInstance(BLOCK_SIZE).get()
@@ -83,13 +80,14 @@ internal class Connection internal constructor(
             try {
                 lastActive = TimeSource.Monotonic.markNow()
 
-                val length = receiveChannel.readInt()
+                val length = receiveChannel.read(reading)
                 require(length >= 0) { "Invalid read length received" }
 
                 if (length == 0) { // keep has length 0
                     handleConnection()
                 } else {
-                    val message = decode(receiveChannel, length)
+                    reading.flip()
+                    val message = decode(length)//Todo length
                     if (message != null) {
                         worker.consume(message, this)
                     }
@@ -100,22 +98,27 @@ internal class Connection internal constructor(
                 debug("Connection.reading " + throwable.message)
                 close()
                 break
+            } finally {
+                reading.clear()
             }
         }
     }
 
     fun receiveHandshake(): Handshake {
-        val sizeName = receiveChannel.readByte()
+val length = receiveChannel.read(reading)
+                require(length >= 0) { "Invalid read length received" }
+        reading.flip()
+        val sizeName = reading.get()
         require(sizeName.toInt() > 0) { "Invalid size name received" }
-        val name = receiveChannel.readByteArray(sizeName.toInt())
+        val name = reading.readByteArray(sizeName.toInt())
         require(sizeName.toInt() == name.size) { "Invalid size name received" }
-        val reserved = receiveChannel.readByteArray(HANDSHAKE_RESERVED_LENGTH)
+        val reserved = reading.readByteArray(HANDSHAKE_RESERVED_LENGTH)
         require(HANDSHAKE_RESERVED_LENGTH == reserved.size) { "Invalid reserved received" }
-        val infoHash = receiveChannel.readByteArray(TORRENT_ID_LENGTH)
+        val infoHash = reading.readByteArray(TORRENT_ID_LENGTH)
         require(TORRENT_ID_LENGTH == infoHash.size) { "Invalid infoHash received" }
-        val peerId = receiveChannel.readByteArray(SHA1_HASH_LENGTH)
+        val peerId = reading.readByteArray(SHA1_HASH_LENGTH)
         require(SHA1_HASH_LENGTH == peerId.size) { "Invalid peerId received" }
-
+        reading.clear()
         return Handshake(name, reserved, TorrentId(infoHash), peerId)
     }
 
@@ -133,7 +136,7 @@ internal class Connection internal constructor(
                 yield()
             } catch (_: Throwable) {
                 break
-            }
+            } 
         }
     }
 
@@ -143,23 +146,23 @@ internal class Connection internal constructor(
             is Handshake -> {
                 val data = message.name
                 sendChannel.writeByte(data.size.toByte())
-                sendChannel.write(data)
-                sendChannel.write(message.reserved)
+                sending.write(data)
+                sending.write(message.reserved)
                 sendChannel.write(message.torrentId.bytes)
-                sendChannel.write(message.peerId)
+                sending.write(message.peerId)
             }
 
             is KeepAlive -> {
-                sendChannel.write(KEEPALIVE)
+                sending.write(KEEPALIVE)
             }
 
             is Piece -> {
                 val size =
                     Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + message.length
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(PIECE_ID)
-                sendChannel.writeInt(message.piece)
-                sendChannel.writeInt(message.offset)
+                sending.writeInt(size)
+                sending.writeByte(PIECE_ID)
+                sending.writeInt(message.piece)
+                sending.writeInt(message.offset)
 
                 ByteArrayPool.getInstance(BLOCK_SIZE).get().use { pooledByteArray ->
                     val readBlock = pooledByteArray.byteArray
@@ -169,84 +172,89 @@ internal class Connection internal constructor(
                         readBlock,
                         message.length,
                     )
-                    sendChannel.write(readBlock)
+                    sending.put(readBlock)
                 }
             }
 
             is Have -> {
                 val size = Byte.SIZE_BYTES + Int.SIZE_BYTES
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(HAVE_ID)
-                sendChannel.writeInt(message.piece)
+                sending.writeInt(size)
+                sending.writeByte(HAVE_ID)
+                sending.writeInt(message.piece)
             }
 
             is Request -> {
                 val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(REQUEST_ID)
-                sendChannel.writeInt(message.piece)
-                sendChannel.writeInt(message.offset)
-                sendChannel.writeInt(message.length)
+                sending.writeInt(size)
+                sending.writeByte(REQUEST_ID)
+                sending.writeInt(message.piece)
+                sending.writeInt(message.offset)
+                sending.writeInt(message.length)
             }
 
             is Bitfield -> {
                 val size = Byte.SIZE_BYTES + message.bitfield.size
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(BITFIELD_ID)
-                sendChannel.write(message.bitfield)
+                sending.writeInt(size)
+                sending.writeByte(BITFIELD_ID)
+                sending.write(message.bitfield)
             }
 
             is Cancel -> {
                 val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(CANCEL_ID)
-                sendChannel.writeInt(message.piece)
-                sendChannel.writeInt(message.offset)
-                sendChannel.writeInt(message.length)
+                sending.writeInt(size)
+                sending.writeByte(CANCEL_ID)
+                sending.writeInt(message.piece)
+                sending.writeInt(message.offset)
+                sending.writeInt(message.length)
             }
 
             is Choke -> {
                 val size = Byte.SIZE_BYTES
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(CHOKE_ID)
+                sending.writeInt(size)
+                sending.writeByte(CHOKE_ID)
             }
 
             is Unchoke -> {
                 val size = Byte.SIZE_BYTES
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(UNCHOKE_ID)
+                sending.writeInt(size)
+                sending.writeByte(UNCHOKE_ID)
             }
 
             is Interested -> {
                 val size = Byte.SIZE_BYTES
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(INTERESTED_ID)
+                sending.writeInt(size)
+                sending.writeByte(INTERESTED_ID)
             }
 
             is NotInterested -> {
                 val size = Byte.SIZE_BYTES
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(NOT_INTERESTED_ID)
+                sending.writeInt(size)
+                sending.writeByte(NOT_INTERESTED_ID)
             }
 
             is Port -> {
                 val size = Byte.SIZE_BYTES + Short.SIZE_BYTES
-                sendChannel.writeInt(size)
-                sendChannel.writeByte(PORT_ID)
-                sendChannel.writeShort(message.port.toShort())
+                sending.writeInt(size)
+                sending.writeByte(PORT_ID)
+                sending.writeShort(message.port.toShort())
             }
 
             is ExtendedMessage -> {
-                // Todo big !!!!
-                val buffer = ByteBuffer.allocate(10000)
-                val res = extendedProtocol.doEncode(address(), message, buffer)
-                val size = buffer.remaining()
-                buffer.flip()
-                sendChannel.writeInt(size.toInt())
-                sendChannel.write(buffer, size)
+                val pos = sending.position()
+                sending.writeInt(0)//placeholder 
+                
+                val size = extendedProtocol.doEncode(address(), message, sending)
+                val last = sending.position()
+                sending.position(pos)
+                sending.writeInt(size.toInt())
+                sending.position(last)
             }
         }
-        sendChannel.flush()
+        sending.flip()
+        while (sending.hasRemaining()) {
+            sendChannel.write(sending);
+        }
+        sending.clear()
     }
 
     private fun consumeBitfield(bitfield: ByteArray) {
@@ -308,26 +316,25 @@ internal class Connection internal constructor(
     }
 
     private fun decode(
-        channel: Source,
         length: Int,
     ): Message? {
-        val messageType = channel.readByte()
+        val messageType = reading.get()
         var size = length - Byte.SIZE_BYTES
 
         return when (messageType) {
             PIECE_ID -> {
-                val piece = channel.readInt()
+                val piece = reading.readInt()
                 size -= Int.SIZE_BYTES
-                val offset = channel.readInt()
+                val offset = reading.readInt()
                 size -= Int.SIZE_BYTES
                 val data = writeBlock()
-                channel.readTo(data, 0, size)
+                reading.readTo(data, 0, size)
                 consumePiece(piece, offset, size)
                 null
             }
 
             HAVE_ID -> {
-                val piece = channel.readInt()
+                val piece = reading.readInt()
 
                 if (dataStorage.initializeDone()) {
                     dataStorage.pieceStatistics()!!.addPiece(this, piece)
@@ -338,9 +345,9 @@ internal class Connection internal constructor(
             }
 
             REQUEST_ID -> {
-                val piece = channel.readInt()
-                val offset = channel.readInt()
-                val length = channel.readInt()
+                val piece = reading.readInt()
+                val offset = reading.readInt()
+                val length = reading.readInt()
 
                 if (dataStorage.initializeDone()) {
                     if (!choking) {
@@ -353,7 +360,7 @@ internal class Connection internal constructor(
             }
 
             BITFIELD_ID -> {
-                val data = channel.readByteArray(size)
+                val data = reading.readByteArray(size)
 
                 if (dataStorage.initializeDone()) {
                     consumeBitfield(data)
@@ -364,9 +371,9 @@ internal class Connection internal constructor(
             }
 
             CANCEL_ID -> {
-                val pieceIndex = channel.readInt()
-                val blockOffset = channel.readInt()
-                channel.readInt()
+                val pieceIndex = reading.readInt()
+                val blockOffset = reading.readInt()
+                reading.readInt()
                 this.cancelRequest(pieceIndex, blockOffset)
                 null
             }
@@ -392,13 +399,14 @@ internal class Connection internal constructor(
             }
 
             PORT_ID -> {
-                val port = channel.readShort().toInt() and 0x0000FFFF
+                val port = reading.readShort().toInt() and 0x0000FFFF
                 debug("Port not yet used $port")
                 null
             }
 
-            EXTENDED_MESSAGE_ID -> {
-                val data = channel.readByteArray(size)
+            EXTENDED_MESSAGE_ID -> { 
+                // todo
+                val data = reading.readByteArray(size)
                 require(size == data.size) { "Invalid number of data received" }
                 // todo optmize
                 val buffer = ByteBuffer.wrap(data)
