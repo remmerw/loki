@@ -4,7 +4,7 @@ import io.github.remmerw.buri.bencode
 import io.github.remmerw.buri.bencodeEof
 import io.github.remmerw.buri.bencodeMap
 import io.github.remmerw.buri.bencodeMapKey
-import kotlinx.io.Sink
+import java.nio.ByteBuffer
 
 internal data class UtMetadata(
     val metaType: MetaType,
@@ -49,22 +49,22 @@ internal data class UtMetadata(
         return result
     }
 
-    fun encode(sink: Sink) {
-        sink.bencodeMap()
+    fun encode(buffer: ByteBuffer) {
+        buffer.bencodeMap()
 
-        sink.bencodeMapKey("msg_type")
-        sink.bencode(metaType.id)
-        sink.bencodeMapKey("piece")
-        sink.bencode(pieceIndex)
+        buffer.bencodeMapKey("msg_type")
+        buffer.bencode(metaType.id)
+        buffer.bencodeMapKey("piece")
+        buffer.bencode(pieceIndex)
         if (totalSize > 0) {
-            sink.bencodeMapKey("total_size")
-            sink.bencode(totalSize)
+            buffer.bencodeMapKey("total_size")
+            buffer.bencode(totalSize)
         }
 
-        sink.bencodeEof()
+        buffer.bencodeEof()
 
         if (data.isNotEmpty()) {
-            sink.write(data)
+            buffer.put(data)
         }
     }
 }
