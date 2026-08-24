@@ -6,7 +6,6 @@ import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.nott.Address
-import kotlinx.io.Buffer
 import kotlinx.io.Sink
 import kotlinx.io.readByteArray
 

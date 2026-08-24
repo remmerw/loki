@@ -21,7 +21,6 @@ import kotlin.test.assertTrue
 import kotlin.time.measureTime
 
 class ExchangedMetadataTest {
-
     @Test
     fun testMagnetUri() {
         var uri =
