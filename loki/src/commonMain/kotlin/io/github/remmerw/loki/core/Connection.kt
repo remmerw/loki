@@ -64,8 +64,10 @@ internal class Connection internal constructor(
     private val receiveChannel = Channels.newChannel(socket.inputStream)
     private val sendChannel = Channels.newChannel(socket.outputStream)
     private var writeBlock: PooledByteArray? = null
-    private val sending = ByteBuffer.allocate(10024)// todo
-    private val reading = ByteBuffer.allocate(10024)// todo
+    private val sending = ByteBuffer.allocate(BLOCK_SIZE + 100)
+    private val reading = ByteBuffer.allocate(BLOCK_SIZE + 100)
+
+    // Todo lazy
     fun writeBlock(): ByteArray {
         if (writeBlock == null) {
             writeBlock = ByteArrayPool.getInstance(BLOCK_SIZE).get()
