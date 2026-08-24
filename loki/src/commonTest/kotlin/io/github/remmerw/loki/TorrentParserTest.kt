@@ -41,7 +41,7 @@ class TorrentParserTest {
 
             val dataStorage = DataStorage(path)
             
-            cal data = content.encodeToByteArray()
+            val data = content.encodeToByteArray()
             val metadata = createMemory(data.size.toInt())
             metadata.writeMemory(data, 0)
             
