@@ -34,7 +34,7 @@ class TorrentParserTest {
     fun parseTorrent(): Unit =
         runBlocking(Dispatchers.IO) {
 
-            val content = "d8:announce37:http://ubuntu.com lengthi16384e6:pieces20:12345678901234567890ee"
+            val content = "d8:announce19:http://localhost.com4:infod6:lengthi0e4:name10:testfile.tx12:piece lengthi262144e6:pieces20:00000000000000000000ee"
             
 
             val path = Path(SystemTemporaryDirectory, Uuid.random().toHexString())
