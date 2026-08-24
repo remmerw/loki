@@ -6,8 +6,7 @@ import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.buri.decodeBencode
 import io.github.remmerw.nott.Address
-import kotlinx.io.Sink
-import kotlinx.io.readByteArray
+import java.nio.ByteBuffer
 
 internal class UtMetadataHandler : ExtendedMessageHandler {
     override fun supportedTypes(): Collection<Type> =
@@ -17,11 +16,11 @@ internal class UtMetadataHandler : ExtendedMessageHandler {
 
     override fun doEncode(
         message: ExtendedMessage,
-        sink: Sink,
+        buffer: ByteBuffer,
     ) {
         message as UtMetadata
 
-        message.encode(sink)
+        message.encode(buffer)
     }
 
     override fun doDecode(
