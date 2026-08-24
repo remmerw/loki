@@ -4,6 +4,7 @@ import io.github.remmerw.buri.BEReader
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.buildTorrent
 import io.github.remmerw.loki.core.createMemory
+import io.github.remmerw.loki.core.writeMemory
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
