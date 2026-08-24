@@ -11,11 +11,9 @@ import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.nott.createAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.io.Buffer
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
-import kotlinx.io.readByteArray
 import java.nio.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -80,7 +78,7 @@ class TorrentParserTest {
 
     @Test
     fun testMetadata() {
-        val data = Buffer()
+        val buffer = ByteBuffer.allocate(600)
         val utMetadata =
             UtMetadata(
                 MetaType.DATA,
@@ -92,10 +90,8 @@ class TorrentParserTest {
 
         val peer = createAddress(byteArrayOf(10, 20, 30, 40), 999.toUShort())
 
-        handler.doEncode(utMetadata, data)
-
-        val bytes = data.readByteArray()
-        val buffer = ByteBuffer.wrap(bytes)
+        handler.doEncode(utMetadata, buffer)
+        buffer.flip()
         val reader = BEReader(buffer)
 
         val result = handler.doDecode(peer, reader)
