@@ -4,7 +4,7 @@ import io.github.remmerw.buri.BEInteger
 import io.github.remmerw.buri.BEMap
 import io.github.remmerw.buri.BEObject
 import io.github.remmerw.buri.bencode
-import kotlinx.io.Sink
+import java.nio.ByteBuffer
 
 /**
  * Extended handshake is sent during connection initialization procedure
@@ -43,7 +43,7 @@ internal data class ExtendedHandshake(
          */
         get() = data["p"] as BEInteger?
 
-    fun encode(sink: Sink) {
-        data.bencode().encodeTo(sink)
+    fun encode(buffer: ByteBuffer) {
+        data.bencode().encodeTo(buffer)
     }
 }
