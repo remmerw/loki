@@ -33,8 +33,7 @@ class TorrentParserTest {
     fun parseTorrent(): Unit =
         runBlocking(Dispatchers.IO) {
 
-            val content = "d8:announce27:udp://tracker.coppersurfer.tk4:infod6:lengthi2e4:name5:t.txt12:piece lengthi16384e6:pieces20:qÀŠÝ™‹È•ö%–EÚO_ÝwSØee
-"
+            val content = "d8:announce27:udp://tracker.coppersurfer.tk4:infod6:lengthi2e4:name5:t.txt12:piece lengthi16384e6:pieces20:qÀŠÝ™‹È•ö%–EÚO_ÝwSØee"
             
 
             val path = Path(SystemTemporaryDirectory, Uuid.random().toHexString())
