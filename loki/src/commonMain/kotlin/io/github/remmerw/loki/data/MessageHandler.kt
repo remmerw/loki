@@ -2,7 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.nott.Address
-import kotlinx.io.Sink
+import java.nio.ByteBuffer
 
 interface MessageHandler {
     /**
@@ -10,7 +10,7 @@ interface MessageHandler {
      */
     fun doEncode(
         message: ExtendedMessage,
-        sink: Sink,
+        buffer: ByteBuffer,
     )
 
     fun doDecode(
