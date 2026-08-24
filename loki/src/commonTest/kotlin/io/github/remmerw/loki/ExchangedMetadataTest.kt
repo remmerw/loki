@@ -9,8 +9,6 @@ import io.github.remmerw.loki.data.UtMetadataHandler
 import io.github.remmerw.nott.createAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.io.Buffer
-import kotlinx.io.readByteArray
 import java.nio.ByteBuffer
 import kotlin.random.Random
 import kotlin.test.Test
@@ -51,11 +49,10 @@ class ExchangedMetadataTest {
                         data = data,
                     )
                 val address = createAddress(byteArrayOf(10, 20, 30, 40), 999.toUShort())
-                val buffer = Buffer()
+                val buffer = ByteBuffer.allocate(200)
                 handler.doEncode(metadata, buffer)
-                val bytes = buffer.readByteArray()
-                val bytebuffer = ByteBuffer.wrap(bytes)
-                val reader = BEReader(bytebuffer)
+                buffer.flip()
+                val reader = BEReader(buffer)
                 val cmp = handler.doDecode(address, reader)
                 assertEquals(cmp, metadata)
             }
