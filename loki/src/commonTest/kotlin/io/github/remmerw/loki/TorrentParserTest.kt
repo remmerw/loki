@@ -18,7 +18,6 @@ import kotlinx.io.files.SystemTemporaryDirectory
 import kotlinx.io.readByteArray
 import java.nio.ByteBuffer
 import kotlin.test.Test
-import kotlin.test.fail
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -27,29 +26,24 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class TorrentParserTest {
-   
-
-    @OptIn(ExperimentalUuidApi::class)
-
     // @Test Todo not working content missing
+    @OptIn(ExperimentalUuidApi::class)
     fun parseTorrent(): Unit =
         runBlocking(Dispatchers.IO) {
-
-            val content = "" // Todo add torrent file content 
-            
+            val content = "" // Todo add torrent file content
 
             val path = Path(SystemTemporaryDirectory, Uuid.random().toHexString())
             SystemFileSystem.createDirectories(path)
 
             val dataStorage = DataStorage(path)
             val data: ByteArray = content.toByteArray(Charsets.ISO_8859_1)
-            
+
             val metadata = createMemory(data.size)
             metadata.writeMemory(data, 0)
-            
+
             val torrent = buildTorrent(metadata)
             assertNotNull(torrent)
-            
+
             dataStorage.metadata(metadata)
             dataStorage.initialize(torrent)
             val dataBitfield = dataStorage.dataBitfield()
