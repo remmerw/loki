@@ -2,7 +2,7 @@ package io.github.remmerw.loki.data
 
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.nott.Address
-import kotlinx.io.Buffer
+import java.nio.ByteBuffer
 
 internal class ExtendedProtocol(
     messageHandlers: List<ExtendedMessageHandler>,
@@ -62,11 +62,12 @@ internal class ExtendedProtocol(
     fun doEncode(
         address: Address,
         message: ExtendedMessage,
-        buffer: Buffer,
-    ) {
-        buffer.writeByte(EXTENDED_MESSAGE_ID)
+        buffer: ByteBuffer,
+    ) : Int {
+        val startPos = buffer.position()
+        buffer.put(EXTENDED_MESSAGE_ID)
         if (message is ExtendedHandshake) {
-            buffer.writeByte(EXTENDED_HANDSHAKE_TYPE_ID)
+            buffer.put(EXTENDED_HANDSHAKE_TYPE_ID)
         } else {
             val typeName = getTypeNameFor(message.type)
             var typeId: Int? = null
@@ -76,8 +77,10 @@ internal class ExtendedProtocol(
                 }
             }
             checkNotNull(typeId) { "Peer does not support extension message: $typeName" }
-            buffer.writeByte(typeId.toByte())
+            buffer.put(typeId.toByte())
         }
         checkNotNull(handlers[message.type]).doEncode(message, buffer)
+        val endPos = buffer.position()
+        return endPos - startPos
     }
 }
