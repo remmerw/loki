@@ -40,8 +40,6 @@ import kotlinx.coroutines.yield
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
-import java.nio.channels.ReadableByteChannel
-import java.nio.channels.WritableByteChannel
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -89,7 +87,7 @@ internal class Connection internal constructor(
                     handleConnection()
                 } else {
                     reading.flip()
-                    val message = decode(length)//Todo length
+                    val message = decode(length) // Todo length
                     if (message != null) {
                         worker.consume(message, this)
                     }
@@ -107,20 +105,20 @@ internal class Connection internal constructor(
     }
 
     fun receiveHandshake(): Handshake {
-val length = receiveChannel.read(reading)
-                require(length >= 0) { "Invalid read length received" }
+        val length = receiveChannel.read(reading)
+        require(length >= 0) { "Invalid read length received" }
         reading.flip()
         val sizeName = reading.get()
         require(sizeName.toInt() > 0) { "Invalid size name received" }
 
         val name = reading.getByteArray(sizeName.toInt())
-        
+
         val reserved = reading.getByteArray(HANDSHAKE_RESERVED_LENGTH)
-        
+
         val infoHash = reading.getByteArray(TORRENT_ID_LENGTH)
-        
+
         val peerId = reading.getByteArray(SHA1_HASH_LENGTH)
-        
+
         reading.clear()
         return Handshake(name, reserved, TorrentId(infoHash), peerId)
     }
@@ -139,7 +137,7 @@ val length = receiveChannel.read(reading)
                 yield()
             } catch (_: Throwable) {
                 break
-            } 
+            }
         }
     }
 
@@ -244,8 +242,8 @@ val length = receiveChannel.read(reading)
 
             is ExtendedMessage -> {
                 val pos = sending.position()
-                sending.putInt(0)//placeholder 
-                
+                sending.putInt(0) // placeholder
+
                 val size = extendedProtocol.doEncode(address(), message, sending)
                 val last = sending.position()
                 sending.position(pos)
@@ -255,7 +253,7 @@ val length = receiveChannel.read(reading)
         }
         sending.flip()
         while (sending.hasRemaining()) {
-            sendChannel.write(sending);
+            sendChannel.write(sending)
         }
         sending.clear()
     }
@@ -318,9 +316,7 @@ val length = receiveChannel.read(reading)
         }
     }
 
-    private fun decode(
-        length: Int,
-    ): Message? {
+    private fun decode(length: Int): Message? {
         val messageType = reading.get()
         var size = length - Byte.SIZE_BYTES
 
@@ -331,7 +327,7 @@ val length = receiveChannel.read(reading)
                 val offset = reading.getInt()
                 size -= Int.SIZE_BYTES
                 val data = writeBlock()
-                reading.get(data, 0, size)//todo
+                reading.get(data, 0, size) // todo
                 consumePiece(piece, offset, size)
                 null
             }
@@ -407,7 +403,7 @@ val length = receiveChannel.read(reading)
                 null
             }
 
-            EXTENDED_MESSAGE_ID -> { 
+            EXTENDED_MESSAGE_ID -> {
                 // todo
                 val data = reading.getByteArray(size)
                 require(size == data.size) { "Invalid number of data received" }
