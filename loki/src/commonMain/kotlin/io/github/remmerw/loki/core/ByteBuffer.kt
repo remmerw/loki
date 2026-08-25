@@ -11,7 +11,7 @@ internal fun directBuffer(size: Int): ByteBuffer = ByteBuffer.allocateDirect(siz
 internal fun directBuffer(filePath: String): ByteBuffer {
     val file = File(filePath)
 
-    val buffer = createBuffer(file.length().toInt())
+    val buffer = directBuffer(file.length().toInt())
 
     FileInputStream(file).use { fis ->
         fis.channel.use { channel ->
