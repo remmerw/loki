@@ -1,11 +1,11 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.loki.BLOCK_SIZE
+import java.nio.ByteBuffer
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-import java.nio.ByteBuffer
 
-internal class Memory (
+internal class Memory(
     private val pool: MemoryPool,
 ) : AutoCloseable {
     val buffer: ByteBuffer = ByteBuffer.allocateDirect(BLOCK_SIZE + 1000)

@@ -37,7 +37,7 @@ class TorrentParserTest {
             val data: ByteArray = content.toByteArray(Charsets.ISO_8859_1)
 
             val metadata = directBuffer(data.size)
-            metadata.putAt(0,data)
+            metadata.putAt(0, data)
 
             val torrent = buildTorrent(metadata)
             assertNotNull(torrent)

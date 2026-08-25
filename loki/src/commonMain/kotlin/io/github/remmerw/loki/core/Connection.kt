@@ -1,7 +1,6 @@
 package io.github.remmerw.loki.core
 
 import io.github.remmerw.buri.BEReader
-import io.github.remmerw.loki.BLOCK_SIZE
 import io.github.remmerw.loki.data.BITFIELD_ID
 import io.github.remmerw.loki.data.Bitfield
 import io.github.remmerw.loki.data.CANCEL_ID
@@ -63,9 +62,6 @@ internal class Connection internal constructor(
     private val receiveChannel = Channels.newChannel(socket.inputStream)
     private val sendChannel = Channels.newChannel(socket.outputStream)
 
-    
-    
-
     fun address(): Address = address
 
     suspend fun reading() {
@@ -73,50 +69,48 @@ internal class Connection internal constructor(
             try {
                 lastActive = TimeSource.Monotonic.markNow()
                 memoryInstance().use { pooled ->
-                val reading= pooled.buffer
-                val length = receiveChannel.read(reading)
-                
+                    val reading = pooled.buffer
+                    val length = receiveChannel.read(reading)
 
-                if (length == 0) { // keep has length 0
-                    handleConnection()
-                } else {
-                    reading.flip()
-                    val message = decode(reading, length) // Todo length
-                    if (message != null) {
-                        worker.consume(message, this)
+                    if (length == 0) { // keep has length 0
+                        handleConnection()
+                    } else {
+                        reading.flip()
+                        val message = decode(reading, length) // Todo length
+                        if (message != null) {
+                            worker.consume(message, this)
+                        }
+                        handleConnection()
                     }
-                    handleConnection()
                 }
-}
                 yield()
             } catch (throwable: Throwable) {
                 debug("Connection.reading " + throwable.message)
                 close()
                 break
-            } 
+            }
         }
     }
 
     fun receiveHandshake(): Handshake {
-memoryInstance().use { pooled ->
-                val reading= pooled.buffer
-        val length = receiveChannel.read(reading)
-        require(length >= 0) { "Invalid read length received" }
-        reading.flip()
-        val sizeName = reading.get()
-        require(sizeName.toInt() > 0) { "Invalid size name received" }
+        memoryInstance().use { pooled ->
+            val reading = pooled.buffer
+            val length = receiveChannel.read(reading)
+            require(length >= 0) { "Invalid read length received" }
+            reading.flip()
+            val sizeName = reading.get()
+            require(sizeName.toInt() > 0) { "Invalid size name received" }
 
-        val name = reading.getByteArray(sizeName.toInt())
+            val name = reading.getByteArray(sizeName.toInt())
 
-        val reserved = reading.getByteArray(HANDSHAKE_RESERVED_LENGTH)
+            val reserved = reading.getByteArray(HANDSHAKE_RESERVED_LENGTH)
 
-        val infoHash = reading.getByteArray(TORRENT_ID_LENGTH)
+            val infoHash = reading.getByteArray(TORRENT_ID_LENGTH)
 
-        val peerId = reading.getByteArray(SHA1_HASH_LENGTH)
+            val peerId = reading.getByteArray(SHA1_HASH_LENGTH)
 
-        
-        return Handshake(name, reserved, TorrentId(infoHash), peerId)
-}
+            return Handshake(name, reserved, TorrentId(infoHash), peerId)
+        }
     }
 
     @OptIn(ExperimentalAtomicApi::class)
@@ -139,120 +133,120 @@ memoryInstance().use { pooled ->
 
     @OptIn(ExperimentalAtomicApi::class)
     fun posting(message: Message) {
-        memoryInstance().use{ pooled ->
-        val sending = pooled.buffer
-        when (message) {
-            is Handshake -> {
-                val data = message.name
-                sending.put(data.size.toByte())
-                sending.put(data)
-                sending.put(message.reserved)
-                sending.put(message.torrentId.bytes)
-                sending.put(message.peerId)
-            }
+        memoryInstance().use { pooled ->
+            val sending = pooled.buffer
+            when (message) {
+                is Handshake -> {
+                    val data = message.name
+                    sending.put(data.size.toByte())
+                    sending.put(data)
+                    sending.put(message.reserved)
+                    sending.put(message.torrentId.bytes)
+                    sending.put(message.peerId)
+                }
 
-            is KeepAlive -> {
-                sending.put(KEEPALIVE)
-            }
+                is KeepAlive -> {
+                    sending.put(KEEPALIVE)
+                }
 
-            is Piece -> {
-                val size =
-                    Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + message.length
-                sending.putInt(size)
-                sending.put(PIECE_ID)
-                sending.putInt(message.piece)
-                sending.putInt(message.offset)
+                is Piece -> {
+                    val size =
+                        Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + message.length
+                    sending.putInt(size)
+                    sending.put(PIECE_ID)
+                    sending.putInt(message.piece)
+                    sending.putInt(message.offset)
 
-                blockInstance().use { pooledBlock ->
-                    val readBlock = pooledBlock.data
-                    dataStorage.readBlock(
-                        message.piece,
-                        message.offset,
-                        readBlock,
-                        message.length,
-                    )
-                    sending.put(readBlock)
+                    blockInstance().use { pooledBlock ->
+                        val readBlock = pooledBlock.data
+                        dataStorage.readBlock(
+                            message.piece,
+                            message.offset,
+                            readBlock,
+                            message.length,
+                        )
+                        sending.put(readBlock)
+                    }
+                }
+
+                is Have -> {
+                    val size = Byte.SIZE_BYTES + Int.SIZE_BYTES
+                    sending.putInt(size)
+                    sending.put(HAVE_ID)
+                    sending.putInt(message.piece)
+                }
+
+                is Request -> {
+                    val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
+                    sending.putInt(size)
+                    sending.put(REQUEST_ID)
+                    sending.putInt(message.piece)
+                    sending.putInt(message.offset)
+                    sending.putInt(message.length)
+                }
+
+                is Bitfield -> {
+                    val size = Byte.SIZE_BYTES + message.bitfield.size
+                    sending.putInt(size)
+                    sending.put(BITFIELD_ID)
+                    sending.put(message.bitfield)
+                }
+
+                is Cancel -> {
+                    val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
+                    sending.putInt(size)
+                    sending.put(CANCEL_ID)
+                    sending.putInt(message.piece)
+                    sending.putInt(message.offset)
+                    sending.putInt(message.length)
+                }
+
+                is Choke -> {
+                    val size = Byte.SIZE_BYTES
+                    sending.putInt(size)
+                    sending.put(CHOKE_ID)
+                }
+
+                is Unchoke -> {
+                    val size = Byte.SIZE_BYTES
+                    sending.putInt(size)
+                    sending.put(UNCHOKE_ID)
+                }
+
+                is Interested -> {
+                    val size = Byte.SIZE_BYTES
+                    sending.putInt(size)
+                    sending.put(INTERESTED_ID)
+                }
+
+                is NotInterested -> {
+                    val size = Byte.SIZE_BYTES
+                    sending.putInt(size)
+                    sending.put(NOT_INTERESTED_ID)
+                }
+
+                is Port -> {
+                    val size = Byte.SIZE_BYTES + Short.SIZE_BYTES
+                    sending.putInt(size)
+                    sending.put(PORT_ID)
+                    sending.putShort(message.port.toShort())
+                }
+
+                is ExtendedMessage -> {
+                    val pos = sending.position()
+                    sending.putInt(0) // placeholder
+
+                    val size = extendedProtocol.doEncode(address(), message, sending)
+                    val last = sending.position()
+                    sending.position(pos)
+                    sending.putInt(size.toInt())
+                    sending.position(last)
                 }
             }
-
-            is Have -> {
-                val size = Byte.SIZE_BYTES + Int.SIZE_BYTES
-                sending.putInt(size)
-                sending.put(HAVE_ID)
-                sending.putInt(message.piece)
+            sending.flip()
+            while (sending.hasRemaining()) {
+                sendChannel.write(sending)
             }
-
-            is Request -> {
-                val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
-                sending.putInt(size)
-                sending.put(REQUEST_ID)
-                sending.putInt(message.piece)
-                sending.putInt(message.offset)
-                sending.putInt(message.length)
-            }
-
-            is Bitfield -> {
-                val size = Byte.SIZE_BYTES + message.bitfield.size
-                sending.putInt(size)
-                sending.put(BITFIELD_ID)
-                sending.put(message.bitfield)
-            }
-
-            is Cancel -> {
-                val size = Byte.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES + Int.SIZE_BYTES
-                sending.putInt(size)
-                sending.put(CANCEL_ID)
-                sending.putInt(message.piece)
-                sending.putInt(message.offset)
-                sending.putInt(message.length)
-            }
-
-            is Choke -> {
-                val size = Byte.SIZE_BYTES
-                sending.putInt(size)
-                sending.put(CHOKE_ID)
-            }
-
-            is Unchoke -> {
-                val size = Byte.SIZE_BYTES
-                sending.putInt(size)
-                sending.put(UNCHOKE_ID)
-            }
-
-            is Interested -> {
-                val size = Byte.SIZE_BYTES
-                sending.putInt(size)
-                sending.put(INTERESTED_ID)
-            }
-
-            is NotInterested -> {
-                val size = Byte.SIZE_BYTES
-                sending.putInt(size)
-                sending.put(NOT_INTERESTED_ID)
-            }
-
-            is Port -> {
-                val size = Byte.SIZE_BYTES + Short.SIZE_BYTES
-                sending.putInt(size)
-                sending.put(PORT_ID)
-                sending.putShort(message.port.toShort())
-            }
-
-            is ExtendedMessage -> {
-                val pos = sending.position()
-                sending.putInt(0) // placeholder
-
-                val size = extendedProtocol.doEncode(address(), message, sending)
-                val last = sending.position()
-                sending.position(pos)
-                sending.putInt(size.toInt())
-                sending.position(last)
-            }
-        }
-        sending.flip()
-        while (sending.hasRemaining()) {
-            sendChannel.write(sending)
-        }
         }
     }
 
@@ -303,7 +297,10 @@ memoryInstance().use { pooled ->
         }
     }
 
-    private fun decode(reading: ByteBuffer, length: Int): Message? {
+    private fun decode(
+        reading: ByteBuffer,
+        length: Int,
+    ): Message? {
         val messageType = reading.get()
         var size = length - Byte.SIZE_BYTES
 
