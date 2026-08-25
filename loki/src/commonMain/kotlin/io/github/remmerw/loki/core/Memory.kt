@@ -35,6 +35,12 @@ internal fun ByteBuffer.transferTo(filePath: String) {
     }
 }
 
+internal fun getByteArray(size:Int): ByteArray{ 
+    val data = ByteArray(size)
+    this.get(data)
+    return data
+}
+
 internal fun ByteBuffer.toSha1(): ByteArray {
     rewind()
     val md = MessageDigest.getInstance("SHA-1")
