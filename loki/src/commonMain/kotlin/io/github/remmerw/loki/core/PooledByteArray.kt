@@ -1,6 +1,5 @@
 package io.github.remmerw.loki.core
 
-
 import io.github.remmerw.loki.BLOCK_SIZE
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -17,7 +16,7 @@ internal class Block(
 
 internal class BlockPool private constructor() {
     private val lock = ReentrantLock()
-    
+
     private val free = ArrayDeque<Block>()
 
     internal fun release(item: Block) {
@@ -33,14 +32,10 @@ internal class BlockPool private constructor() {
     }
 
     companion object {
-        val instance: BlockPool by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { 
-            BlockPool() 
+        val instance: BlockPool by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+            BlockPool()
         }
     }
 }
 
-internal fun blockInstance(): Block {
-    return BlockPool.instance.get()
-}
-
-
+internal fun blockInstance(): Block = BlockPool.instance.get()

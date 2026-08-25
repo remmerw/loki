@@ -343,17 +343,16 @@ internal class Connection internal constructor(
             }
 
             BITFIELD_ID -> {
-                
                 if (dataStorage.initializeDone()) {
                     val pieces = dataStorage.piecesTotal()
                     val bitmask = reading.getBitmask(pieces)
-                            val dataBitfield =
-            DataBitfield(
-                pieces,
-                bitmask,
-            )
-        setDataBitfield(dataBitfield)
-        dataStorage.pieceStatistics()!!.addBitfield(dataBitfield)
+                    val dataBitfield =
+                        DataBitfield(
+                            pieces,
+                            bitmask,
+                        )
+                    setDataBitfield(dataBitfield)
+                    dataStorage.pieceStatistics()!!.addBitfield(dataBitfield)
                 } else {
                     val data = reading.getByteArray(size)
                     worker.consumeBitfield(data, this)

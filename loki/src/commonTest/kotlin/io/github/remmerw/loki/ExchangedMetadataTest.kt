@@ -2,8 +2,8 @@ package io.github.remmerw.loki
 
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.loki.core.Bitmask
-import io.github.remmerw.loki.core.getBitmask
 import io.github.remmerw.loki.core.ExchangedMetadata
+import io.github.remmerw.loki.core.getBitmask
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
 import io.github.remmerw.loki.data.UtMetadataHandler
