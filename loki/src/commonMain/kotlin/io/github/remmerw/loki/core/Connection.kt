@@ -62,7 +62,7 @@ internal class Connection internal constructor(
     private val receiveChannel = Channels.newChannel(socket.inputStream)
     private val sendChannel = Channels.newChannel(socket.outputStream)
 
-    private val sending = ByteBuffer.allocate(BLOCK_SIZE + 100)
+    
     private val reading = ByteBuffer.allocate(BLOCK_SIZE + 100)
 
     fun address(): Address = address
@@ -135,6 +135,8 @@ internal class Connection internal constructor(
 
     @OptIn(ExperimentalAtomicApi::class)
     fun posting(message: Message) {
+        memoryInstance().use{ pooled ->
+        val sending = pooled.buffer
         when (message) {
             is Handshake -> {
                 val data = message.name
@@ -247,7 +249,7 @@ internal class Connection internal constructor(
         while (sending.hasRemaining()) {
             sendChannel.write(sending)
         }
-        sending.clear()
+        }
     }
 
     private fun consumePiece(
