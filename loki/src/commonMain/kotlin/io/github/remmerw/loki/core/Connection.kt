@@ -61,10 +61,9 @@ internal class Connection internal constructor(
     private val closed = AtomicBoolean(false)
     private val receiveChannel = Channels.newChannel(socket.inputStream)
     private val sendChannel = Channels.newChannel(socket.outputStream)
-    
+
     private val sending = ByteBuffer.allocate(BLOCK_SIZE + 100)
     private val reading = ByteBuffer.allocate(BLOCK_SIZE + 100)
-
 
     fun address(): Address = address
 
@@ -296,7 +295,6 @@ internal class Connection internal constructor(
             return
         }
 
-        
         dataStorage.writeBlock(piece, offset, data, length)
         chunk.markAvailable(offset, length)
 
@@ -321,13 +319,13 @@ internal class Connection internal constructor(
                 size -= Int.SIZE_BYTES
                 val offset = reading.getInt()
                 size -= Int.SIZE_BYTES
-ByteArrayPool.getInstance(BLOCK_SIZE).get().use { pooledByteArray ->
+                ByteArrayPool.getInstance(BLOCK_SIZE).get().use { pooledByteArray ->
                     val data = pooledByteArray.byteArray
-                
-                reading.get(data, 0, size)
-                consumePiece(piece, offset, size, data)
-                null
-}
+
+                    reading.get(data, 0, size)
+                    consumePiece(piece, offset, size, data)
+                    null
+                }
             }
 
             HAVE_ID -> {
