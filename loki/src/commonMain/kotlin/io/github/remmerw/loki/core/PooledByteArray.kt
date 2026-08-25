@@ -3,34 +3,34 @@ package io.github.remmerw.loki.core
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class PooledByteArray(
-    val pool: ByteArrayPool,
+internal class Block(
+    val pool: BlockPool,
 ) : AutoCloseable {
-    val byteArray: ByteArray = ByteArray(BLOCK_SIZE)
+    val data: ByteArray = ByteArray(BLOCK_SIZE)
 
     override fun close() {
         pool.release(this)
     }
 }
 
-class ByteArrayPool(
+internal class BlockPool(
 ) {
     private val lock = ReentrantLock()
-    private val used = mutableSetOf<PooledByteArray>()
-    private val free = mutableSetOf<PooledByteArray>()
+    private val used = mutableSetOf<Block>()
+    private val free = mutableSetOf<Block>()
 
-    internal fun release(item: PooledByteArray) {
+    internal fun release(item: Block) {
         lock.withLock {
             used.remove(item)
             free.add(item)
         }
     }
 
-    fun get(): PooledByteArray {
+    fun get(): Block {
         lock.withLock {
             val array = free.firstOrNull()
             if (array == null) {
-                val created = PooledByteArray(this)
+                val created = Block(this)
                 used.add(created)
                 return created
             } else {
@@ -43,18 +43,22 @@ class ByteArrayPool(
 
     companion object {
         @Volatile
-        private var instance: ByteArrayPool? = null
+        private var instance: BlockPool? = null
 
         @JvmStatic
-        fun getInstance(): ByteArrayPool {
+        fun getInstance(): BlockPool {
             if (instance == null) {
-                synchronized(ByteArrayPool::class) {
+                synchronized(BlockPool::class) {
                     if (instance == null) {
-                        instance = ByteArrayPool()
+                        instance = BlockPool()
                     }
                 }
             }
             return instance!!
         }
     }
+}
+
+internal fun blockInstance() : Block {
+     return                BlockPool.getInstance().get()
 }
