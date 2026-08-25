@@ -6,9 +6,9 @@ import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 
-internal fun createMemory(size: Int): ByteBuffer = ByteBuffer.allocateDirect(size)
+internal fun createBuffer(size: Int): ByteBuffer = ByteBuffer.allocateDirect(size)
 
-internal fun createMemory(filePath: String): ByteBuffer {
+internal fun createBuffer(filePath: String): ByteBuffer {
     val file = File(filePath)
 
     val buffer = createMemory(file.length().toInt())
@@ -64,7 +64,7 @@ internal fun ByteBuffer.toSha1(): ByteArray {
     return md.digest()
 }
 
-internal fun ByteBuffer.readMemory(
+internal fun ByteBuffer.getByteArrayAt(
     offset: Int,
     length: Int,
 ): ByteArray {
@@ -75,9 +75,9 @@ internal fun ByteBuffer.readMemory(
     return result
 }
 
-internal fun ByteBuffer.writeMemory(
-    bytes: ByteArray,
+internal fun ByteBuffer.putAt(
     offset: Int,
+    bytes: ByteArray,
 ) {
     rewind()
     position(offset)
