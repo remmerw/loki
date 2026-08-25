@@ -273,6 +273,7 @@ internal class Connection internal constructor(
         piece: Int,
         offset: Int,
         length: Int,
+        data: ByteArray,
     ) {
         if (!dataStorage.initializeDone()) {
             return
@@ -301,7 +302,7 @@ internal class Connection internal constructor(
             return
         }
 
-        val data = this.writeBlock()
+        
         dataStorage.writeBlock(piece, offset, data, length)
         chunk.markAvailable(offset, length)
 
@@ -326,10 +327,13 @@ internal class Connection internal constructor(
                 size -= Int.SIZE_BYTES
                 val offset = reading.getInt()
                 size -= Int.SIZE_BYTES
-                val data = writeBlock()
-                reading.get(data, 0, size) // todo
-                consumePiece(piece, offset, size)
+ByteArrayPool.getInstance(BLOCK_SIZE).get().use { pooledByteArray ->
+                    val data = pooledByteArray.byteArray
+                
+                reading.get(data, 0, size)
+                consumePiece(piece, offset, size, data)
                 null
+}
             }
 
             HAVE_ID -> {
