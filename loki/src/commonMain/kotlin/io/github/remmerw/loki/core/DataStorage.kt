@@ -31,7 +31,7 @@ internal data class DataStorage(
             "Path is not a directory."
         }
         if (SystemFileSystem.exists(torrentDatabase)) {
-            val metadata = directBuffer (torrentDatabase.toString())
+            val metadata = directBuffer(torrentDatabase.toString())
             val torrent = buildTorrent(metadata)
             metadata(metadata)
             initialize(torrent)
