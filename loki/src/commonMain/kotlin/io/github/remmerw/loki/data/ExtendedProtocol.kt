@@ -63,7 +63,7 @@ internal class ExtendedProtocol(
         address: Address,
         message: ExtendedMessage,
         buffer: ByteBuffer,
-    ) : Int {
+    ): Int {
         val startPos = buffer.position()
         buffer.put(EXTENDED_MESSAGE_ID)
         if (message is ExtendedHandshake) {
