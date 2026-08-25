@@ -35,7 +35,7 @@ internal fun ByteBuffer.transferTo(filePath: String) {
     }
 }
 
-internal fun getByteArray(size:Int): ByteArray{ 
+internal fun ByteBuffer.getByteArray(size:Int): ByteArray{ 
     val data = ByteArray(size)
     this.get(data)
     return data
