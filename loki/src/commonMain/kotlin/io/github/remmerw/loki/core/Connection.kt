@@ -114,8 +114,9 @@ memoryInstance().use { pooled ->
 
         val peerId = reading.getByteArray(SHA1_HASH_LENGTH)
 
-        }
+        
         return Handshake(name, reserved, TorrentId(infoHash), peerId)
+}
     }
 
     @OptIn(ExperimentalAtomicApi::class)
