@@ -46,7 +46,7 @@ internal fun ByteBuffer.getBitmask(
             }
             val bitmask = Bitmask(piecesTotal)
             var bitPos = 0
-            while (has remaining()) {
+            while (hasRemaining()) {
                 val b = get().toInt() and 0xFF
                 for (bitInByte in 0..7) {
                     if (bitPos >= piecesTotal) break
