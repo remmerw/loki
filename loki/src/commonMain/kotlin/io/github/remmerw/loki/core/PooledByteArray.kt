@@ -4,10 +4,9 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class PooledByteArray(
-    size: Int,
     val pool: ByteArrayPool,
 ) : AutoCloseable {
-    val byteArray: ByteArray = ByteArray(size)
+    val byteArray: ByteArray = ByteArray(BLOCK_SIZE)
 
     override fun close() {
         pool.release(this)
@@ -15,7 +14,6 @@ class PooledByteArray(
 }
 
 class ByteArrayPool(
-    val size: Int,
 ) {
     private val lock = ReentrantLock()
     private val used = mutableSetOf<PooledByteArray>()
@@ -32,7 +30,7 @@ class ByteArrayPool(
         lock.withLock {
             val array = free.firstOrNull()
             if (array == null) {
-                val created = PooledByteArray(size, this)
+                val created = PooledByteArray(this)
                 used.add(created)
                 return created
             } else {
@@ -48,11 +46,11 @@ class ByteArrayPool(
         private var instance: ByteArrayPool? = null
 
         @JvmStatic
-        fun getInstance(size: Int): ByteArrayPool {
+        fun getInstance(): ByteArrayPool {
             if (instance == null) {
                 synchronized(ByteArrayPool::class) {
                     if (instance == null) {
-                        instance = ByteArrayPool(size)
+                        instance = ByteArrayPool()
                     }
                 }
             }
