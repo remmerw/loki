@@ -112,14 +112,15 @@ val length = receiveChannel.read(reading)
         reading.flip()
         val sizeName = reading.get()
         require(sizeName.toInt() > 0) { "Invalid size name received" }
-        val name = reading.readByteArray(sizeName.toInt())
-        require(sizeName.toInt() == name.size) { "Invalid size name received" }
-        val reserved = reading.readByteArray(HANDSHAKE_RESERVED_LENGTH)
-        require(HANDSHAKE_RESERVED_LENGTH == reserved.size) { "Invalid reserved received" }
-        val infoHash = reading.readByteArray(TORRENT_ID_LENGTH)
-        require(TORRENT_ID_LENGTH == infoHash.size) { "Invalid infoHash received" }
-        val peerId = reading.readByteArray(SHA1_HASH_LENGTH)
-        require(SHA1_HASH_LENGTH == peerId.size) { "Invalid peerId received" }
+
+        val name = reading.getByteArray(sizeName.toInt())
+        
+        val reserved = reading.getByteArray(HANDSHAKE_RESERVED_LENGTH)
+        
+        val infoHash = reading.getByteArray(TORRENT_ID_LENGTH)
+        
+        val peerId = reading.getByteArray(SHA1_HASH_LENGTH)
+        
         reading.clear()
         return Handshake(name, reserved, TorrentId(infoHash), peerId)
     }
@@ -325,18 +326,18 @@ val length = receiveChannel.read(reading)
 
         return when (messageType) {
             PIECE_ID -> {
-                val piece = reading.readInt()
+                val piece = reading.getInt()
                 size -= Int.SIZE_BYTES
-                val offset = reading.readInt()
+                val offset = reading.getInt()
                 size -= Int.SIZE_BYTES
                 val data = writeBlock()
-                reading.readTo(data, 0, size)
+                reading.get(data, 0, size)//todo
                 consumePiece(piece, offset, size)
                 null
             }
 
             HAVE_ID -> {
-                val piece = reading.readInt()
+                val piece = reading.getInt()
 
                 if (dataStorage.initializeDone()) {
                     dataStorage.pieceStatistics()!!.addPiece(this, piece)
@@ -347,9 +348,9 @@ val length = receiveChannel.read(reading)
             }
 
             REQUEST_ID -> {
-                val piece = reading.readInt()
-                val offset = reading.readInt()
-                val length = reading.readInt()
+                val piece = reading.getInt()
+                val offset = reading.getInt()
+                val length = reading.getInt()
 
                 if (dataStorage.initializeDone()) {
                     if (!choking) {
@@ -362,7 +363,7 @@ val length = receiveChannel.read(reading)
             }
 
             BITFIELD_ID -> {
-                val data = reading.readByteArray(size)
+                val data = reading.getByteArray(size)
 
                 if (dataStorage.initializeDone()) {
                     consumeBitfield(data)
@@ -373,9 +374,9 @@ val length = receiveChannel.read(reading)
             }
 
             CANCEL_ID -> {
-                val pieceIndex = reading.readInt()
-                val blockOffset = reading.readInt()
-                reading.readInt()
+                val pieceIndex = reading.getInt()
+                val blockOffset = reading.getInt()
+                reading.getInt()
                 this.cancelRequest(pieceIndex, blockOffset)
                 null
             }
@@ -401,14 +402,14 @@ val length = receiveChannel.read(reading)
             }
 
             PORT_ID -> {
-                val port = reading.readShort().toInt() and 0x0000FFFF
+                val port = reading.getShort().toInt() and 0x0000FFFF
                 debug("Port not yet used $port")
                 null
             }
 
             EXTENDED_MESSAGE_ID -> { 
                 // todo
-                val data = reading.readByteArray(size)
+                val data = reading.getByteArray(size)
                 require(size == data.size) { "Invalid number of data received" }
                 // todo optmize
                 val buffer = ByteBuffer.wrap(data)
