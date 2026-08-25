@@ -35,6 +35,29 @@ internal fun ByteBuffer.transferTo(filePath: String) {
     }
 }
 
+
+
+internal fun ByteBuffer.getBitmask(
+            piecesTotal: Int,
+        ): Bitmask {
+            val expectedBitmaskLength = getBitmaskLength(piecesTotal)
+            require(remaining() == expectedBitmaskLength) {
+                "Invalid bitfield: total ($piecesTotal), bitmask length (${remaining()}). Expected $expectedBitmaskLength"
+            }
+            val bitmask = Bitmask(piecesTotal)
+            var bitPos = 0
+            while (has remaining()) {
+                val b = get().toInt() and 0xFF
+                for (bitInByte in 0..7) {
+                    if (bitPos >= piecesTotal) break
+                    if ((b and (1 shl (7 - bitInByte))) != 0) {
+                        bitmask.set(bitPos)
+                    }
+                    bitPos++
+                }
+            }
+            return bitmask
+        }
 internal fun ByteBuffer.getByteArray(size: Int): ByteArray {
     val data = ByteArray(size)
     this.get(data)
