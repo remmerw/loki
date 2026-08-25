@@ -11,7 +11,7 @@ internal data class ExchangedMetadata(
     val totalSize: Int,
 ) {
     private val lock = reentrantLock()
-    val metadata = createMemory(totalSize)
+    val metadata = createBuffer(totalSize)
     private val metadataBlocks: BlockSet = createBlockSet(totalSize, BLOCK_SIZE)
 
     fun isBlockPresent(blockIndex: Int): Boolean = metadataBlocks.isPresent(blockIndex)
@@ -23,7 +23,7 @@ internal data class ExchangedMetadata(
         lock.withLock {
             validateBlockIndex(blockIndex)
             val offset = blockIndex * BLOCK_SIZE
-            metadata.writeMemory(block, offset)
+            metadata.putAt(offset, block)
             metadataBlocks.markAvailable(offset, block.size)
         }
     }
