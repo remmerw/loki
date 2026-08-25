@@ -250,18 +250,6 @@ internal class Connection internal constructor(
         sending.clear()
     }
 
-    // Todo bitfield should Bitmask decode adapt
-    private fun consumeBitfield(bitmask: Bitmask) {
-        
-        val dataBitfield =
-            DataBitfield(
-                piecesTotal,
-                bitmask,
-            )
-        setDataBitfield(dataBitfield)
-        dataStorage.pieceStatistics()!!.addBitfield(dataBitfield)
-    }
-
     private fun consumePiece(
         piece: Int,
         offset: Int,
@@ -359,7 +347,13 @@ internal class Connection internal constructor(
                 if (dataStorage.initializeDone()) {
                     val pieces = dataStorage.piecesTotal()
                     val bitmask = reading.getBitmask(pieces)
-                    consumeBitfield(bitmask)
+                            val dataBitfield =
+            DataBitfield(
+                pieces,
+                bitmask,
+            )
+        setDataBitfield(dataBitfield)
+        dataStorage.pieceStatistics()!!.addBitfield(dataBitfield)
                 } else {
                     val data = reading.getByteArray(size)
                     worker.consumeBitfield(data, this)
