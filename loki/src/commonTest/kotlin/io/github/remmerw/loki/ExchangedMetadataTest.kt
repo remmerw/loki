@@ -65,8 +65,8 @@ class ExchangedMetadataTest {
         val a = Bitmask(bits)
         a.set(5)
         val data = a.encode(bits)
-
-        val cmp = Bitmask.decode(data, bits)
+        val buffer = ByteBuffer.wrap(data)
+        val cmp = buffer.getBitmask(bits)
         assertEquals(a, cmp)
     }
 
