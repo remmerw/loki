@@ -35,25 +35,22 @@ internal fun ByteBuffer.transferTo(filePath: String) {
     }
 }
 
-
-
-internal fun ByteBuffer.getBitmask(
-            piecesTotal: Int,
-        ): Bitmask {
-            val bitmask = Bitmask(piecesTotal)
-            var bitPos = 0
-            while (hasRemaining()) {
-                val b = get().toInt() and 0xFF
-                for (bitInByte in 0..7) {
-                    if (bitPos >= piecesTotal) break
-                    if ((b and (1 shl (7 - bitInByte))) != 0) {
-                        bitmask.set(bitPos)
-                    }
-                    bitPos++
-                }
+internal fun ByteBuffer.getBitmask(piecesTotal: Int): Bitmask {
+    val bitmask = Bitmask(piecesTotal)
+    var bitPos = 0
+    while (hasRemaining()) {
+        val b = get().toInt() and 0xFF
+        for (bitInByte in 0..7) {
+            if (bitPos >= piecesTotal) break
+            if ((b and (1 shl (7 - bitInByte))) != 0) {
+                bitmask.set(bitPos)
             }
-            return bitmask
+            bitPos++
         }
+    }
+    return bitmask
+}
+
 internal fun ByteBuffer.getByteArray(size: Int): ByteArray {
     val data = ByteArray(size)
     this.get(data)
