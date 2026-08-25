@@ -1,11 +1,12 @@
 package io.github.remmerw.loki.core
 
+
 import io.github.remmerw.loki.BLOCK_SIZE
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 internal class Block(
-    val pool: BlockPool,
+    private val pool: BlockPool,
 ) : AutoCloseable {
     val data: ByteArray = ByteArray(BLOCK_SIZE)
 
@@ -14,52 +15,32 @@ internal class Block(
     }
 }
 
-internal class BlockPool(
-) {
+internal class BlockPool private constructor() {
     private val lock = ReentrantLock()
-    private val used = mutableSetOf<Block>()
-    private val free = mutableSetOf<Block>()
+    
+    private val free = ArrayDeque<Block>()
 
     internal fun release(item: Block) {
         lock.withLock {
-            used.remove(item)
-            free.add(item)
+            free.addLast(item)
         }
     }
 
     fun get(): Block {
         lock.withLock {
-            val array = free.firstOrNull()
-            if (array == null) {
-                val created = Block(this)
-                used.add(created)
-                return created
-            } else {
-                free.remove(array)
-                used.add(array)
-                return array
-            }
+            return free.removeLastOrNull() ?: Block(this)
         }
     }
 
     companion object {
-        @Volatile
-        private var instance: BlockPool? = null
-
-        @JvmStatic
-        fun getInstance(): BlockPool {
-            if (instance == null) {
-                synchronized(BlockPool::class) {
-                    if (instance == null) {
-                        instance = BlockPool()
-                    }
-                }
-            }
-            return instance!!
+        val instance: BlockPool by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { 
+            BlockPool() 
         }
     }
 }
 
-internal fun blockInstance() : Block {
-     return                BlockPool.getInstance().get()
+internal fun blockInstance(): Block {
+    return BlockPool.instance.get()
 }
+
+
