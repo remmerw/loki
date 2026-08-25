@@ -40,10 +40,6 @@ internal fun ByteBuffer.transferTo(filePath: String) {
 internal fun ByteBuffer.getBitmask(
             piecesTotal: Int,
         ): Bitmask {
-            val expectedBitmaskLength = getBitmaskLength(piecesTotal)
-            require(remaining() == expectedBitmaskLength) {
-                "Invalid bitfield: total ($piecesTotal), bitmask length (${remaining()}). Expected $expectedBitmaskLength"
-            }
             val bitmask = Bitmask(piecesTotal)
             var bitPos = 0
             while (hasRemaining()) {
