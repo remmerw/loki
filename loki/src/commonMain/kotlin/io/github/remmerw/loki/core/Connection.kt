@@ -59,11 +59,12 @@ internal class Connection internal constructor(
 
     @OptIn(ExperimentalAtomicApi::class)
     private val closed = AtomicBoolean(false)
+
     private val receiveChannel = Channels.newChannel(socket.inputStream)
     private val sendChannel = Channels.newChannel(socket.outputStream)
 
     
-    private val reading = ByteBuffer.allocate(BLOCK_SIZE + 100)
+    
 
     fun address(): Address = address
 
@@ -71,32 +72,34 @@ internal class Connection internal constructor(
         while (!isClosed) {
             try {
                 lastActive = TimeSource.Monotonic.markNow()
-
+                memoryInstance().use { pooled ->
+                val reading= pooled.buffer
                 val length = receiveChannel.read(reading)
-                require(length >= 0) { "Invalid read length received" }
+                
 
                 if (length == 0) { // keep has length 0
                     handleConnection()
                 } else {
                     reading.flip()
-                    val message = decode(length) // Todo length
+                    val message = decode(reading, length) // Todo length
                     if (message != null) {
                         worker.consume(message, this)
                     }
                     handleConnection()
                 }
+}
                 yield()
             } catch (throwable: Throwable) {
                 debug("Connection.reading " + throwable.message)
                 close()
                 break
-            } finally {
-                reading.clear()
-            }
+            } 
         }
     }
 
     fun receiveHandshake(): Handshake {
+memoryInstance().use { pooled ->
+                val reading= pooled.buffer
         val length = receiveChannel.read(reading)
         require(length >= 0) { "Invalid read length received" }
         reading.flip()
@@ -111,7 +114,7 @@ internal class Connection internal constructor(
 
         val peerId = reading.getByteArray(SHA1_HASH_LENGTH)
 
-        reading.clear()
+        }
         return Handshake(name, reserved, TorrentId(infoHash), peerId)
     }
 
@@ -299,7 +302,7 @@ internal class Connection internal constructor(
         }
     }
 
-    private fun decode(length: Int): Message? {
+    private fun decode(reading: ByteBuffer, length: Int): Message? {
         val messageType = reading.get()
         var size = length - Byte.SIZE_BYTES
 
