@@ -3,7 +3,7 @@ package io.github.remmerw.loki
 import io.github.remmerw.buri.BEReader
 import io.github.remmerw.loki.core.DataStorage
 import io.github.remmerw.loki.core.buildTorrent
-import io.github.remmerw.loki.core.createBuffer
+import io.github.remmerw.loki.core.directBuffer
 import io.github.remmerw.loki.core.putAt
 import io.github.remmerw.loki.data.MetaType
 import io.github.remmerw.loki.data.UtMetadata
@@ -36,7 +36,7 @@ class TorrentParserTest {
             val dataStorage = DataStorage(path)
             val data: ByteArray = content.toByteArray(Charsets.ISO_8859_1)
 
-            val metadata = createBuffer(data.size)
+            val metadata = directBuffer(data.size)
             metadata.putAt(0,data)
 
             val torrent = buildTorrent(metadata)
