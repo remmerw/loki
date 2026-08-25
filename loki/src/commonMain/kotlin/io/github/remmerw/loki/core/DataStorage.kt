@@ -31,7 +31,7 @@ internal data class DataStorage(
             "Path is not a directory."
         }
         if (SystemFileSystem.exists(torrentDatabase)) {
-            val metadata = createMemory(torrentDatabase.toString())
+            val metadata = createBuffer (torrentDatabase.toString())
             val torrent = buildTorrent(metadata)
             metadata(metadata)
             initialize(torrent)
@@ -155,7 +155,7 @@ internal data class DataStorage(
     internal fun sliceMetadata(
         offset: Int,
         length: Int,
-    ): ByteArray = metadata!!.readMemory(offset, length)
+    ): ByteArray = metadata!!.getByteArrayAt(offset, length)
 
     internal fun metadataSize(): Int = metadata?. capacity() ?: -1
 
