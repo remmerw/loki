@@ -251,6 +251,7 @@ internal class Connection internal constructor(
         sending.clear()
     }
 
+    // Todo bitfield should Bitmask decode adapt
     private fun consumeBitfield(bitfield: ByteArray) {
         val piecesTotal = dataStorage.piecesTotal()
         val dataBitfield =
