@@ -33,7 +33,7 @@ internal data class DataBitfield(
      * If the n-th bit is set, then the n-th piece
      * is in [PieceStatus.COMPLETE_VERIFIED] status.
      */
-    fun encode(): ByteArray {
+    fun encode2(): ByteArray {
         lock.withLock {
             return bitmask.encode(piecesTotal)
         }
