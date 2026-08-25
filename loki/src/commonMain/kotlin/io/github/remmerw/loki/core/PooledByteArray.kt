@@ -1,5 +1,6 @@
 package io.github.remmerw.loki.core
 
+import io.github.remmerw.loki.BLOCK_SIZE
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
