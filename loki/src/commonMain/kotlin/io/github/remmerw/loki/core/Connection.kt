@@ -157,8 +157,8 @@ internal class Connection internal constructor(
                 sending.putInt(message.piece)
                 sending.putInt(message.offset)
 
-                ByteArrayPool.getInstance().get().use { pooledByteArray ->
-                    val readBlock = pooledByteArray.byteArray
+                blockInstance().use { pooledBlock ->
+                    val readBlock = pooledBlock.data
                     dataStorage.readBlock(
                         message.piece,
                         message.offset,
@@ -307,8 +307,8 @@ internal class Connection internal constructor(
                 size -= Int.SIZE_BYTES
                 val offset = reading.getInt()
                 size -= Int.SIZE_BYTES
-                ByteArrayPool.getInstance().get().use { pooledByteArray ->
-                    val data = pooledByteArray.byteArray
+                blockInstance().use { pooled ->
+                    val data = pooled.data
 
                     reading.get(data, 0, size)
                     consumePiece(piece, offset, size, data)
