@@ -19,7 +19,7 @@ internal class Bitmask(
         wordsInUse = i + 1
     }
 
-    fun encode(piecesTotal: Int): ByteArray {
+    fun encode2(piecesTotal: Int): ByteArray {
         val len = getBitmaskLength(piecesTotal)
         val bytes = ByteArray(len)
 
