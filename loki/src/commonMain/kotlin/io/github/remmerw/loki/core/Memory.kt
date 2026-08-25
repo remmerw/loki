@@ -1,85 +1,43 @@
 package io.github.remmerw.loki.core
 
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import io.github.remmerw.loki.BLOCK_SIZE
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import java.nio.ByteBuffer
-import java.security.MessageDigest
 
-internal fun createBuffer(size: Int): ByteBuffer = ByteBuffer.allocateDirect(size)
+internal class Memory (
+    private val pool: MemoryPool,
+) : AutoCloseable {
+    val buffer: ByteBuffer = ByteBuffer.allocateDirect(BLOCK_SIZE + 1000)
 
-internal fun createBuffer(filePath: String): ByteBuffer {
-    val file = File(filePath)
-
-    val buffer = createBuffer(file.length().toInt())
-
-    FileInputStream(file).use { fis ->
-        fis.channel.use { channel ->
-            while (channel.read(buffer) != -1) {
-            }
-        }
-    }
-
-    return buffer
-}
-
-internal fun ByteBuffer.transferTo(filePath: String) {
-    rewind()
-
-    FileOutputStream(filePath).use { fos ->
-        fos.channel.use { channel ->
-            while (this.hasRemaining()) {
-                channel.write(this)
-            }
-        }
+    override fun close() {
+        buffer.clear()
+        pool.release(this)
     }
 }
 
-internal fun ByteBuffer.getBitmask(piecesTotal: Int): Bitmask {
-    val bitmask = Bitmask(piecesTotal)
-    var bitPos = 0
-    while (hasRemaining()) {
-        val b = get().toInt() and 0xFF
-        for (bitInByte in 0..7) {
-            if (bitPos >= piecesTotal) break
-            if ((b and (1 shl (7 - bitInByte))) != 0) {
-                bitmask.set(bitPos)
-            }
-            bitPos++
+internal class MemoryPool private constructor() {
+    private val lock = ReentrantLock()
+
+    private val free = ArrayDeque<Memory>()
+
+    internal fun release(item: Memory) {
+        lock.withLock {
+            free.addLast(item)
         }
     }
-    return bitmask
+
+    fun get(): Memory {
+        lock.withLock {
+            return free.removeLastOrNull() ?: Memory(this)
+        }
+    }
+
+    companion object {
+        val instance: MemoryPool by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+            MemoryPool()
+        }
+    }
 }
 
-internal fun ByteBuffer.getByteArray(size: Int): ByteArray {
-    val data = ByteArray(size)
-    this.get(data)
-    return data
-}
-
-internal fun ByteBuffer.toSha1(): ByteArray {
-    rewind()
-    val md = MessageDigest.getInstance("SHA-1")
-    md.update(this)
-    return md.digest()
-}
-
-internal fun ByteBuffer.getByteArrayAt(
-    offset: Int,
-    length: Int,
-): ByteArray {
-    rewind()
-    position(offset)
-    val result = ByteArray(length)
-    get(result)
-    return result
-}
-
-internal fun ByteBuffer.putAt(
-    offset: Int,
-    bytes: ByteArray,
-) {
-    rewind()
-    position(offset)
-    put(bytes)
-}
+internal fun memoryInstance(): Memory = MemoryPool.instance.get()
