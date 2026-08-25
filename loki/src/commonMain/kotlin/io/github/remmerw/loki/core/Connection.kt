@@ -404,12 +404,8 @@ internal class Connection internal constructor(
             }
 
             EXTENDED_MESSAGE_ID -> {
-                // todo
-                val data = reading.getByteArray(size)
-                require(size == data.size) { "Invalid number of data received" }
-                // todo optmize
-                val buffer = ByteBuffer.wrap(data)
-                val reader = BEReader(buffer)
+                require(size == reading.remaining()) { "Invalid number of data received" }
+                val reader = BEReader(reading)
                 extendedProtocol.doDecode(address(), reader)
             }
 
