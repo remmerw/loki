@@ -41,7 +41,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(libs.kotlin.stdlib)
-                implementation(libs.kotlinx.io.core)
+                //implementation(libs.kotlinx.io.core)
                 implementation(libs.uri.kmp)
                 implementation(libs.atomicfu)
                 implementation(libs.kotlinx.coroutines.core)
