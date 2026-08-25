@@ -61,17 +61,10 @@ internal class Connection internal constructor(
     private val closed = AtomicBoolean(false)
     private val receiveChannel = Channels.newChannel(socket.inputStream)
     private val sendChannel = Channels.newChannel(socket.outputStream)
-    private var writeBlock: PooledByteArray? = null
+    
     private val sending = ByteBuffer.allocate(BLOCK_SIZE + 100)
     private val reading = ByteBuffer.allocate(BLOCK_SIZE + 100)
 
-    // Todo lazy
-    fun writeBlock(): ByteArray {
-        if (writeBlock == null) {
-            writeBlock = ByteArrayPool.getInstance(BLOCK_SIZE).get()
-        }
-        return writeBlock!!.byteArray
-    }
 
     fun address(): Address = address
 
@@ -449,10 +442,6 @@ ByteArrayPool.getInstance(BLOCK_SIZE).get().use { pooledByteArray ->
     @OptIn(ExperimentalAtomicApi::class)
     override fun close() {
         if (!closed.exchange(true)) {
-            try {
-                writeBlock?.close()
-            } catch (_: Throwable) {
-            }
             try {
                 receiveChannel.close()
             } catch (_: Throwable) {
