@@ -6,9 +6,9 @@ import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 
-internal fun createBuffer(size: Int): ByteBuffer = ByteBuffer.allocateDirect(size)
+internal fun directBuffer(size: Int): ByteBuffer = ByteBuffer.allocateDirect(size)
 
-internal fun createBuffer(filePath: String): ByteBuffer {
+internal fun directBuffer(filePath: String): ByteBuffer {
     val file = File(filePath)
 
     val buffer = createBuffer(file.length().toInt())
