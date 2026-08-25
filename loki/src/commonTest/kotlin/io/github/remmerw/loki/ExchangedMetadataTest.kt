@@ -88,8 +88,8 @@ class ExchangedMetadataTest {
         assertTrue(a[999])
 
         val data = a.encode(bits)
-
-        val b = Bitmask.decode(data, bits)
+        val buffer = ByteBuffer.wrap(data)
+        val b = buffer.getBitmask(bits)
         assertEquals(a, b)
         assertTrue(b[5])
         assertTrue(b[34])
