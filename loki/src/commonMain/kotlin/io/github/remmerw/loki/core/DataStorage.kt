@@ -219,6 +219,7 @@ internal data class DataStorage(
         }
     }
 
+    // Todo bytes should be ByteBuffer 
     internal fun readBlock(
         piece: Int,
         offset: Int,
@@ -227,7 +228,7 @@ internal data class DataStorage(
     ) = databaseLock.withLock {
         database.readBytes(position(piece, offset), bytes, 0, length)
     }
-
+    // Todo data should be ByteBuffer 
     internal fun writeBlock(
         piece: Int,
         offset: Int,
