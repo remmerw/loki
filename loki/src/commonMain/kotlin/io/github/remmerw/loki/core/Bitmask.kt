@@ -205,7 +205,7 @@ internal class Bitmask(
             }
             return bitmask
         }
-
+        // Todo remove
         fun decode(bytes: ByteArray): Bitmask {
             val size = bytes.size
             val bitmask = Bitmask(size)
