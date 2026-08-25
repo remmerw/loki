@@ -206,7 +206,7 @@ internal class Bitmask(
             return bitmask
         }
 
-        fun decode2(bytes: ByteArray): Bitmask {
+        fun decode(bytes: ByteArray): Bitmask {
             val size = bytes.size
             val bitmask = Bitmask(size)
             for (i in 0 until size) {
